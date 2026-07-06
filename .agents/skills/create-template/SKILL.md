@@ -54,6 +54,9 @@ The generated `faceCoords` inside the Calculator component must contain:
 - `topFlaps` and `bottomFlaps`: The closing flaps.
 - `glue`: The glue flap.
 For exact 3D cutting (especially for complex shapes like lock tabs), you must include the `polygon` array for each flap (e.g., `polygon: [[x1,y1], [x2,y2], ...]`) if the flap is not a perfect rectangle. The 3D engine uses these polygons to cut the shape via `ShapeGeometry`.
+- **No Duplicate Vertices**: The `polygon` array MUST NOT contain duplicate adjacent points (e.g., repeating the same corner point twice, or matching the start/end points of Bézier curves with the corners). Duplicate adjacent points will cause the Three.js Earcut triangulation library to crash at runtime.
+- **Flap Cover + Tongue Coordination**: For flaps split into a cover panel and a locking tongue (e.g., straight tuck boxes), define the `polygon` array to span the **entire** flap length (cover + tongue). The 3D engine in `Box3DPreview` will dynamically split and filter the polygon points based on `lidTongue` so that the cover stays flat and the tongue rotates independently without visual duplicates.
+
 
 # Validation & Registration
 - Ensure fold lines are hinges and do not become cut paths.
@@ -77,3 +80,13 @@ For exact 3D cutting (especially for complex shapes like lock tabs), you must in
 
 4. **FLAP LENGTHS MATCH DEPTH:**
    Ensure that the length/height of the closing flaps (لسان الغلق) is exactly the same as the depth (`D`), or parametrically linked to it (e.g., `D/2` for dust flaps). Do not use hardcoded values for flap heights; they must be dynamic to fit with any design proportions based on the depth.
+
+5. **STROKE WIDTHS IN EXPORTED SVGS:**
+   Never hardcode thick `stroke-width` attributes in exported SVGs. Avoid specifying `stroke-width` in the SVG `<line>`, `<path>`, or `<g>` tags entirely (matching the style of `template (3).svg`). This ensures they open with standard thin line weights in Illustrator, AutoCAD, or other vector editors.
+
+6. **DIMENSION OVERLAY SIZING:**
+   Always define the CAD visual dimension overlay elements (`dimensionsOverlay.ts`) directly in millimeter user space units (e.g., font size ~3.5mm, arrow head size ~1.6mm, stroke width ~0.35mm, padding X ~1.2mm, padding Y ~0.8mm) rather than scaling by screen-pixels or using large defaults like 14px. This ensures dimension markings fit proportionally within the box layout panel widths (e.g. W=50mm) without overlapping or cluttering the visual area.
+
+7. **INTERACTIVE PREVIEW LINE THICKNESS:**
+   Configure the `InteractiveSvgCanvas` preview lines to use thin rendering stroke-width (e.g., `0.45px` default line weight, `1.5px` selected weight) to keep the on-screen preview clean and visually accurate, while utilizing the thick invisible hover bounds (`strokeWidth="15"` or similar) for easy mouse/touch selection and editing.
+

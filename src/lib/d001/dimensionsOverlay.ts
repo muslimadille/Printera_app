@@ -23,18 +23,20 @@ export function buildD001DimensionsSvg(p: D001Params, unit: DimUnit = 'mm', scal
   const Yfb = Yft + H;
 
   const C = '#2563eb';
-  // Sizes are expressed in template-mm units, but divided by `scale` so that
-  // after the parent <g scale(scale)> they render at a constant visual size
-  // (in CSS px), independent of how much the template itself is zoomed.
-  // We clamp the on-screen px values so dimensions stay readable at any zoom.
+  
+  // Since we render in mm user space, we define the dimension layout directly in mm
+  // for natural proportion (e.g. font size 3.5mm, stroke 0.35mm, arrowhead 1.8mm).
+  // This ensures text scales proportionally with the drawing and doesn't look huge.
+  const baseFS = 3.5;  // font size in mm
+  const baseAH = 1.6;  // arrow head size in mm
+  const baseSW = 0.35; // stroke width in mm
+  const baseRectStroke = 0.2;
+
+  // We allow adjusting it by a scale factor if passed (defaults to 1).
   const s = scale > 0 ? scale : 1;
-  const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v));
-  const FS_PX = clamp(14, 12, 16);   // font size in CSS px
-  const SW_PX = clamp(1.2, 1, 1.6);  // dimension line stroke in CSS px
-  const AH_PX = clamp(6.5, 5, 8);    // arrow head size in CSS px
-  const SW = SW_PX / s;
-  const AH = AH_PX / s;
-  const FS = FS_PX / s;
+  const SW = baseSW / s;
+  const AH = baseAH / s;
+  const FS = baseFS / s;
 
   const arrowL = (x: number, y: number) =>
     `<path d="M${x} ${y} l${AH} ${-AH / 2} l0 ${AH} z" fill="${C}"/>`;
@@ -46,13 +48,13 @@ export function buildD001DimensionsSvg(p: D001Params, unit: DimUnit = 'mm', scal
     `<path d="M${x} ${y} l${-AH / 2} ${-AH} l${AH} 0 z" fill="${C}"/>`;
 
   const label = (x: number, y: number, text: string) => {
-    const padX = 4 / s;
-    const padY = 2.5 / s;
+    const padX = 1.2 / s;
+    const padY = 0.8 / s;
     const w = text.length * FS * 0.58 + padX * 2;
     const h = FS + padY * 2;
     return (
       `<rect x="${x - w / 2}" y="${y - h / 2}" width="${w}" height="${h}" ` +
-      `fill="#ffffff" fill-opacity="0.95" stroke="${C}" stroke-width="${0.6 / s}" rx="${1.5 / s}"/>` +
+      `fill="#ffffff" fill-opacity="0.95" stroke="${C}" stroke-width="${baseRectStroke / s}" rx="${1.0 / s}"/>` +
       `<text x="${x}" y="${y}" font-family="Arial, sans-serif" font-size="${FS}" font-weight="600" ` +
       `fill="${C}" text-anchor="middle" dominant-baseline="middle" direction="ltr" unicode-bidi="isolate">${text}</text>`
     );

@@ -1,36 +1,42 @@
 // T0002 — Visual-only dimensions overlay.
 // Renders CAD-style blue dimension lines on top of the template preview.
+// NOT included in SVG / PDF exports or Sheet Nesting. Pure UI.
 
 import type { T0002Params } from './types';
 
 export type DimUnit = 'mm' | 'cm' | 'in';
 
 export function buildT0002DimensionsSvg(p: T0002Params, unit: DimUnit = 'mm', scale = 1): string {
-  const W = p.W;
-  const H = p.H;
-  const D = p.D;
-  const LH = p.LH;
-  const LFH = p.LFH;
-  const LTW = p.LTW;
+  const W = p.width;
+  const H = p.height;
+  const D = p.depth;
+  const Gf = p.glueFlap;
+  const Lid = p.lidTongue;
+  const Cov = D - 0.25;
 
-  const pad = 2;
-  const xMainCreaseL = pad + LTW + D;
-  const xMainCreaseR = xMainCreaseL + W;
+  const Xf1 = Gf;
+  const Xd1 = Gf + W;
+  const Xf2 = Gf + W + D;
+  const Xd2 = Gf + 2 * W + D;
 
-  const yLidFlapCrease = pad + LFH;
-  const yLidCrease = yLidFlapCrease + LH;
-  const yMiddleCreaseT = yLidCrease + D;
-  const yMiddleCreaseB = yMiddleCreaseT + H;
+  const Yft = Lid + Cov;
+  const Yfb = Yft + H;
 
   const C = '#2563eb';
+  
+  // Since we render in mm user space, we define the dimension layout directly in mm
+  // for natural proportion (e.g. font size 3.5mm, stroke 0.35mm, arrowhead 1.8mm).
+  // This ensures text scales proportionally with the drawing and doesn't look huge.
+  const baseFS = 3.5;  // font size in mm
+  const baseAH = 1.6;  // arrow head size in mm
+  const baseSW = 0.35; // stroke width in mm
+  const baseRectStroke = 0.2;
+
+  // We allow adjusting it by a scale factor if passed (defaults to 1).
   const s = scale > 0 ? scale : 1;
-  const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v));
-  const FS_PX = clamp(14, 12, 16);   // font size in CSS px
-  const SW_PX = clamp(1.2, 1, 1.6);  // dimension line stroke in CSS px
-  const AH_PX = clamp(6.5, 5, 8);    // arrow head size in CSS px
-  const SW = SW_PX / s;
-  const AH = AH_PX / s;
-  const FS = FS_PX / s;
+  const SW = baseSW / s;
+  const AH = baseAH / s;
+  const FS = baseFS / s;
 
   const arrowL = (x: number, y: number) =>
     `<path d="M${x} ${y} l${AH} ${-AH / 2} l0 ${AH} z" fill="${C}"/>`;
@@ -42,13 +48,13 @@ export function buildT0002DimensionsSvg(p: T0002Params, unit: DimUnit = 'mm', sc
     `<path d="M${x} ${y} l${-AH / 2} ${-AH} l${AH} 0 z" fill="${C}"/>`;
 
   const label = (x: number, y: number, text: string) => {
-    const padX = 4 / s;
-    const padY = 2.5 / s;
+    const padX = 1.2 / s;
+    const padY = 0.8 / s;
     const w = text.length * FS * 0.58 + padX * 2;
     const h = FS + padY * 2;
     return (
       `<rect x="${x - w / 2}" y="${y - h / 2}" width="${w}" height="${h}" ` +
-      `fill="#ffffff" fill-opacity="0.95" stroke="${C}" stroke-width="${0.6 / s}" rx="${1.5 / s}"/>` +
+      `fill="#ffffff" fill-opacity="0.95" stroke="${C}" stroke-width="${baseRectStroke / s}" rx="${1.0 / s}"/>` +
       `<text x="${x}" y="${y}" font-family="Arial, sans-serif" font-size="${FS}" font-weight="600" ` +
       `fill="${C}" text-anchor="middle" dominant-baseline="middle" direction="ltr" unicode-bidi="isolate">${text}</text>`
     );
@@ -75,16 +81,9 @@ export function buildT0002DimensionsSvg(p: T0002Params, unit: DimUnit = 'mm', sc
   const fmt = (n: number) => `${conv(n)} ${suffix}`;
 
   let out = '';
-  // Width (W)
-  out += dimH(xMainCreaseL, xMainCreaseR, yMiddleCreaseT + H * 0.5, fmt(W));
-  // Depth (D)
-  out += dimH(xMainCreaseL - D, xMainCreaseL, yMiddleCreaseT + H * 0.25, fmt(D));
-  // Height (H)
-  out += dimV((xMainCreaseL + xMainCreaseR) / 2, yMiddleCreaseT, yMiddleCreaseB, fmt(H));
-  // Lid Flap Height (LFH)
-  out += dimV(xMainCreaseL + 25, pad, yLidFlapCrease, fmt(LFH));
-  // Lid Height (LH)
-  out += dimV(xMainCreaseL + 25, yLidFlapCrease, yLidCrease, fmt(LH));
+  out += dimH(Xf1, Xd1, Yft + H * 0.28, fmt(W));
+  out += dimH(Xd1, Xf2, Yft + H * 0.55, fmt(D));
+  out += dimV((Xf2 + Xd2) / 2, Yft, Yfb, fmt(H));
 
   return `<g class="t0002-dimensions" pointer-events="none">${out}</g>`;
 }

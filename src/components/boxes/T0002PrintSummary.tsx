@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Printer, FileText, Ruler } from 'lucide-react';
@@ -16,10 +17,17 @@ interface T0002PrintSummaryProps {
   nestingResult: T0002NestingResult;
   dimUnit: 'mm' | 'cm' | 'in';
   distributionFootprint: { w: number; h: number };
+  derived: {
+    faceHeight: number;
+    depth1: number;
+    depth2: number;
+    coverVertical: number;
+    lidCurveHeight: number;
+  };
 }
 
 const T0002PrintSummary = ({
-  open, onOpenChange, params, nesting, nestingResult, dimUnit, distributionFootprint,
+  open, onOpenChange, params, nesting, nestingResult, dimUnit, distributionFootprint, derived,
 }: T0002PrintSummaryProps) => {
   const today = new Date().toLocaleDateString('ar-SA');
   const u = unitLabel(dimUnit);
@@ -67,24 +75,37 @@ const T0002PrintSummary = ({
           <SectionBlock icon={<Ruler className="w-4 h-4" />} title="أبعاد المنتج">
             <table className="w-full text-sm border-collapse">
               <tbody>
-                <PrintRow label="العرض (W)" value={d(params.W)} />
-                <PrintRow label="الارتفاع للعلبة الأساسية (H)" value={d(params.H)} />
-                <PrintRow label="العمق (D)" value={d(params.D)} />
-                <PrintRow label="ارتفاع الغطاء (LH)" value={d(params.LH)} />
+                <PrintRow label="العرض" value={d(params.width)} />
+                <PrintRow label="الارتفاع" value={d(params.height)} />
+                <PrintRow label="العمق" value={d(params.depth)} />
               </tbody>
             </table>
           </SectionBlock>
 
           {/* Tongues & Flaps */}
-          <SectionBlock icon={<Ruler className="w-4 h-4" />} title="الألسنة والأغطية والرفارف">
+          <SectionBlock icon={<Ruler className="w-4 h-4" />} title="الألسنة واللصق">
             <table className="w-full text-sm border-collapse">
               <tbody>
-                <PrintRow label="ارتفاع لسان الغطاء (LFH)" value={d(params.LFH)} />
-                <PrintRow label="نصف قطر لسان الغطاء (LFR)" value={d(params.LFR)} />
-                <PrintRow label="عرض لسان القفل (LTW)" value={d(params.LTW)} />
-                <PrintRow label="عرض رفرف الغبار (DFW)" value={d(params.DFW)} />
-                <PrintRow label="تداخل رفرف الغبار (DFI)" value={d(params.DFI)} />
-                <PrintRow label="ميل خلوص رفرف الغبار (DFS)" value={d(params.DFS)} />
+                <PrintRow label="لسان اللصق (Glue Flap)" value={d(params.glueFlap)} />
+                <PrintRow label="زاوية لسان اللصق — علوي" value={`${params.glueFlapTopAngle ?? 25}°`} />
+                <PrintRow label="زاوية لسان اللصق — سفلي" value={`${params.glueFlapBottomAngle ?? 25}°`} />
+                <PrintRow label="لسان الغطاء (Lid Tongue)" value={d(params.lidTongue)} />
+                <PrintRow label="ارتفاع لسان العمق (Depth Tongue)" value={d(params.depthTongueTotalHeight ?? (params.depthTongue + 2 + params.depth / 2))} />
+                <PrintRow label="القفل (Lock)" value={d(params.depthTongue)} />
+                <PrintRow label="زاوية لسان العمق (Corner Radius)" value={d(params.depthTongueCornerRadius ?? 0)} />
+              </tbody>
+            </table>
+          </SectionBlock>
+
+          {/* Derived dimensions */}
+          <SectionBlock icon={<Ruler className="w-4 h-4" />} title="الأبعاد المشتقة">
+            <table className="w-full text-sm border-collapse">
+              <tbody>
+                <PrintRow label="Face Height = H + 0.5" value={d(derived.faceHeight)} />
+                <PrintRow label="Depth 1 = D" value={d(derived.depth1)} />
+                <PrintRow label="Depth 2 = D − 0.5" value={d(derived.depth2)} />
+                <PrintRow label="Cover Vertical = D − 0.25" value={d(derived.coverVertical)} />
+                <PrintRow label="Lid Curve Height" value={d(derived.lidCurveHeight)} />
               </tbody>
             </table>
           </SectionBlock>
@@ -115,6 +136,8 @@ const T0002PrintSummary = ({
                 />
                 <PrintRow label="Pitch (X × Y)" value={`${d(nestingResult.pitchX)} × ${d(nestingResult.pitchY)}`} />
                 <PrintRow label="التداخل (H × V)" value={`${d(nestingResult.horizontalInterlock)} × ${d(nestingResult.verticalInterlock)}`} />
+                <PrintRow label="Row Brick Δx" value={d(nestingResult.rowBrickDx)} />
+                <PrintRow label="المصدر" value={nestingResult.smartAuto ? 'Smart Auto (silhouette)' : 'Manual'} />
                 <PrintRow label="مسموح بالدوران" value={nesting.allowRotation ? 'نعم' : 'لا'} />
                 <PrintRow label="وضع الدوران" value={nesting.rotationMode} />
               </tbody>

@@ -59,18 +59,21 @@ export function InteractiveSvgCanvas({ segments: initialSegments = [], svgWidth 
   const currentSvgMarkup = useMemo(() => {
     const lines = segments.map(s => {
       const color = s.kind === "CREASE" ? "#00a651" : "#ed1c24";
+      if (s.geometry === "fillet" && s.via && s.bezier) {
+        return `<path d="M${s.start.x.toFixed(4)},${s.start.y.toFixed(4)} L${s.via.x.toFixed(4)},${s.via.y.toFixed(4)} C${s.bezier.c1.x.toFixed(4)},${s.bezier.c1.y.toFixed(4)} ${s.bezier.c2.x.toFixed(4)},${s.bezier.c2.y.toFixed(4)} ${s.end.x.toFixed(4)},${s.end.y.toFixed(4)}" stroke="${color}" fill="none" />`;
+      }
       if (s.geometry === "line" || !s.geometry) {
-        return `<line x1="${s.start.x.toFixed(4)}" y1="${s.start.y.toFixed(4)}" x2="${s.end.x.toFixed(4)}" y2="${s.end.y.toFixed(4)}" stroke="${color}" stroke-width="4" fill="none" />`;
+        return `<line x1="${s.start.x.toFixed(4)}" y1="${s.start.y.toFixed(4)}" x2="${s.end.x.toFixed(4)}" y2="${s.end.y.toFixed(4)}" stroke="${color}" fill="none" />`;
       }
       if (s.geometry === "polyline" && s.points) {
         const pts = s.points.map(pt => `${pt.x.toFixed(4)},${pt.y.toFixed(4)}`).join(" ");
-        return `<polyline points="${pts}" stroke="${color}" stroke-width="4" fill="none" />`;
+        return `<polyline points="${pts}" stroke="${color}" fill="none" />`;
       }
       if (s.geometry === "bezier" && s.bezier) {
-        return `<path d="M ${s.start.x.toFixed(4)},${s.start.y.toFixed(4)} C ${s.bezier.c1.x.toFixed(4)},${s.bezier.c1.y.toFixed(4)} ${s.bezier.c2.x.toFixed(4)},${s.bezier.c2.y.toFixed(4)} ${s.end.x.toFixed(4)},${s.end.y.toFixed(4)}" stroke="${color}" stroke-width="4" fill="none" />`;
+        return `<path d="M ${s.start.x.toFixed(4)},${s.start.y.toFixed(4)} C ${s.bezier.c1.x.toFixed(4)},${s.bezier.c1.y.toFixed(4)} ${s.bezier.c2.x.toFixed(4)},${s.bezier.c2.y.toFixed(4)} ${s.end.x.toFixed(4)},${s.end.y.toFixed(4)}" stroke="${color}" fill="none" />`;
       }
       if (s.geometry === "arc" && s.arc) {
-        return `<path d="M ${s.start.x.toFixed(4)},${s.start.y.toFixed(4)} A ${s.arc.rx.toFixed(4)} ${s.arc.ry.toFixed(4)} ${s.arc.xar} ${s.arc.laf} ${s.arc.sf} ${s.end.x.toFixed(4)},${s.end.y.toFixed(4)}" stroke="${color}" stroke-width="4" fill="none" />`;
+        return `<path d="M ${s.start.x.toFixed(4)},${s.start.y.toFixed(4)} A ${s.arc.rx.toFixed(4)} ${s.arc.ry.toFixed(4)} ${s.arc.xar} ${s.arc.laf} ${s.arc.sf} ${s.end.x.toFixed(4)},${s.end.y.toFixed(4)}" stroke="${color}" fill="none" />`;
       }
       return '';
     });
@@ -160,18 +163,21 @@ export function InteractiveSvgCanvas({ segments: initialSegments = [], svgWidth 
     if (onChange) {
       const lines = nextSegments.map(s => {
         const color = s.kind === "CREASE" ? "#00a651" : "#ed1c24";
+        if (s.geometry === "fillet" && s.via && s.bezier) {
+          return `<path d="M${s.start.x.toFixed(4)},${s.start.y.toFixed(4)} L${s.via.x.toFixed(4)},${s.via.y.toFixed(4)} C${s.bezier.c1.x.toFixed(4)},${s.bezier.c1.y.toFixed(4)} ${s.bezier.c2.x.toFixed(4)},${s.bezier.c2.y.toFixed(4)} ${s.end.x.toFixed(4)},${s.end.y.toFixed(4)}" stroke="${color}" fill="none" />`;
+        }
         if (s.geometry === "line" || !s.geometry) {
-          return `<line x1="${s.start.x.toFixed(4)}" y1="${s.start.y.toFixed(4)}" x2="${s.end.x.toFixed(4)}" y2="${s.end.y.toFixed(4)}" stroke="${color}" stroke-width="4" fill="none" />`;
+          return `<line x1="${s.start.x.toFixed(4)}" y1="${s.start.y.toFixed(4)}" x2="${s.end.x.toFixed(4)}" y2="${s.end.y.toFixed(4)}" stroke="${color}" fill="none" />`;
         }
         if (s.geometry === "polyline" && s.points) {
           const pts = s.points.map(pt => `${pt.x.toFixed(4)},${pt.y.toFixed(4)}`).join(" ");
-          return `<polyline points="${pts}" stroke="${color}" stroke-width="4" fill="none" />`;
+          return `<polyline points="${pts}" stroke="${color}" fill="none" />`;
         }
         if (s.geometry === "bezier" && s.bezier) {
-          return `<path d="M ${s.start.x.toFixed(4)},${s.start.y.toFixed(4)} C ${s.bezier.c1.x.toFixed(4)},${s.bezier.c1.y.toFixed(4)} ${s.bezier.c2.x.toFixed(4)},${s.bezier.c2.y.toFixed(4)} ${s.end.x.toFixed(4)},${s.end.y.toFixed(4)}" stroke="${color}" stroke-width="4" fill="none" />`;
+          return `<path d="M ${s.start.x.toFixed(4)},${s.start.y.toFixed(4)} C ${s.bezier.c1.x.toFixed(4)},${s.bezier.c1.y.toFixed(4)} ${s.bezier.c2.x.toFixed(4)},${s.bezier.c2.y.toFixed(4)} ${s.end.x.toFixed(4)},${s.end.y.toFixed(4)}" stroke="${color}" fill="none" />`;
         }
         if (s.geometry === "arc" && s.arc) {
-          return `<path d="M ${s.start.x.toFixed(4)},${s.start.y.toFixed(4)} A ${s.arc.rx.toFixed(4)} ${s.arc.ry.toFixed(4)} ${s.arc.xar} ${s.arc.laf} ${s.arc.sf} ${s.end.x.toFixed(4)},${s.end.y.toFixed(4)}" stroke="${color}" stroke-width="4" fill="none" />`;
+          return `<path d="M ${s.start.x.toFixed(4)},${s.start.y.toFixed(4)} A ${s.arc.rx.toFixed(4)} ${s.arc.ry.toFixed(4)} ${s.arc.xar} ${s.arc.laf} ${s.arc.sf} ${s.end.x.toFixed(4)},${s.end.y.toFixed(4)}" stroke="${color}" fill="none" />`;
         }
         return '';
       });
@@ -305,6 +311,9 @@ export function InteractiveSvgCanvas({ segments: initialSegments = [], svgWidth 
             const color = s.kind === "CREASE" ? "#00a651" : "#ed1c24";
             
             const renderShape = (props: any) => {
+              if (s.geometry === "fillet" && s.via && s.bezier) {
+                return <path d={`M${s.start.x},${s.start.y} L${s.via.x},${s.via.y} C${s.bezier.c1.x},${s.bezier.c1.y} ${s.bezier.c2.x},${s.bezier.c2.y} ${s.end.x},${s.end.y}`} {...props} />;
+              }
               if (s.geometry === "line" || !s.geometry) {
                 return <line x1={s.start.x} y1={s.start.y} x2={s.end.x} y2={s.end.y} {...props} />;
               }
@@ -331,7 +340,7 @@ export function InteractiveSvgCanvas({ segments: initialSegments = [], svgWidth 
                 })}
                 {renderShape({
                   stroke: isSelected ? "#3b82f6" : color,
-                  strokeWidth: isSelected ? "6" : "4",
+                  strokeWidth: isSelected ? "1.5" : "0.45",
                   fill: "none",
                   className: editMode ? 'transition-all duration-200 cursor-pointer' : ''
                 })}

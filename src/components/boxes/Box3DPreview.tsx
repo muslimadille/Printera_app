@@ -122,7 +122,14 @@ function buildCropTexture(
 // ─────────────────────────────────────────────
 // بناء Panel mesh مع material
 // ─────────────────────────────────────────────
-function buildPanel(w: number, h: number, tex: THREE.Texture | null, coord?: Panel2DInfo, S: number = 1): THREE.Mesh {
+function buildPanel(
+  w: number,
+  h: number,
+  tex: THREE.Texture | null,
+  coord?: Panel2DInfo,
+  S: number = 1,
+  innerColor: string = '#cfa87b' // Kraft cardboard brown color
+): THREE.Object3D {
   let geo: THREE.BufferGeometry;
   
   if (coord && coord.polygon && coord.polygon.length > 0) {
@@ -149,17 +156,34 @@ function buildPanel(w: number, h: number, tex: THREE.Texture | null, coord?: Pan
     geo = new THREE.PlaneGeometry(w, h);
   }
 
-  const mat = new THREE.MeshStandardMaterial({
+  // Outer material (displays the printed SVG texture or a default outer color)
+  const matOuter = new THREE.MeshStandardMaterial({
     map: tex,
     color: tex ? 0xffffff : 0xf5e9c8,
     roughness: 0.75,
     metalness: 0.0,
-    side: THREE.DoubleSide,
+    side: THREE.FrontSide, // Front side only!
   });
-  const m = new THREE.Mesh(geo, mat);
-  m.castShadow = true;
-  m.receiveShadow = true;
-  return m;
+  const meshOuter = new THREE.Mesh(geo, matOuter);
+  meshOuter.castShadow = true;
+  meshOuter.receiveShadow = true;
+
+  // Inner material (solid kraft brown or distinct color)
+  const matInner = new THREE.MeshStandardMaterial({
+    color: new THREE.Color(innerColor),
+    roughness: 0.85,
+    metalness: 0.0,
+    side: THREE.BackSide, // Back side only!
+  });
+  const meshInner = new THREE.Mesh(geo, matInner);
+  meshInner.castShadow = true;
+  meshInner.receiveShadow = true;
+
+  const group = new THREE.Group();
+  group.add(meshOuter);
+  group.add(meshInner);
+
+  return group;
 }
 
 // ─────────────────────────────────────────────
@@ -167,7 +191,7 @@ function buildPanel(w: number, h: number, tex: THREE.Texture | null, coord?: Pan
 // المحور عند x=0 (حافة اللصق مع اللوح الأول)
 // اللوح يمتد من x=0 إلى x=-gf
 // ─────────────────────────────────────────────
-function buildGlueFlap(gf: number, ph: number, tex: THREE.Texture | null): THREE.Mesh {
+function buildGlueFlap(gf: number, ph: number, tex: THREE.Texture | null, innerColor: string = '#cfa87b'): THREE.Object3D {
   // زاوية الإمالة: tan(15°) ≈ 0.2679
   const bevel = gf * 0.2679;
 
@@ -182,18 +206,33 @@ function buildGlueFlap(gf: number, ph: number, tex: THREE.Texture | null): THREE
   shape.closePath();
 
   const geo = new THREE.ShapeGeometry(shape);
-  const mat = new THREE.MeshStandardMaterial({
+
+  const matOuter = new THREE.MeshStandardMaterial({
     map: tex,
     color: tex ? 0xffffff : 0xf5e9c8,
     roughness: 0.75,
     metalness: 0.0,
-    side: THREE.DoubleSide,
-    transparent: false,
+    side: THREE.FrontSide,
   });
-  const m = new THREE.Mesh(geo, mat);
-  m.castShadow = true;
-  m.receiveShadow = true;
-  return m;
+  const meshOuter = new THREE.Mesh(geo, matOuter);
+  meshOuter.castShadow = true;
+  meshOuter.receiveShadow = true;
+
+  const matInner = new THREE.MeshStandardMaterial({
+    color: new THREE.Color(innerColor),
+    roughness: 0.85,
+    metalness: 0.0,
+    side: THREE.BackSide,
+  });
+  const meshInner = new THREE.Mesh(geo, matInner);
+  meshInner.castShadow = true;
+  meshInner.receiveShadow = true;
+
+  const group = new THREE.Group();
+  group.add(meshOuter);
+  group.add(meshInner);
+
+  return group;
 }
 
 // guard: تجاهل الرفارف ذات الارتفاع الصفري أو السالب
@@ -205,6 +244,8 @@ function hasHeight(h: number): boolean {
 // المكوّن الرئيسي
 // ─────────────────────────────────────────────
 const Box3DPreview: React.FC<Box3DPreviewProps> = ({
+  boxType,
+  lidTongue,
   panelWidths,
   panelHeights,
   glueFlapWidth,
@@ -227,6 +268,8 @@ const Box3DPreview: React.FC<Box3DPreviewProps> = ({
     gluePivot: THREE.Group;
     tf1: THREE.Group; tf2: THREE.Group; tf3: THREE.Group; tf4: THREE.Group;
     bf1: THREE.Group; bf2: THREE.Group; bf3: THREE.Group; bf4: THREE.Group;
+    tf3Tongue?: THREE.Group;
+    bf1Tongue?: THREE.Group;
   } | null>(null);
 
   const [foldPercent, setFoldPercent] = useState(50);
@@ -344,6 +387,56 @@ const Box3DPreview: React.FC<Box3DPreviewProps> = ({
     //  Panel 4 يُطوى بعد Panel 3
     //  ══════════════════════════════════════════
 
+    let texTf3Cover: THREE.CanvasTexture | null = null;
+    let texTf3Tongue: THREE.CanvasTexture | null = null;
+    let texBf1Cover: THREE.CanvasTexture | null = null;
+    let texBf1Tongue: THREE.CanvasTexture | null = null;
+
+    const splitTf3 = !!(lidTongue && lidTongue > 0 && tf[2] > lidTongue * S + 0.001);
+    const splitBf1 = !!(lidTongue && lidTongue > 0 && bf[0] > lidTongue * S + 0.001);
+
+    if (splitTf3) {
+      // Top Cover & Tongue
+      const tf3Coord = faceCoords.topFlaps[2];
+      const coordTf3Cover = {
+        x: tf3Coord.x,
+        y: lidTongue,
+        w: tf3Coord.w,
+        h: tf3Coord.h - lidTongue,
+      };
+      const coordTf3Tongue = {
+        x: tf3Coord.x,
+        y: 0,
+        w: tf3Coord.w,
+        h: lidTongue,
+        polygon: tf3Coord.polygon,
+      };
+
+      texTf3Cover = buildCropTexture(svgMarkup, svgWidth, svgHeight, coordTf3Cover, S, '#e8dcc0');
+      texTf3Tongue = buildCropTexture(svgMarkup, svgWidth, svgHeight, coordTf3Tongue, S, '#e8dcc0');
+    }
+
+    if (splitBf1) {
+      // Bottom Cover & Tongue
+      const bf1Coord = faceCoords.bottomFlaps[0];
+      const coordBf1Cover = {
+        x: bf1Coord.x,
+        y: bf1Coord.y,
+        w: bf1Coord.w,
+        h: bf1Coord.h - lidTongue,
+      };
+      const coordBf1Tongue = {
+        x: bf1Coord.x,
+        y: bf1Coord.y + (bf1Coord.h - lidTongue),
+        w: bf1Coord.w,
+        h: lidTongue,
+        polygon: bf1Coord.polygon,
+      };
+
+      texBf1Cover = buildCropTexture(svgMarkup, svgWidth, svgHeight, coordBf1Cover, S, '#e8dcc0');
+      texBf1Tongue = buildCropTexture(svgMarkup, svgWidth, svgHeight, coordBf1Tongue, S, '#e8dcc0');
+    }
+
     // ── Panel 2 (ثابت) ──
     const p2 = buildPanel(pw[1], ph, texList?.body[1] ?? null, faceCoords.body[1], S);
     scene.add(p2);
@@ -393,10 +486,40 @@ const Box3DPreview: React.FC<Box3DPreviewProps> = ({
     p1Pivot.add(bf1Pivot);
     const bf1Inner = new THREE.Group();
     bf1Pivot.add(bf1Inner);
+
+    let bf1TongueG: THREE.Group | undefined = undefined;
+ 
     if (hasHeight(bf[0])) {
-      const bf1Mesh = buildPanel(pw[0], bf[0], texList?.bot[0] ?? null, faceCoords.bottomFlaps[0], S);
-      bf1Mesh.position.y = -bf[0] / 2;
-      bf1Inner.add(bf1Mesh);
+      if (splitBf1) {
+        const lidS = (lidTongue as number) * S;
+        const covS = bf[0] - lidS;
+
+        // 1. Cover panel
+        const coverMesh = buildPanel(pw[0], covS, texBf1Cover, undefined, S);
+        coverMesh.position.y = -covS / 2;
+        bf1Inner.add(coverMesh);
+
+        // 2. Tongue pivot & panel
+        bf1TongueG = new THREE.Group();
+        bf1TongueG.position.y = -covS; // At the bottom edge of cover panel
+        bf1Inner.add(bf1TongueG);
+
+        const yBound = faceCoords.bottomFlaps[0].y + (faceCoords.bottomFlaps[0].h - (lidTongue as number));
+        const filteredPolygon = faceCoords.bottomFlaps[0].polygon?.filter(pt => pt[1] >= yBound - 0.01);
+
+        const tongueMesh = buildPanel(pw[0], lidS, texBf1Tongue, {
+          ...faceCoords.bottomFlaps[0],
+          y: yBound,
+          h: (lidTongue as number),
+          polygon: filteredPolygon,
+        }, S);
+        tongueMesh.position.y = -lidS / 2;
+        bf1TongueG.add(tongueMesh);
+      } else {
+        const bf1Mesh = buildPanel(pw[0], bf[0], texList?.bot[0] ?? null, faceCoords.bottomFlaps[0], S);
+        bf1Mesh.position.y = -bf[0] / 2;
+        bf1Inner.add(bf1Mesh);
+      }
     }
 
     // ── Glue flap — يسار p1 (شكل متوازي أضلاع) ──
@@ -423,10 +546,39 @@ const Box3DPreview: React.FC<Box3DPreviewProps> = ({
     p3Pivot.add(tf3Pivot);
     const tf3Inner = new THREE.Group();
     tf3Pivot.add(tf3Inner);
+
+    let tf3TongueG: THREE.Group | undefined = undefined;
+
     if (hasHeight(tf[2])) {
-      const tf3Mesh = buildPanel(pw[2], tf[2], texList?.top[2] ?? null, faceCoords.topFlaps[2], S);
-      tf3Mesh.position.y = tf[2] / 2;
-      tf3Inner.add(tf3Mesh);
+      if (splitTf3) {
+        const lidS = (lidTongue as number) * S;
+        const covS = tf[2] - lidS;
+
+        // 1. Cover panel
+        const coverMesh = buildPanel(pw[2], covS, texTf3Cover, undefined, S);
+        coverMesh.position.y = covS / 2;
+        tf3Inner.add(coverMesh);
+
+        // 2. Tongue pivot & panel
+        tf3TongueG = new THREE.Group();
+        tf3TongueG.position.y = covS; // At the top edge of cover panel
+        tf3Inner.add(tf3TongueG);
+
+        const filteredPolygon = faceCoords.topFlaps[2].polygon?.filter(pt => pt[1] <= (lidTongue as number) + 0.01);
+
+        const tongueMesh = buildPanel(pw[2], lidS, texTf3Tongue, {
+          ...faceCoords.topFlaps[2],
+          y: 0,
+          h: (lidTongue as number),
+          polygon: filteredPolygon,
+        }, S);
+        tongueMesh.position.y = lidS / 2;
+        tf3TongueG.add(tongueMesh);
+      } else {
+        const tf3Mesh = buildPanel(pw[2], tf[2], texList?.top[2] ?? null, faceCoords.topFlaps[2], S);
+        tf3Mesh.position.y = tf[2] / 2;
+        tf3Inner.add(tf3Mesh);
+      }
     }
 
     const bf3Pivot = new THREE.Group();
@@ -477,6 +629,8 @@ const Box3DPreview: React.FC<Box3DPreviewProps> = ({
       gluePivot: gluePivotG,
       tf1: tf1Inner, tf2: tf2Pivot, tf3: tf3Inner, tf4: tf4Inner,
       bf1: bf1Inner, bf2: bf2Pivot, bf3: bf3Inner, bf4: bf4Inner,
+      tf3Tongue: tf3TongueG,
+      bf1Tongue: bf1TongueG,
     };
 
     // ── Render Loop ──
@@ -503,6 +657,13 @@ const Box3DPreview: React.FC<Box3DPreviewProps> = ({
       cancelAnimationFrame(rafRef.current);
       controls.dispose();
       renderer.dispose();
+      
+      // Dispose our custom textures to prevent memory leaks!
+      if (texTf3Cover) texTf3Cover.dispose();
+      if (texTf3Tongue) texTf3Tongue.dispose();
+      if (texBf1Cover) texBf1Cover.dispose();
+      if (texBf1Tongue) texBf1Tongue.dispose();
+
       if (mount.contains(renderer.domElement)) {
         mount.removeChild(renderer.domElement);
       }
@@ -520,28 +681,45 @@ const Box3DPreview: React.FC<Box3DPreviewProps> = ({
     const refs = pivotRefs.current;
     if (!refs) return;
 
-    const angle = (foldPercent / 100) * (Math.PI / 2);
+    // Phase 1: Body Panels (0% to 40%)
+    const p1Factor = Math.min(1, Math.max(0, foldPercent / 40));
+    const angle1 = p1Factor * (Math.PI / 2);
 
-    // Panel 1: يُطوى بعيداً عن Z→ دوران سالب على Y
-    refs.p1.rotation.y = -angle;
-    // Panel 3: يُطوى إلى الأمام → دوران موجب على Y
-    refs.p3.rotation.y = angle;
-    // Panel 4 يتابع p3 — نفس الدوران (تراكمي بالنسبة لـ p3)
-    refs.p4.rotation.y = angle;
-    // Glue: يتابع p1 تماماً
-    refs.gluePivot.rotation.y = -angle;
+    // Phase 2: Dust Flaps (40% to 70%)
+    const p2Factor = Math.min(1, Math.max(0, (foldPercent - 40) / 30));
+    const angle2 = p2Factor * (Math.PI / 2);
 
-    // رفارف علوية — تُطوى للداخل (X سالب)
-    refs.tf1.rotation.x = -angle;
-    refs.tf2.rotation.x = -angle;
-    refs.tf3.rotation.x = -angle;
-    refs.tf4.rotation.x = -angle;
+    // Phase 3: Locking Tongues (70% to 85%)
+    const p3Factor = Math.min(1, Math.max(0, (foldPercent - 70) / 15));
+    const angle3 = p3Factor * (Math.PI / 2);
 
-    // رفارف سفلية — تُطوى للداخل (X موجب)
-    refs.bf1.rotation.x = angle;
-    refs.bf2.rotation.x = angle;
-    refs.bf3.rotation.x = angle;
-    refs.bf4.rotation.x = angle;
+    // Phase 4: Lid Covers (85% to 100%)
+    const p4Factor = Math.min(1, Math.max(0, (foldPercent - 85) / 15));
+    const angle4 = p4Factor * (Math.PI / 2);
+
+    // Panel 1, 3, 4, Glue (Body Panels)
+    refs.p1.rotation.y = -angle1;
+    refs.p3.rotation.y = angle1;
+    refs.p4.rotation.y = angle1;
+    refs.gluePivot.rotation.y = -angle1;
+
+    // Dust Flaps (tf1, tf2, tf4) -> rotate inwards (negative X)
+    refs.tf1.rotation.x = -angle2;
+    refs.tf2.rotation.x = -angle2;
+    refs.tf4.rotation.x = -angle2;
+
+    // Dust Flaps (bf2, bf3, bf4) -> rotate inwards (positive X)
+    refs.bf2.rotation.x = angle2;
+    refs.bf3.rotation.x = angle2;
+    refs.bf4.rotation.x = angle2;
+
+    // Lid Covers (tf3, bf1) -> rotate inwards (X)
+    refs.tf3.rotation.x = -angle4;
+    refs.bf1.rotation.x = angle4;
+
+    // Locking Tongues (tf3Tongue, bf1Tongue) -> rotate inwards relative to covers
+    if (refs.tf3Tongue) refs.tf3Tongue.rotation.x = -angle3;
+    if (refs.bf1Tongue) refs.bf1Tongue.rotation.x = angle3;
   }, [foldPercent]);
 
   // ── تفعيل/إيقاف الدوران التلقائي ──

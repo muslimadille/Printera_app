@@ -12,6 +12,9 @@ const CUT_COLOR = '#ED1C24';
 const CREASE_COLOR = '#00A651';
 
 function segPath(s: Segment): string | null {
+  if (s.geometry === 'fillet' && s.via && s.bezier) {
+    return `M${s.start.x},${s.start.y} L${s.via.x},${s.via.y} C${s.bezier.c1.x},${s.bezier.c1.y} ${s.bezier.c2.x},${s.bezier.c2.y} ${s.end.x},${s.end.y}`;
+  }
   if (s.geometry === 'bezier' && s.bezier) {
     return `M${s.start.x},${s.start.y} C${s.bezier.c1.x},${s.bezier.c1.y} ${s.bezier.c2.x},${s.bezier.c2.y} ${s.end.x},${s.end.y}`;
   }
