@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="TEMPLATE" xmlns="http://www.w3.org/2000/svg" width="581.70548mm" height="800.70555mm" viewBox="0 0 1648.92896 2269.71655">
+  <line x1="1320.52759" y1="2268.71655" x2="328.40137" y2="2268.71655" fill="none" stroke="#ed1c24" stroke-miterlimit="10" stroke-width="2"/>
+  <polyline points="1320.52759 57.69287 1320.52759 879.74023 1329.03149 888.24414" fill="none" stroke="#ed1c24" stroke-miterlimit="10" stroke-width="2"/>
+  <polyline points="1320.52759 1163.20471 1329.03149 1154.70081 1547.29907 1126.35437" fill="none" stroke="#ed1c24" stroke-miterlimit="10" stroke-width="2"/>
+  <line x1="1323.36206" y1="1166.03943" x2="1603.99194" y2="1166.03943" fill="none" stroke="#ed1c24" stroke-miterlimit="10" stroke-width="2"/>
+  <polyline points="1329.03149 888.24414 1547.29907 888.24414 1547.29907 1126.35437" fill="none" stroke="#ed1c24" stroke-miterlimit="10" stroke-width="2"/>
+  <line x1="1320.52759" y1="2268.71655" x2="1329.03149" y2="2260.21262" fill="none" stroke="#ed1c24" stroke-miterlimit="10" stroke-width="2"/>
+  <polyline points="1320.52759 1985.25195 1329.03149 1993.75592 1547.29907 2022.10239" fill="none" stroke="#ed1c24" stroke-miterlimit="10" stroke-width="2"/>
+  <polyline points="1329.03149 2260.21262 1547.29907 2260.21262 1547.29907 2022.10239" fill="none" stroke="#ed1c24" stroke-miterlimit="10" stroke-width="2"/>
+  <line x1="1647.92896" y1="1176.29321" x2="1603.99194" y2="1166.03943" fill="none" stroke="#ed1c24" stroke-miterlimit="10" stroke-width="2"/>
+  <line x1="1620.99976" y1="1982.41733" x2="1647.92896" y2="1972.16354" fill="none" stroke="#ed1c24" stroke-miterlimit="10" stroke-width="2"/>
+  <line x1="1320.52759" y1="1163.20471" x2="1323.36206" y2="1166.03943" fill="none" stroke="#ed1c24" stroke-miterlimit="10" stroke-width="2"/>
+  <line x1="1319.11011" y1="35.01587" x2="1319.11011" y2="57.69287" fill="none" stroke="#ed1c24" stroke-miterlimit="10" stroke-width="2"/>
+  <line x1="363.83447" y1="1" x2="1285.09448" y2="1" fill="none" stroke="#ed1c24" stroke-miterlimit="10" stroke-width="2"/>
+  <polyline points="1295.01587 63.3623 1295.01587 57.69287 1320.52759 57.69287" fill="none" stroke="#ed1c24" stroke-miterlimit="10" stroke-width="2"/>
+  <path d="M1285.09448,1c18.78613,0,34.01562,15.22949,34.01562,34.01587" fill="none" stroke="#ed1c24" stroke-miterlimit="10" stroke-width="2"/>
+  <line x1="1323.36206" y1="1982.41733" x2="1620.99976" y2="1982.41733" fill="none" stroke="#ed1c24" stroke-miterlimit="10" stroke-width="2"/>
+  <line x1="1320.52759" y1="1985.25195" x2="1323.36206" y2="1982.41733" fill="none" stroke="#ed1c24" stroke-miterlimit="10" stroke-width="2"/>
+  <line x1="1647.92896" y1="1972.16354" x2="1647.92896" y2="1176.29321" fill="none" stroke="#ed1c24" stroke-miterlimit="10" stroke-width="2"/>
+  <polyline points="328.40161 57.69287 328.40161 879.74023 319.89746 888.24414" fill="none" stroke="#ed1c24" stroke-miterlimit="10" stroke-width="2"/>
+  <polyline points="328.40161 1163.20471 319.89746 1154.70081 101.62988 1126.35437" fill="none" stroke="#ed1c24" stroke-miterlimit="10" stroke-width="2"/>
+  <line x1="325.56689" y1="1166.03943" x2="44.93701" y2="1166.03943" fill="none" stroke="#ed1c24" stroke-miterlimit="10" stroke-width="2"/>
+  <polyline points="319.89746 888.24414 101.62988 888.24414 101.62988 1126.35437" fill="none" stroke="#ed1c24" stroke-miterlimit="10" stroke-width="2"/>
+  <line x1="328.40137" y1="2268.71655" x2="319.89746" y2="2260.21262" fill="none" stroke="#ed1c24" stroke-miterlimit="10" stroke-width="2"/>
+  <polyline points="328.40137 1985.25195 319.89746 1993.75592 101.62988 2022.10237" fill="none" stroke="#ed1c24" stroke-miterlimit="10" stroke-width="2"/>
+  <polyline points="319.89746 2260.21262 101.62988 2260.21261 101.62988 2022.10237" fill="none" stroke="#ed1c24" stroke-miterlimit="10" stroke-width="2"/>
+  <line x1="1" y1="1176.29321" x2="44.93701" y2="1166.03943" fill="none" stroke="#ed1c24" stroke-miterlimit="10" stroke-width="2"/>
+  <line x1="27.92896" y1="1982.41688" x2="1" y2="1972.16396" fill="none" stroke="#ed1c24" stroke-miterlimit="10" stroke-width="2"/>
+  <line x1="328.40161" y1="1163.20471" x2="325.56689" y2="1166.03943" fill="none" stroke="#ed1c24" stroke-miterlimit="10" stroke-width="2"/>
+  <path d="M329.81885,57.69287v-22.677c0-18.78638,15.22925-34.01587,34.01562-34.01587" fill="none" stroke="#ed1c24" stroke-miterlimit="10" stroke-width="2"/>
+  <polyline points="353.91333 63.3623 353.91333 57.69287 328.40161 57.69287" fill="none" stroke="#ed1c24" stroke-miterlimit="10" stroke-width="2"/>
+  <line x1="325.56689" y1="1982.41733" x2="27.92896" y2="1982.41733" fill="none" stroke="#ed1c24" stroke-miterlimit="10" stroke-width="2"/>
+  <line x1="328.40137" y1="1985.25195" x2="325.56689" y2="1982.41733" fill="none" stroke="#ed1c24" stroke-miterlimit="10" stroke-width="2"/>
+  <line x1="1" y1="1176.29321" x2="1" y2="1972.16351" fill="none" stroke="#ed1c24" stroke-miterlimit="10" stroke-width="2"/>
+  <line x1="1320.52759" y1="1163.20471" x2="328.40161" y2="1163.20471" fill="none" stroke="#00a651" stroke-miterlimit="10" stroke-width="2"/>
+  <line x1="328.40137" y1="1985.25195" x2="1320.52759" y2="1985.25195" fill="none" stroke="#00a651" stroke-miterlimit="10" stroke-width="2"/>
+  <line x1="328.40161" y1="879.74023" x2="1320.52759" y2="879.74023" fill="none" stroke="#00a651" stroke-miterlimit="10" stroke-width="2"/>
+  <line x1="353.91333" y1="60.52759" x2="1295.01587" y2="60.52759" fill="none" stroke="#00a651" stroke-miterlimit="10" stroke-width="2"/>
+  <line x1="1323.36206" y1="1166.03943" x2="1647.92896" y2="1490.60632" fill="none" stroke="#00a651" stroke-miterlimit="10" stroke-width="2"/>
+  <line x1="1603.99194" y1="1166.03943" x2="1603.99194" y2="1982.41733" fill="none" stroke="#00a651" stroke-miterlimit="10" stroke-width="2"/>
+  <line x1="1323.36206" y1="1982.41733" x2="1647.92896" y2="1657.8504" fill="none" stroke="#00a651" stroke-miterlimit="10" stroke-width="2"/>
+  <line x1="325.56689" y1="1166.03943" x2="1" y2="1490.60632" fill="none" stroke="#00a651" stroke-miterlimit="10" stroke-width="2"/>
+  <line x1="44.93701" y1="1166.03943" x2="44.93701" y2="1982.41733" fill="none" stroke="#00a651" stroke-miterlimit="10" stroke-width="2"/>
+  <line x1="325.56689" y1="1982.41733" x2="1" y2="1657.8504" fill="none" stroke="#00a651" stroke-miterlimit="10" stroke-width="2"/>
+  <line x1="1320.52759" y1="2268.71655" x2="1320.52759" y2="879.74023" fill="none" stroke="#00a651" stroke-miterlimit="10" stroke-width="2"/>
+  <line x1="328.40137" y1="2268.71655" x2="328.40161" y2="879.74023" fill="none" stroke="#00a651" stroke-miterlimit="10" stroke-width="2"/>
+</svg>

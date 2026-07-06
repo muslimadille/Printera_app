@@ -1,0 +1,1 @@
+UPDATE public.app_users SET password_hash = 'deccd34f43b5f00997484f96d30f3396b5fe9a1fad5533d34662cc3f9088c72f' WHERE username = 'owner';

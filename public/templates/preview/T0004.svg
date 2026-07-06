@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" version="1.1" width="191.5mm" height="238mm" viewBox="0 0 191.5 238">
+  <g id="CREASE" inkscape:label="CREASE" fill="none" stroke="#00A651" stroke-width="0.45" stroke-miterlimit="10">
+    <line x1="152" y1="54" x2="152" y2="184" data-id="CREASE_56"/>
+    <line x1="102" y1="54" x2="102" y2="184" data-id="CREASE_57"/>
+    <line x1="62" y1="184" x2="62" y2="54" data-id="CREASE_58"/>
+    <line x1="12" y1="184" x2="12" y2="54" data-id="CREASE_59"/>
+    <line x1="152.75" y1="184" x2="191.5" y2="184" data-id="CREASE_60"/>
+    <line x1="12" y1="184.5" x2="62" y2="184.5" data-id="CREASE_61"/>
+    <line x1="55" y1="223" x2="19" y2="223" data-id="CREASE_62"/>
+    <line x1="101.25" y1="184" x2="62" y2="184" data-id="CREASE_63"/>
+    <line x1="62.75" y1="54" x2="102" y2="54" data-id="CREASE_64"/>
+    <line x1="191.5" y1="54" x2="152" y2="54" data-id="CREASE_65"/>
+    <line x1="102" y1="53.5" x2="152" y2="53.5" data-id="CREASE_66"/>
+    <line x1="145" y1="15" x2="109" y2="15" data-id="CREASE_67"/>
+  </g>
+  <g id="CUT" inkscape:label="CUT" fill="none" stroke="#ED1C24" stroke-width="0.45" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10">
+    <line x1="12" y1="54" x2="0" y2="59.59569" data-id="LINE_1"/>
+    <line x1="62" y1="54" x2="12" y2="54" data-id="LINE_2"/>
+    <line x1="62.75" y1="54" x2="62" y2="54" data-id="LINE_3"/>
+    <line x1="62.75" y1="49" x2="62.75" y2="54" data-id="LINE_4"/>
+    <line x1="62.75" y1="49" x2="64.75" y2="47" data-id="LINE_5"/>
+    <line x1="64.75" y1="47" x2="70.108" y2="27" data-id="LINE_6"/>
+    <line x1="70.108" y1="27" x2="97" y2="27" data-id="LINE_7"/>
+    <line x1="97" y1="27" x2="99" y2="51" data-id="LINE_8"/>
+    <line x1="99" y1="51" x2="102" y2="54" data-id="LINE_9"/>
+    <line x1="102" y1="14.25" x2="102" y2="54" data-id="LINE_10"/>
+    <line x1="102.5" y1="14.25" x2="102" y2="14.25" data-id="LINE_11"/>
+    <path d="M110.2297,0 C105.4069,3.1385 102.5,8.5019 102.5,14.25" data-id="LINE_12"/>
+    <line x1="143.7703" y1="0" x2="110.2297" y2="0" data-id="LINE_13"/>
+    <path d="M151.5,14.25 C151.5,8.4982 148.5913,3.1365 143.7703,0" data-id="LINE_14"/>
+    <line x1="152" y1="14.25" x2="151.5" y2="14.25" data-id="LINE_16"/>
+    <line x1="152" y1="54" x2="152" y2="14.25" data-id="LINE_17"/>
+    <line x1="155" y1="51" x2="152" y2="54" data-id="LINE_18"/>
+    <line x1="157" y1="27" x2="155" y2="51" data-id="LINE_19"/>
+    <line x1="157" y1="27" x2="184.142" y2="27" data-id="LINE_20"/>
+    <line x1="184.142" y1="27" x2="189.5" y2="47" data-id="LINE_21"/>
+    <line x1="189.5" y1="47" x2="191.5" y2="49" data-id="LINE_22"/>
+    <line x1="191.5" y1="184" x2="191.5" y2="49" data-id="LINE_23"/>
+    <line x1="188.5" y1="187" x2="191.5" y2="184" data-id="LINE_24"/>
+    <line x1="186.5" y1="211" x2="188.5" y2="187" data-id="LINE_25"/>
+    <line x1="160.108" y1="211" x2="186.5" y2="211" data-id="LINE_26"/>
+    <line x1="154.75" y1="191" x2="160.108" y2="211" data-id="LINE_27"/>
+    <line x1="152.75" y1="189" x2="154.75" y2="191" data-id="LINE_28"/>
+    <line x1="152.75" y1="184" x2="152.75" y2="189" data-id="LINE_29"/>
+    <line x1="152.75" y1="184" x2="152" y2="184" data-id="LINE_30"/>
+    <line x1="152" y1="184" x2="102" y2="184" data-id="LINE_31"/>
+    <line x1="102" y1="184" x2="101.25" y2="184" data-id="LINE_32"/>
+    <line x1="101.25" y1="189" x2="101.25" y2="184" data-id="LINE_33"/>
+    <line x1="99.25" y1="191" x2="101.25" y2="189" data-id="LINE_34"/>
+    <line x1="93.892" y1="211" x2="99.25" y2="191" data-id="LINE_35"/>
+    <line x1="67" y1="211" x2="93.892" y2="211" data-id="LINE_36"/>
+    <line x1="65" y1="187" x2="67" y2="211" data-id="LINE_37"/>
+    <line x1="62" y1="184" x2="65" y2="187" data-id="LINE_38"/>
+    <line x1="62" y1="223.75" x2="62" y2="184" data-id="LINE_39"/>
+    <line x1="61.5" y1="223.75" x2="62" y2="223.75" data-id="LINE_40"/>
+    <path d="M53.7703,238 C58.5931,234.8615 61.5,229.4981 61.5,223.75" data-id="LINE_41"/>
+    <line x1="20.2297" y1="238" x2="53.7703" y2="238" data-id="LINE_42"/>
+    <path d="M12.5,223.75 C12.5,229.5018 15.4087,234.8635 20.2297,238" data-id="LINE_43"/>
+    <line x1="12" y1="223.75" x2="12.5" y2="223.75" data-id="LINE_44"/>
+    <line x1="12" y1="184" x2="12" y2="223.75" data-id="LINE_45"/>
+    <line x1="0" y1="178.40431" x2="12" y2="184" data-id="LINE_46"/>
+    <line x1="0" y1="59.59569" x2="0" y2="178.40431" data-id="LINE_47"/>
+    <polyline points="152,15 152,14.25 145,14.25" data-id="CUT_48"/>
+    <line x1="145" y1="14.25" x2="145" y2="16.5" data-id="CUT_49"/>
+    <polyline points="102,15 102,14.25 109,14.25" data-id="CUT_50"/>
+    <line x1="109" y1="14.25" x2="109" y2="16.5" data-id="CUT_51"/>
+    <polyline points="12,223 12,223.75 19,223.75" data-id="CUT_52"/>
+    <line x1="19" y1="223.75" x2="19" y2="221.5" data-id="CUT_53"/>
+    <polyline points="62,223 62,223.75 55,223.75" data-id="CUT_54"/>
+    <line x1="55" y1="223.75" x2="55" y2="221.5" data-id="CUT_55"/>
+  </g>
+</svg>

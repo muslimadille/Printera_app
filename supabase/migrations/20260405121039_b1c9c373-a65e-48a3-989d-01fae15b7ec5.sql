@@ -1,0 +1,1 @@
+DROP POLICY "Service role can insert login_logs" ON public.login_logs;

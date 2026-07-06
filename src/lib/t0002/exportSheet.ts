@@ -1,0 +1,185 @@
+// T0002 — Export Sheet Layout SVG and PDF
+// Emits the full sheet with all nested templates, matching the preview EXACTLY
+
+import type { T0002Params } from './types';
+import { usableSheet } from './types';
+import { buildT0002Geometry } from './geometry';
+import type { Segment } from './geometry';
+import type { T0002NestingParams, T0002NestingResult } from './nesting';
+import { computeT0002Nesting } from './nesting';
+
+const CUT_COLOR = '#ED1C24';
+const SLOT_COLOR = '#2028B0';
+const CREASE_COLOR = '#00A651';
+const r = (n: number) => Math.round(n * 100000) / 100000;
+
+function renderSeg(s: Segment): string {
+  if (s.geometry === "line") {
+    if (s.start.x === s.end.x && s.start.y === s.end.y) return "";
+    return `<line x1="${s.start.x}" y1="${s.start.y}" x2="${s.end.x}" y2="${s.end.y}" data-id="${s.svgId}"/>`;
+  }
+  if (s.geometry === "polyline" && s.points) {
+    const pts = s.points.map(p => `${p.x},${p.y}`).join(" ");
+    return `<polyline points="${pts}" data-id="${s.svgId}"/>`;
+  }
+  if (s.geometry === "bezier" && s.bezier) {
+    return `<path d="M${s.start.x},${s.start.y} C${s.bezier.c1.x},${s.bezier.c1.y} ${s.bezier.c2.x},${s.bezier.c2.y} ${s.end.x},${s.end.y}" data-id="${s.svgId}"/>`;
+  }
+  if (s.geometry === "arc" && s.arc) {
+    return `<path d="M ${s.start.x},${s.start.y} A ${s.arc.rx} ${s.arc.ry} ${s.arc.xar} ${s.arc.laf} ${s.arc.sf} ${s.end.x},${s.end.y}" data-id="${s.svgId}"/>`;
+  }
+  return "";
+}
+
+export interface T0002SheetExport {
+  svg: string;
+  filename: string;
+  total: number;
+}
+
+export function buildT0002SheetLayoutSvg(
+  params: T0002Params,
+  nesting: T0002NestingParams,
+  resultIn?: T0002NestingResult,
+): T0002SheetExport {
+  const result = resultIn ?? computeT0002Nesting(params, nesting);
+  const geo = buildT0002Geometry(params);
+  const usable = usableSheet(params);
+
+  const sheetW = r(Math.max(1, params.sheetWidth));
+  const sheetH = r(Math.max(1, params.sheetHeight));
+  const margin = Math.max(0, params.sheetMargin);
+  const gripper = Math.max(0, params.gripper);
+
+  const usableX = margin;
+  const usableY = margin + gripper;
+
+  const orientation = result.bestOrientation;
+  const grid = orientation === 'rotated' ? result.rotated : result.normal;
+  const tW = geo.bbox.w;
+  const tH = geo.bbox.h;
+  const cellW = orientation === 'rotated' ? tH : tW;
+  const pitchX = grid.pitchX;
+  const pitchY = grid.pitchY;
+
+  const creaseSegs = geo.segments.filter(s => s.kind === 'CREASE');
+  const outerSegs = geo.segments.filter(s => s.kind === 'OUTER');
+  const innerSegs = geo.segments.filter(s => s.kind === 'CUT');
+
+  const creaseInner = creaseSegs.map(renderSeg).filter(Boolean).join('\n      ');
+  const outerInner = outerSegs.map(renderSeg).filter(Boolean).join('\n      ');
+  const innerInner = innerSegs.map(renderSeg).filter(Boolean).join('\n      ');
+
+  const placements: { x: number; y: number }[] = [];
+  for (let row = 0; row < grid.rows; row++) {
+    const startX = 0;
+    const cols = grid.perRowCols[row] ?? 0;
+    for (let c = 0; c < cols; c++) {
+      placements.push({
+        x: usableX + startX + c * pitchX,
+        y: usableY + row * pitchY,
+      });
+    }
+  }
+
+  const creasePieces: string[] = [];
+  const outerPieces: string[] = [];
+  const innerPieces: string[] = [];
+  
+  for (const p of placements) {
+    const transform = orientation === 'rotated'
+      ? `translate(${r(p.x + tH)} ${r(p.y)}) rotate(90)`
+      : `translate(${r(p.x)} ${r(p.y)})`;
+      
+    creasePieces.push(`    <g transform="${transform}">\n      ${creaseInner}\n    </g>`);
+    outerPieces.push(`    <g transform="${transform}">\n      ${outerInner}\n    </g>`);
+    innerPieces.push(`    <g transform="${transform}">\n      ${innerInner}\n    </g>`);
+  }
+
+  const out: string[] = [];
+  out.push(`<?xml version="1.0" encoding="UTF-8" standalone="no"?>`);
+  out.push(
+    `<svg xmlns="http://www.w3.org/2000/svg" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" version="1.1" width="${sheetW}mm" height="${sheetH}mm" viewBox="0 0 ${sheetW} ${sheetH}">`,
+  );
+
+  // Crease layer
+  out.push(`  <g id="CREASE" inkscape:label="CREASE" fill="none" stroke="${CREASE_COLOR}" stroke-width="0.45" stroke-miterlimit="10">`);
+  if (creasePieces.length) out.push(creasePieces.join('\n'));
+  out.push(`  </g>`);
+
+  // Cut layer
+  out.push(`  <g id="CUT" inkscape:label="CUT" fill="none" stroke-width="0.45" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10">`);
+  
+  // Outer cut contour sub-group
+  out.push(`    <g id="OUTER_CUT_CONTOUR" inkscape:label="OUTER CUT CONTOUR" stroke="${CUT_COLOR}">`);
+  if (outerPieces.length) out.push(outerPieces.join('\n'));
+  out.push(`    </g>`);
+
+  // Inner cuts sub-group
+  out.push(`    <g id="INNER_CUTS" inkscape:label="INNER CUTS" stroke="${SLOT_COLOR}">`);
+  if (innerPieces.length) out.push(innerPieces.join('\n'));
+  out.push(`    </g>`);
+
+  out.push(`  </g>`);
+  out.push(`</svg>`);
+
+  const filename = `T0002-sheet-layout-W${sheetW}-H${sheetH}-QTY${result.bestTotal}.svg`;
+  return { svg: out.join('\n'), filename, total: result.bestTotal };
+}
+
+export function downloadT0002SheetLayout(
+  params: T0002Params,
+  nesting: T0002NestingParams,
+  result?: T0002NestingResult,
+): void {
+  const { svg, filename } = buildT0002SheetLayoutSvg(params, nesting, result);
+  const blob = new Blob([svg], { type: 'image/svg+xml;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 0);
+}
+
+export async function downloadT0002SheetLayoutPdf(
+  params: T0002Params,
+  nesting: T0002NestingParams,
+  result?: T0002NestingResult,
+): Promise<void> {
+  const { svg, filename: svgFilename } = buildT0002SheetLayoutSvg(params, nesting, result);
+  const filename = svgFilename.replace(/\.svg$/, '.pdf');
+
+  const host = document.createElement('div');
+  host.style.position = 'fixed';
+  host.style.left = '-100000px';
+  host.style.top = '0';
+  host.style.visibility = 'hidden';
+  host.innerHTML = svg;
+  const svgEl = host.querySelector('svg') as SVGSVGElement | null;
+  if (!svgEl) throw new Error('T0002 Sheet PDF export: failed to parse SVG.');
+  document.body.appendChild(host);
+
+  const vb = (svgEl.getAttribute('viewBox') || '0 0 0 0').split(/\s+/).map(Number);
+  const pageW = vb[2] || 1;
+  const pageH = vb[3] || 1;
+
+  try {
+    const [{ jsPDF }, { svg2pdf }] = await Promise.all([
+      import('jspdf'),
+      import('svg2pdf.js'),
+    ]);
+    const pdf = new jsPDF({
+      unit: 'mm',
+      format: [pageW, pageH],
+      orientation: pageW >= pageH ? "landscape" : "portrait",
+      compress: true,
+    });
+    await svg2pdf(svgEl, pdf, { x: 0, y: 0, width: pageW, height: pageH });
+    pdf.save(filename);
+  } finally {
+    document.body.removeChild(host);
+  }
+}

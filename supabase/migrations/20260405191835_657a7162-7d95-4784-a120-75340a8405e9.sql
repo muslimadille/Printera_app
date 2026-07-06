@@ -1,0 +1,1 @@
+UPDATE app_users SET password_hash = '$2b$12$rH2QwV.Gf6mHBOkugX9apeDfEN6yDj5KVCx48HVG0lHKvKIV8lh/y' WHERE username = 'owner';

@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /app
+Disallow: /
+
+Sitemap: https://printlogic.online/sitemap.xml

@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 543.83472 675.64563">
+  <g id="CREASE">
+    <line id="CREASE_67" data-name="CREASE 67" x1="433.49219" y1="522.07479" x2="543.33472" y2="522.07479" fill="none" stroke="#00a651" stroke-miterlimit="10"/>
+    <line id="CREASE_66" data-name="CREASE 66" x1="543.33472" y1="153.57087" x2="431.36621" y2="153.57087" fill="none" stroke="#00a651" stroke-miterlimit="10"/>
+    <line id="CREASE_65" data-name="CREASE 65" x1="411.52368" y1="43.01969" x2="309.47644" y2="43.01969" fill="none" stroke="#00a651" stroke-miterlimit="10"/>
+    <line id="CREASE_64" data-name="CREASE 64" x1="289.63391" y1="152.15355" x2="431.36621" y2="152.15355" fill="none" stroke="#00a651" stroke-miterlimit="10"/>
+    <line id="CREASE_63" data-name="CREASE 63" x1="287.50787" y1="522.07479" x2="176.24804" y2="522.07479" fill="none" stroke="#00a651" stroke-miterlimit="10"/>
+    <line id="CREASE_62" data-name="CREASE 62" x1="178.37402" y1="153.57087" x2="289.63385" y2="153.57087" fill="none" stroke="#00a651" stroke-miterlimit="10"/>
+    <line id="CREASE_61" data-name="CREASE 61" x1="156.40552" y1="632.626" x2="54.35828" y2="632.626" fill="none" stroke="#00a651" stroke-miterlimit="10"/>
+    <line id="CREASE_60" data-name="CREASE 60" x1="34.51575" y1="523.49215" x2="176.24811" y2="523.49215" fill="none" stroke="#00a651" stroke-miterlimit="10"/>
+    <line id="CREASE_59" data-name="CREASE 59" x1="431.36621" y1="153.57087" x2="431.36621" y2="522.07479" fill="none" stroke="#00a651" stroke-miterlimit="10"/>
+    <line id="CREASE_58" data-name="CREASE 58" x1="289.63391" y1="153.57087" x2="289.63391" y2="522.07479" fill="none" stroke="#00a651" stroke-miterlimit="10"/>
+    <line id="CREASE_57" data-name="CREASE 57" x1="176.24811" y1="522.07479" x2="176.24811" y2="153.57087" fill="none" stroke="#00a651" stroke-miterlimit="10"/>
+    <line id="CREASE_56" data-name="CREASE 56" x1="34.51575" y1="522.07479" x2="34.51575" y2="153.57087" fill="none" stroke="#00a651" stroke-miterlimit="10"/>
+  </g>
+  <g id="CUT">
+    <g id="CUT_48-55" data-name="CUT 48-55">
+      <line id="CUT_55" data-name="CUT 55" x1="156.40552" y1="634.75198" x2="156.40552" y2="628.37399" fill="none" stroke="#ed1c24" stroke-miterlimit="10"/>
+      <line id="CUT_54" data-name="CUT 54" x1="176.24811" y1="634.75198" x2="156.40552" y2="634.75198" fill="none" stroke="#ed1c24" stroke-miterlimit="10"/>
+      <line id="CUT_53" data-name="CUT 53" x1="54.35828" y1="634.75198" x2="54.35828" y2="628.37399" fill="none" stroke="#ed1c24" stroke-miterlimit="10"/>
+      <line id="CUT_52" data-name="CUT 52" x1="34.51575" y1="634.75198" x2="54.35828" y2="634.75198" fill="none" stroke="#ed1c24" stroke-miterlimit="10"/>
+      <line id="CUT_51" data-name="CUT 51" x1="411.52368" y1="40.8937" x2="411.52368" y2="47.27166" fill="none" stroke="#ed1c24" stroke-miterlimit="10"/>
+      <line id="CUT_50" data-name="CUT 50" x1="431.36621" y1="40.8937" x2="411.52368" y2="40.8937" fill="none" stroke="#ed1c24" stroke-miterlimit="10"/>
+      <line id="CUT_49" data-name="CUT 49" x1="309.47638" y1="40.8937" x2="309.47637" y2="47.27166" fill="none" stroke="#ed1c24" stroke-miterlimit="10"/>
+      <line id="CUT_48" data-name="CUT 48" x1="289.63391" y1="40.8937" x2="309.47644" y2="40.8937" fill="none" stroke="#ed1c24" stroke-miterlimit="10"/>
+    </g>
+    <g id="OUTER_CUT_CONTOUR_1-47" data-name="OUTER CUT CONTOUR 1-47">
+      <line id="LINE_47" data-name="LINE 47" x1=".5" y1="169.43268" x2=".5" y2="506.21295" fill="none" stroke="#ed1c24" stroke-miterlimit="10"/>
+      <line id="LINE_46" data-name="LINE 46" x1="34.51575" y1="522.07479" x2=".5" y2="506.21298" fill="none" stroke="#ed1c24" stroke-miterlimit="10"/>
+      <line id="LINE_45" data-name="LINE 45" x1="34.51575" y1="522.07477" x2="34.51575" y2="634.75195" fill="none" stroke="#ed1c24" stroke-miterlimit="10"/>
+      <line id="LINE_44" data-name="LINE 44" x1="34.51519" y1="634.75231" x2="35.93363" y2="634.75232" fill="none" stroke="#ed1c24" stroke-miterlimit="10"/>
+      <path id="LINE_43" data-name="LINE 43" d="M35.93311,634.75195c0,16.30426,8.24426,31.50281,21.91113,40.39368" fill="none" stroke="#ed1c24" stroke-miterlimit="10"/>
+      <line id="LINE_42" data-name="LINE 42" x1="57.84424" y1="675.14563" x2="152.91968" y2="675.14563" fill="none" stroke="#ed1c24" stroke-miterlimit="10"/>
+      <path id="LINE_41" data-name="LINE 41" d="M152.91968,675.14563c13.66675-8.89087,21.91107-24.08942,21.91107-40.39368" fill="none" stroke="#ed1c24" stroke-miterlimit="10"/>
+      <line id="LINE_40" data-name="LINE 40" x1="176.24802" y1="634.75172" x2="174.83072" y2="634.75171" fill="none" stroke="#ed1c24" stroke-miterlimit="10"/>
+      <polyline id="LINE_39" data-name="LINE 39" points="176.24811 634.75195 176.24811 632.62598 176.24811 522.07477" fill="none" stroke="#ed1c24" stroke-miterlimit="10"/>
+      <line id="LINE_38" data-name="LINE 38" x1="176.24811" y1="522.07477" x2="184.75201" y2="530.57874" fill="none" stroke="#ed1c24" stroke-miterlimit="10"/>
+      <line id="LINE_37" data-name="LINE 37" x1="184.75201" y1="530.57874" x2="190.42133" y2="598.61023" fill="none" stroke="#ed1c24" stroke-miterlimit="10"/>
+      <line id="LINE_36" data-name="LINE 36" x1="190.42133" y1="598.61023" x2="266.64783" y2="598.61023" fill="none" stroke="#ed1c24" stroke-miterlimit="10"/>
+      <line id="LINE_35" data-name="LINE 35" x1="266.64783" y1="598.61023" x2="281.83862" y2="541.9173" fill="none" stroke="#ed1c24" stroke-miterlimit="10"/>
+      <line id="LINE_34" data-name="LINE 34" x1="281.83862" y1="541.9173" x2="287.50793" y2="536.24799" fill="none" stroke="#ed1c24" stroke-miterlimit="10"/>
+      <line id="LINE_33" data-name="LINE 33" x1="287.50793" y1="536.24799" x2="287.50793" y2="522.07477" fill="none" stroke="#ed1c24" stroke-miterlimit="10"/>
+      <line id="LINE_32" data-name="LINE 32" x1="287.50793" y1="522.07477" x2="289.63391" y2="522.07477" fill="none" stroke="#ed1c24" stroke-miterlimit="10"/>
+      <line id="LINE_31" data-name="LINE 31" x1="289.63391" y1="522.07477" x2="431.36621" y2="522.07477" fill="none" stroke="#ed1c24" stroke-miterlimit="10"/>
+      <line id="LINE_30" data-name="LINE 30" x1="431.36621" y1="522.07477" x2="433.49219" y2="522.07477" fill="none" stroke="#ed1c24" stroke-miterlimit="10"/>
+      <line id="LINE_29" data-name="LINE 29" x1="433.49219" y1="522.07477" x2="433.49219" y2="536.24799" fill="none" stroke="#ed1c24" stroke-miterlimit="10"/>
+      <line id="LINE_28" data-name="LINE 28" x1="433.49219" y1="536.24799" x2="439.1615" y2="541.9173" fill="none" stroke="#ed1c24" stroke-miterlimit="10"/>
+      <line id="LINE_27" data-name="LINE 27" x1="439.1615" y1="541.9173" x2="454.35229" y2="598.61023" fill="none" stroke="#ed1c24" stroke-miterlimit="10"/>
+      <line id="LINE_26" data-name="LINE 26" x1="454.35229" y1="598.61023" x2="529.1615" y2="598.61023" fill="none" stroke="#ed1c24" stroke-miterlimit="10"/>
+      <line id="LINE_25" data-name="LINE 25" x1="529.1615" y1="598.61023" x2="534.83069" y2="530.57874" fill="none" stroke="#ed1c24" stroke-miterlimit="10"/>
+      <line id="LINE_24" data-name="LINE 24" x1="534.83069" y1="530.57874" x2="543.33472" y2="522.07477" fill="none" stroke="#ed1c24" stroke-miterlimit="10"/>
+      <line id="LINE_23" data-name="LINE 23" x1="543.33472" y1="522.07477" x2="543.33472" y2="153.57086" fill="none" stroke="#ed1c24" stroke-miterlimit="10"/>
+      <line id="LINE_22" data-name="LINE 22" x1="543.33472" y1="153.57086" x2="543.33472" y2="139.39764" fill="none" stroke="#ed1c24" stroke-miterlimit="10"/>
+      <line id="LINE_21" data-name="LINE 21" x1="543.33472" y1="139.39764" x2="537.66541" y2="133.72833" fill="none" stroke="#ed1c24" stroke-miterlimit="10"/>
+      <line id="LINE_20" data-name="LINE 20" x1="537.66541" y1="133.72833" x2="522.47461" y2="77.03546" fill="none" stroke="#ed1c24" stroke-miterlimit="10"/>
+      <line id="LINE_19" data-name="LINE 19" x1="522.47461" y1="77.03546" x2="445.53943" y2="77.03546" fill="none" stroke="#ed1c24" stroke-miterlimit="10"/>
+      <line id="LINE_18" data-name="LINE 18" x1="445.53943" y1="77.03546" x2="439.87012" y2="145.06696" fill="none" stroke="#ed1c24" stroke-miterlimit="10"/>
+      <line id="LINE_17" data-name="LINE 17" x1="439.87012" y1="145.06696" x2="431.36621" y2="153.57086" fill="none" stroke="#ed1c24" stroke-miterlimit="10"/>
+      <polyline id="LINE_16" data-name="LINE 16" points="431.36621 153.57086 431.36621 43.01971 431.36621 40.89368" fill="none" stroke="#ed1c24" stroke-miterlimit="10"/>
+      <line id="LINE_15" data-name="LINE 15" x1="431.36616" y1="40.89336" x2="429.9488" y2="40.89335" fill="none" stroke="#ed1c24" stroke-miterlimit="10"/>
+      <path id="LINE_14" data-name="LINE 14" d="M429.94885,40.89368c0-16.30426-8.24426-31.50281-21.91113-40.39368" fill="none" stroke="#ed1c24" stroke-miterlimit="10"/>
+      <line id="LINE_13" data-name="LINE 13" x1="408.03772" y1=".5" x2="312.96234" y2=".5" fill="none" stroke="#ed1c24" stroke-miterlimit="10"/>
+      <path id="LINE_12" data-name="LINE 12" d="M312.96234.5c-13.66681,8.89087-21.91113,24.08942-21.91113,40.39368" fill="none" stroke="#ed1c24" stroke-miterlimit="10"/>
+      <line id="LINE_11" data-name="LINE 11" x1="289.63387" y1="40.89339" x2="291.05117" y2="40.8934" fill="none" stroke="#ed1c24" stroke-miterlimit="10"/>
+      <polyline id="LINE_10" data-name="LINE 10" points="289.63386 40.89368 289.63386 43.01971 289.63386 153.57086" fill="none" stroke="#ed1c24" stroke-miterlimit="10"/>
+      <line id="LINE_9" data-name="LINE 9" x1="289.63387" y1="153.57086" x2="281.12991" y2="145.06696" fill="none" stroke="#ed1c24" stroke-miterlimit="10"/>
+      <line id="LINE_8" data-name="LINE 8" x1="281.12994" y1="145.06696" x2="275.46069" y2="77.03546" fill="none" stroke="#ed1c24" stroke-miterlimit="10"/>
+      <line id="LINE_7" data-name="LINE 7" x1="275.46069" y1="77.03546" x2="199.23419" y2="77.03546" fill="none" stroke="#ed1c24" stroke-miterlimit="10"/>
+      <line id="LINE_6" data-name="LINE 6" x1="199.23419" y1="77.03546" x2="184.04333" y2="133.72833" fill="none" stroke="#ed1c24" stroke-miterlimit="10"/>
+      <line id="LINE_5" data-name="LINE 5" x1="184.04333" y1="133.72833" x2="178.37408" y2="139.39764" fill="none" stroke="#ed1c24" stroke-miterlimit="10"/>
+      <line id="LINE_4" data-name="LINE 4" x1="178.37408" y1="139.39764" x2="178.37408" y2="153.57086" fill="none" stroke="#ed1c24" stroke-miterlimit="10"/>
+      <line id="LINE_3" data-name="LINE 3" x1="178.37408" y1="153.57086" x2="176.24811" y2="153.57086" fill="none" stroke="#ed1c24" stroke-miterlimit="10"/>
+      <line id="LINE_2" data-name="LINE 2" x1="176.24811" y1="153.57086" x2="34.51575" y2="153.57086" fill="none" stroke="#ed1c24" stroke-miterlimit="10"/>
+      <line id="LINE_1" data-name="LINE 1" x1="34.51575" y1="153.57086" x2=".5" y2="169.43268" fill="none" stroke="#ed1c24" stroke-miterlimit="10"/>
+    </g>
+  </g>
+</svg>
