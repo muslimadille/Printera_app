@@ -9,23 +9,27 @@ Your goal is to convert a packaging dieline into a fully parametric template tha
 
 # Input
 The user will provide:
-1. A screenshot of the packaging dieline.
-2. The original SVG of the same dieline.
-3. A template name (e.g., T0005).
+1. An image/screenshot of the packaging dieline or a 3D box.
+2. A template name (e.g., T0005).
+(Optional) An SVG if available, but NOT required.
 
-The SVG is the source of truth for geometry.
-The screenshot is only used to identify semantic meaning (panel types, folds, tabs, glue areas, and visual relationships).
+The image is used to identify semantic meaning (panel types, folds, tabs, glue areas, and visual relationships) and the specific box style (e.g., Mailer Box, Straight Tuck, Reverse Tuck, Crash Lock).
 
 # Primary Goal
-Reverse engineer the dieline exactly as if it were originally created in professional CAD software.
-Preserve every manufacturing detail while converting it into a completely parametric template.
+Reverse engineer the packaging structure exactly as if it were originally created in professional CAD software (ArtiosCAD, Esko).
+Apply industry-standard packaging geometry rules (ECMA Carton Standards, FEFCO) to convert the visual reference into a completely parametric template.
 
-# Geometry Analysis
-Analyze the SVG in full detail. Detect every structural element:
+# Geometry Analysis & Expert Knowledge
+Act as an expert in:
+- ECMA Carton Standards & FEFCO Corrugated Standards
+- ArtiosCAD & Esko Packaging Design
+- Folding Carton Design Manuals
+
+Analyze the image to detect every structural element:
 - Cut Lines, Fold Lines, Crease Lines
-- Glue Flaps, Dust Flaps, Lock Tabs, Slots, Windows
-- Rounded Corners, Chamfers, Perforations
-Never ignore small details, never simplify geometry, and never smooth paths.
+- Glue Flaps, Dust Flaps, Lock Tabs (Cherry Locks, Tuck Ends), Slots, Windows
+- Bleed, Safe Area, Auto Lock Bottoms, Crash Locks.
+Derive the exact mathematical proportions (W, H, D) based on standard carton design rules. Never ignore small details (like clearances for dust flaps, chamfers, or lock tab angles).
 
 # Geometric & Parametric Reconstruction
 Calculate position, width, height, angles, and radii for all elements.
@@ -75,11 +79,11 @@ For exact 3D cutting (especially for complex shapes like lock tabs), you must in
    - **Do not hardcode dimensions in Points thinking they are Millimeters.** This will cause massive distortion.
    - *Best Practice:* Write a small Python or Node script to parse the SVG `<line>` and `<polyline>` points, convert them to `mm`, and calculate their delta offsets relative to `W`, `H`, and `D`.
 
-3. **VERIFY EXACT MATHEMATICAL RELATIONSHIPS:**
-   Extract exact lengths for chamfers, angles (like 45-degree corner pop-ups), slots, and locking tabs. Relate these back to the `W`, `H`, `D` variables. Do not use approximations or "eyeball" it from the screenshot. The SVG is the absolute source of mathematical truth.
+3. **VERIFY EXACT MATHEMATICAL RELATIONSHIPS (ECMA STANDARDS):**
+   Use standard packaging design rules to derive chamfers, angles (like 45-degree dust flap cutbacks), slots, and locking tabs. Relate these back to the `W`, `H`, `D` variables. Apply professional clearances (e.g., 0.5mm - 1.5mm for folding tolerances) where panels meet.
 
-4. **FLAP LENGTHS MATCH DEPTH:**
-   Ensure that the length/height of the closing flaps (لسان الغلق) is exactly the same as the depth (`D`), or parametrically linked to it (e.g., `D/2` for dust flaps). Do not use hardcoded values for flap heights; they must be dynamic to fit with any design proportions based on the depth.
+4. **FLAP LENGTHS MATCH PROPORTIONS:**
+   Ensure that the length/height of the closing flaps (لسان الغلق) is calculated parametrically (e.g., `D` for full overlapping flaps, `D/2` for dust flaps, or standard tuck lengths like 15-20mm depending on box size).
 
 5. **STROKE WIDTHS IN EXPORTED SVGS:**
    Never hardcode thick `stroke-width` attributes in exported SVGs. Avoid specifying `stroke-width` in the SVG `<line>`, `<path>`, or `<g>` tags entirely (matching the style of `template (3).svg`). This ensures they open with standard thin line weights in Illustrator, AutoCAD, or other vector editors.
@@ -90,3 +94,14 @@ For exact 3D cutting (especially for complex shapes like lock tabs), you must in
 7. **INTERACTIVE PREVIEW LINE THICKNESS:**
    Configure the `InteractiveSvgCanvas` preview lines to use thin rendering stroke-width (e.g., `0.45px` default line weight, `1.5px` selected weight) to keep the on-screen preview clean and visually accurate, while utilizing the thick invisible hover bounds (`strokeWidth="15"` or similar) for easy mouse/touch selection and editing.
 
+8. **INTERACTIVE PREVIEW FOR COMPLEX PATHS (d Property):**
+   When defining complex shapes (such as interlocking tabs, notch cutouts, or non-trivial closing tongues) in `geometry.ts` and `reference.ts`, define the exact pre-computed SVG path string in the optional `d` property of the `Segment` object. The `InteractiveSvgCanvas` component will read this `d` property to render the path with 100% precision instead of trying to reconstruct it from a simple start/end segment.
+
+9. **SYNCHRONIZE faceCoords POLYGONS AND geometry.ts:**
+   The `polygon` array defined inside `faceCoords` (for `bottomFlaps`, `topFlaps`, `glue`, etc.) in the `Calculator.tsx` file must match the exact mathematical coordinates of the outer cut boundaries defined in `geometry.ts` (including clearances, slants, and custom notches). If they mismatch, the 3D preview crop textures will align incorrectly, resulting in visible alignment shifts or missing graphic areas on the 3D model.
+
+10. **MANUFACTURING CLEARANCE FOR DUST FLAPS:**
+    Pay close attention to dust flaps adjacent to main crease folds. Typically, professional CAD designs offset the edge of the dust flap next to a fold line by a clearance (e.g., `0.5mm` to `1.0mm`) to prevent the flap from catching on the folded panel. Analyze the reference SVG to identify these clearances (e.g., a vertical notch cut starting a fraction of a millimeter away from the crease) and parameterize them precisely (e.g., `Xd1 + 0.5` instead of `Xd1`).
+
+11. **3D HOLES AND CUTOUTS FOR SLOTS/NOTCHES:**
+    Any closed red cut shape located inside a panel's main boundary (e.g., thumb notches, locking slots, or interior windows) must be defined in the `holes` property of the corresponding panel in `faceCoords` (as an array of coordinate loops: `holes: [[[x1,y1], [x2,y2], ...]]`). The 3D engine in [Box3DPreview.tsx](file:///Users/mslmadl/Documents/Print%20logic/src/components/boxes/Box3DPreview.tsx) parses these polygons and subtracts them from the panel mesh using Three.js `ShapeGeometry.holes` to render real, hollowed-out physical openings rather than just lines on the cardboard.

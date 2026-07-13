@@ -1,0 +1,56 @@
+Point_ID,Description,Rule / Meaning,Ref_X_mm,Dyn_X_mm,Ref_Y_mm,Dyn_Y_mm,Connected_Lines
+P001,Right main corner: top-depth/base hinge,Dynamic anchor from Inputs; shared by all connected lines,315.85,315.85,260.35,260.35,"D1, J4, CREASE1, CREASE11, CREASE13"
+P002,Left main corner: top-depth/base hinge,Dynamic anchor from Inputs; shared by all connected lines,65.85,65.85,260.35,260.35,"C1, H4, CREASE1, CREASE14, CREASE16"
+P003,Right cover-bottom / top-depth start,Dynamic anchor from Inputs; shared by all connected lines,315.85,315.85,210.35,210.35,"B4, D5, CREASE3, CREASE11"
+P004,Left cover-bottom / top-depth start,Dynamic anchor from Inputs; shared by all connected lines,65.85,65.85,210.35,210.35,"B2, C5, CREASE3, CREASE14"
+P005,Right base-bottom / bottom-depth start,Dynamic anchor from Inputs; shared by all connected lines,315.85,315.85,450.35,450.35,"J1, F1, CREASE2, CREASE12, CREASE13"
+P006,Left base-bottom / bottom-depth start,Dynamic anchor from Inputs; shared by all connected lines,65.85,65.85,450.35,450.35,"H1, E5, CREASE2, CREASE15, CREASE16"
+P007,Right bottom of template,Dynamic anchor from Inputs; shared by all connected lines,315.85,315.85,500.35,500.35,"F5, M1, CREASE12"
+P008,Left bottom of template,Dynamic anchor from Inputs; shared by all connected lines,65.85,65.85,500.35,500.35,"E1, M1, CREASE15"
+P009,Right cover top,Dynamic anchor from Inputs; shared by all connected lines,315.85,315.85,20.35,20.35,"B3, B4"
+P010,Left cover top,Dynamic anchor from Inputs; shared by all connected lines,65.85,65.85,20.35,20.35,"B1, B2"
+P011,Top lid straight left; A5 stretches with L,Dynamic anchor from Inputs; shared by all connected lines,78.35,78.35,0.35,0.35,A5
+P012,Top lid straight right; A5 stretches with L,Dynamic anchor from Inputs; shared by all connected lines,303.35,303.35,0.35,0.35,A5
+P013,CREASE4 left; L-dependent,Dynamic anchor from Inputs; shared by all connected lines,74.85,74.85,21.35,21.35,CREASE4
+P014,CREASE4 right; L-dependent,Dynamic anchor from Inputs; shared by all connected lines,306.85,306.85,21.35,21.35,CREASE4
+P015,A1 top,Dynamic anchor from Inputs; shared by all connected lines,74.85,74.85,20.35,20.35,"A1, A2"
+P016,A1 bottom,Dynamic anchor from Inputs; shared by all connected lines,74.85,74.85,22.35,22.35,A1
+P017,A2/B1 connector left,Dynamic anchor from Inputs; shared by all connected lines,66.35,66.35,20.35,20.35,"A2, B1"
+P018,A9 top,Dynamic anchor from Inputs; shared by all connected lines,306.85,306.85,20.35,20.35,"A8, A9"
+P019,A9 bottom,Dynamic anchor from Inputs; shared by all connected lines,306.85,306.85,22.35,22.35,A9
+P020,A8/B3 connector right,Dynamic anchor from Inputs; shared by all connected lines,315.35,315.35,20.35,20.35,"B3, A7, A8"
+P021,A7 top,Dynamic anchor from Inputs; shared by all connected lines,315.35,315.35,12.35,12.35,A7
+P022,D5 end / D4 start,Dynamic anchor from Inputs; shared by all connected lines,318.85,318.85,213.35,213.35,"D5, D4"
+P023,D4 end / D3 start,Dynamic anchor from Inputs; shared by all connected lines,365.85,365.85,213.35,213.35,"D4, D3"
+P024,D3 end / D2 end; H-dependent,Dynamic anchor from Inputs; shared by all connected lines,365.85,365.85,247.35,247.35,"D3, D2"
+P025,D2 start / D1 end,Dynamic anchor from Inputs; shared by all connected lines,318.85,318.85,257.35,257.35,"D2, D1"
+P026,C5 end / C4 start,Dynamic anchor from Inputs; shared by all connected lines,62.85,62.85,213.35,213.35,"C5, C4"
+P027,C4 end / C3 start,Dynamic anchor from Inputs; shared by all connected lines,15.85,15.85,213.35,213.35,"C4, C3"
+P028,C3 end / C2 end; H-dependent,Dynamic anchor from Inputs; shared by all connected lines,15.85,15.85,247.35,247.35,"C3, C2"
+P029,C2 start / C1 end,Dynamic anchor from Inputs; shared by all connected lines,62.85,62.85,257.35,257.35,"C2, C1"
+P030,F1 end / F2 start,Dynamic anchor from Inputs; shared by all connected lines,318.85,318.85,453.35,453.35,"F1, F2"
+P031,F2 end / F3 end,Dynamic anchor from Inputs; shared by all connected lines,365.85,365.85,463.35,463.35,"F2, F3"
+P032,F3 start / F4 end,Dynamic anchor from Inputs; shared by all connected lines,365.85,365.85,497.35,497.35,"F3, F4"
+P033,F4 start / F5 end,Dynamic anchor from Inputs; shared by all connected lines,318.85,318.85,497.35,497.35,"F4, F5"
+P034,E5 end / E4 start,Dynamic anchor from Inputs; shared by all connected lines,62.85,62.85,453.35,453.35,"E4, E5"
+P035,E4 end / E3 end,Dynamic anchor from Inputs; shared by all connected lines,15.85,15.85,463.35,463.35,"E3, E4"
+P036,E3 start / E2 end,Dynamic anchor from Inputs; shared by all connected lines,15.85,15.85,497.35,497.35,"E2, E3"
+P037,E2 start / E1 end,Dynamic anchor from Inputs; shared by all connected lines,62.85,62.85,497.35,497.35,"E1, E2"
+P038,J4 end / J3 start,Dynamic anchor from Inputs; shared by all connected lines,316.85,316.85,261.35,261.35,"J4, J3, CREASE5"
+P039,J3 end / I4 end / crease6 top,Dynamic anchor from Inputs; shared by all connected lines,365.85,365.85,261.35,261.35,"J3, I4, CREASE6"
+P040,J2 start / J1 end,Dynamic anchor from Inputs; shared by all connected lines,316.85,316.85,449.35,449.35,"J2, J1, CREASE7"
+P041,J2 end / I1 start / crease6 bottom,Dynamic anchor from Inputs; shared by all connected lines,365.85,365.85,449.35,449.35,"J2, I1, CREASE6"
+P042,I1 end / I2 start,Dynamic anchor from Inputs; shared by all connected lines,371.85,371.85,449.35,449.35,"I2, I1"
+P043,I2 end / I3 start,Dynamic anchor from Inputs; shared by all connected lines,381.35,381.35,445.73,445.73,"I3, I2"
+P044,I3 end / I4 start,Dynamic anchor from Inputs; shared by all connected lines,381.35,381.35,264.97,264.97,"I4, I3"
+P045,H4 end / H3 start,Dynamic anchor from Inputs; shared by all connected lines,64.85,64.85,261.35,261.35,"H4, H3, CREASE8"
+P046,H3 end / G4 end / crease9 top,Dynamic anchor from Inputs; shared by all connected lines,15.85,15.85,261.35,261.35,"H3, G4, CREASE9"
+P047,H2 start / H1 end,Dynamic anchor from Inputs; shared by all connected lines,64.85,64.85,449.35,449.35,"H2, H1, CREASE10"
+P048,H2 end / G1 start / crease9 bottom,Dynamic anchor from Inputs; shared by all connected lines,15.85,15.85,449.35,449.35,"H2, G1, CREASE9"
+P049,G1 end / G2 start,Dynamic anchor from Inputs; shared by all connected lines,9.85,9.85,449.35,449.35,"G2, G1"
+P050,G2 end / G3 start,Dynamic anchor from Inputs; shared by all connected lines,0.35,0.35,445.73,445.73,"G3, G2"
+P051,G3 end / G4 start,Dynamic anchor from Inputs; shared by all connected lines,0.35,0.35,264.97,264.97,"G4, G3"
+P052,CREASE5 end; 45 degrees,Dynamic anchor from Inputs; shared by all connected lines,381.35,381.35,325.85,325.85,CREASE5
+P053,CREASE7 end; 45 degrees,Dynamic anchor from Inputs; shared by all connected lines,381.35,381.35,384.85,384.85,CREASE7
+P054,CREASE8 end; 45 degrees,Dynamic anchor from Inputs; shared by all connected lines,0.35,0.35,325.85,325.85,CREASE8
+P055,CREASE10 end; 45 degrees,Dynamic anchor from Inputs; shared by all connected lines,0.35,0.35,384.85,384.85,CREASE10

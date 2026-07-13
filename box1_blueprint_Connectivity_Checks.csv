@@ -1,0 +1,45 @@
+Point_ID,Connected Lines Count,Connected Lines,Rule
+P001,5,"D1, J4, CREASE1, CREASE11, CREASE13",All connected lines must use this same dynamic point; never calculate independent endpoints.
+P002,5,"C1, H4, CREASE1, CREASE14, CREASE16",All connected lines must use this same dynamic point; never calculate independent endpoints.
+P003,4,"B4, D5, CREASE3, CREASE11",All connected lines must use this same dynamic point; never calculate independent endpoints.
+P004,4,"B2, C5, CREASE3, CREASE14",All connected lines must use this same dynamic point; never calculate independent endpoints.
+P005,5,"J1, F1, CREASE2, CREASE12, CREASE13",All connected lines must use this same dynamic point; never calculate independent endpoints.
+P006,5,"H1, E5, CREASE2, CREASE15, CREASE16",All connected lines must use this same dynamic point; never calculate independent endpoints.
+P007,3,"F5, M1, CREASE12",All connected lines must use this same dynamic point; never calculate independent endpoints.
+P008,3,"E1, M1, CREASE15",All connected lines must use this same dynamic point; never calculate independent endpoints.
+P009,2,"B3, B4",All connected lines must use this same dynamic point; never calculate independent endpoints.
+P010,2,"B1, B2",All connected lines must use this same dynamic point; never calculate independent endpoints.
+P015,2,"A1, A2",All connected lines must use this same dynamic point; never calculate independent endpoints.
+P017,2,"A2, B1",All connected lines must use this same dynamic point; never calculate independent endpoints.
+P018,2,"A8, A9",All connected lines must use this same dynamic point; never calculate independent endpoints.
+P020,3,"B3, A7, A8",All connected lines must use this same dynamic point; never calculate independent endpoints.
+P022,2,"D5, D4",All connected lines must use this same dynamic point; never calculate independent endpoints.
+P023,2,"D4, D3",All connected lines must use this same dynamic point; never calculate independent endpoints.
+P024,2,"D3, D2",All connected lines must use this same dynamic point; never calculate independent endpoints.
+P025,2,"D2, D1",All connected lines must use this same dynamic point; never calculate independent endpoints.
+P026,2,"C5, C4",All connected lines must use this same dynamic point; never calculate independent endpoints.
+P027,2,"C4, C3",All connected lines must use this same dynamic point; never calculate independent endpoints.
+P028,2,"C3, C2",All connected lines must use this same dynamic point; never calculate independent endpoints.
+P029,2,"C2, C1",All connected lines must use this same dynamic point; never calculate independent endpoints.
+P030,2,"F1, F2",All connected lines must use this same dynamic point; never calculate independent endpoints.
+P031,2,"F2, F3",All connected lines must use this same dynamic point; never calculate independent endpoints.
+P032,2,"F3, F4",All connected lines must use this same dynamic point; never calculate independent endpoints.
+P033,2,"F4, F5",All connected lines must use this same dynamic point; never calculate independent endpoints.
+P034,2,"E4, E5",All connected lines must use this same dynamic point; never calculate independent endpoints.
+P035,2,"E3, E4",All connected lines must use this same dynamic point; never calculate independent endpoints.
+P036,2,"E2, E3",All connected lines must use this same dynamic point; never calculate independent endpoints.
+P037,2,"E1, E2",All connected lines must use this same dynamic point; never calculate independent endpoints.
+P038,3,"J4, J3, CREASE5",All connected lines must use this same dynamic point; never calculate independent endpoints.
+P039,3,"J3, I4, CREASE6",All connected lines must use this same dynamic point; never calculate independent endpoints.
+P040,3,"J2, J1, CREASE7",All connected lines must use this same dynamic point; never calculate independent endpoints.
+P041,3,"J2, I1, CREASE6",All connected lines must use this same dynamic point; never calculate independent endpoints.
+P042,2,"I2, I1",All connected lines must use this same dynamic point; never calculate independent endpoints.
+P043,2,"I3, I2",All connected lines must use this same dynamic point; never calculate independent endpoints.
+P044,2,"I4, I3",All connected lines must use this same dynamic point; never calculate independent endpoints.
+P045,3,"H4, H3, CREASE8",All connected lines must use this same dynamic point; never calculate independent endpoints.
+P046,3,"H3, G4, CREASE9",All connected lines must use this same dynamic point; never calculate independent endpoints.
+P047,3,"H2, H1, CREASE10",All connected lines must use this same dynamic point; never calculate independent endpoints.
+P048,3,"H2, G1, CREASE9",All connected lines must use this same dynamic point; never calculate independent endpoints.
+P049,2,"G2, G1",All connected lines must use this same dynamic point; never calculate independent endpoints.
+P050,2,"G3, G2",All connected lines must use this same dynamic point; never calculate independent endpoints.
+P051,2,"G4, G3",All connected lines must use this same dynamic point; never calculate independent endpoints.

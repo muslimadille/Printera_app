@@ -1,0 +1,258 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="381.70551mm" height="500.70556mm" viewBox="0 0 1081.99988 1419.32288">
+  <g id="CUT_Locations" data-name="CUT &amp;amp; Locations">
+    <g id="M">
+      <rect id="M_AREA" data-name="M AREA" x="186.66919" y="1276.59045" width="708.6615" height="141.73242" fill="#e6e7e8"/>
+      <line id="M1" x1="895.33069" y1="1418.32288" x2="186.66919" y2="1418.32288" fill="none" stroke="#ed1c24" stroke-miterlimit="10" stroke-width="2"/>
+      <text transform="translate(531.17218 1355.83228)" fill="#231f20" font-family="IBMPlexSansArabic-Bold, &apos;IBM Plex Sans Arabic&apos;" font-size="24" font-weight="700"><tspan x="0" y="0">M</tspan></text>
+    </g>
+    <g id="L">
+      <rect id="L_AREA" data-name="L AREA" x="186.66919" y="596.27557" width="708.6615" height="141.7323" fill="#e6e7e8"/>
+      <text transform="translate(534.13605 675.51756)" fill="#231f20" font-family="IBMPlexSansArabic-Bold, &apos;IBM Plex Sans Arabic&apos;" font-size="24" font-weight="700"><tspan x="0" y="0">L</tspan></text>
+    </g>
+    <g id="K">
+      <rect id="K_AREA" data-name="K AREA" x="186.66919" y="738.00787" width="708.6615" height="538.58258" fill="#e6e7e8"/>
+      <text transform="translate(531.86798 1015.67558)" fill="#231f20" font-family="IBMPlexSansArabic-Bold, &apos;IBM Plex Sans Arabic&apos;" font-size="24" font-weight="700"><tspan x="0" y="0">K</tspan></text>
+    </g>
+    <g id="J">
+      <polygon id="J_AREA" data-name="J AREA" points="1037.06287 740.84253 1037.06287 1273.75586 898.16541 1273.75586 895.33069 1276.59045 895.33069 738.00787 898.16541 740.84253 1037.06287 740.84253" fill="#e6e7e8"/>
+      <g id="J4">
+        <line id="CUT_11_object" data-name="CUT 11 object" x1="895.33069" y1="738.00787" x2="898.16541" y2="740.84253" fill="none" stroke="#ed1c24" stroke-miterlimit="10" stroke-width="2"/>
+      </g>
+      <g id="J3">
+        <line id="CUT_4_object" data-name="CUT 4 object" x1="898.16541" y1="740.84253" x2="1037.06287" y2="740.84253" fill="none" stroke="#ed1c24" stroke-miterlimit="10" stroke-width="2"/>
+      </g>
+      <g id="J2">
+        <line id="CUT_14_object" data-name="CUT 14 object" x1="898.16541" y1="1273.75586" x2="1037.06287" y2="1273.75586" fill="none" stroke="#ed1c24" stroke-miterlimit="10" stroke-width="2"/>
+      </g>
+      <g id="J1">
+        <line id="CUT_15_object" data-name="CUT 15 object" x1="895.33069" y1="1276.59045" x2="898.16541" y2="1273.75586" fill="none" stroke="#ed1c24" stroke-miterlimit="10" stroke-width="2"/>
+      </g>
+      <text transform="translate(957.95209 1001.16705) rotate(90)" fill="#231f20" font-family="IBMPlexSansArabic-Bold, &apos;IBM Plex Sans Arabic&apos;" font-size="24" font-weight="700"><tspan x="0" y="0">J</tspan></text>
+    </g>
+    <g id="I">
+      <polygon id="I_AREA" data-name="I AREA" points="1037.06287 1273.75586 1054.07068 1273.75586 1080.99988 1263.50208 1080.99988 751.09631 1037.06287 740.84253 1037.06287 1273.75586" fill="#e6e7e8"/>
+      <g id="I4">
+        <line id="CUT_9_object" data-name="CUT 9 object" x1="1080.99988" y1="751.09631" x2="1037.06287" y2="740.84253" fill="none" stroke="#ed1c24" stroke-miterlimit="10" stroke-width="2"/>
+      </g>
+      <g id="I3">
+        <line id="CUT_16_object" data-name="CUT 16 object" x1="1080.99988" y1="1263.50208" x2="1080.99988" y2="751.09631" fill="none" stroke="#ed1c24" stroke-miterlimit="10" stroke-width="2"/>
+      </g>
+      <g id="I2">
+        <line id="CUT_10_object" data-name="CUT 10 object" x1="1054.07068" y1="1273.75586" x2="1080.99988" y2="1263.50208" fill="none" stroke="#ed1c24" stroke-miterlimit="10" stroke-width="2"/>
+      </g>
+      <g id="I1">
+        <line id="CUT_41_object" data-name="CUT 41 object" x1="1037.06287" y1="1273.75586" x2="1054.07068" y2="1273.75586" fill="none" stroke="#ed1c24" stroke-miterlimit="10" stroke-width="2"/>
+      </g>
+      <text transform="translate(1050.65521 1002.11584) rotate(90)" fill="#231f20" font-family="IBMPlexSansArabic-Bold, &apos;IBM Plex Sans Arabic&apos;" font-size="24" font-weight="700"><tspan x="0" y="0">I</tspan></text>
+    </g>
+    <g id="H">
+      <polygon id="H_AREA" data-name="H AREA" points="44.93689 740.84247 44.93689 1273.75586 183.83459 1273.75586 186.66919 1276.59045 186.66919 738.00787 183.83459 740.84253 44.93689 740.84247" fill="#e6e7e8"/>
+      <g id="H4">
+        <line id="CUT_28_object" data-name="CUT 28 object" x1="186.66919" y1="738.00787" x2="183.83459" y2="740.84253" fill="none" stroke="#ed1c24" stroke-miterlimit="10" stroke-width="2"/>
+      </g>
+      <g id="H3">
+        <line id="CUT_19_object" data-name="CUT 19 object" x1="183.83459" y1="740.84253" x2="44.93689" y2="740.84247" fill="none" stroke="#ed1c24" stroke-miterlimit="10" stroke-width="2"/>
+      </g>
+      <g id="H2">
+        <line id="CUT_32_object" data-name="CUT 32 object" x1="183.83459" y1="1273.75586" x2="44.93689" y2="1273.75586" fill="none" stroke="#ed1c24" stroke-miterlimit="10" stroke-width="2"/>
+      </g>
+      <g id="H1">
+        <line id="CUT_33_object" data-name="CUT 33 object" x1="186.66919" y1="1276.59045" x2="183.83459" y2="1273.75586" fill="none" stroke="#ed1c24" stroke-miterlimit="10" stroke-width="2"/>
+      </g>
+      <text transform="translate(124.17896 1015.98694) rotate(-90)" fill="#231f20" font-family="IBMPlexSansArabic-Bold, &apos;IBM Plex Sans Arabic&apos;" font-size="24" font-weight="700"><tspan x="0" y="0">H</tspan></text>
+    </g>
+    <g id="G">
+      <polygon id="G_AREA" data-name="G AREA" points="44.93689 1273.75589 27.92908 1273.75589 1 1263.50211 1 751.09634 44.93689 740.8425 44.93689 1273.75589" fill="#e6e7e8"/>
+      <g id="G4">
+        <line id="CUT_26_object" data-name="CUT 26 object" x1="1" y1="751.09631" x2="44.93689" y2="740.84247" fill="none" stroke="#ed1c24" stroke-miterlimit="10" stroke-width="2"/>
+      </g>
+      <g id="G3">
+        <line id="CUT_34_object" data-name="CUT 34 object" x1="1" y1="1263.50208" x2="1" y2="751.09631" fill="none" stroke="#ed1c24" stroke-miterlimit="10" stroke-width="2"/>
+      </g>
+      <g id="G2">
+        <line id="CUT_27_object" data-name="CUT 27 object" x1="27.92908" y1="1273.75586" x2="1" y2="1263.50208" fill="none" stroke="#ed1c24" stroke-miterlimit="10" stroke-width="2"/>
+      </g>
+      <g id="G1">
+        <line id="CUT_42_object" data-name="CUT 42 object" x1="44.93689" y1="1273.75586" x2="27.92908" y2="1273.75586" fill="none" stroke="#ed1c24" stroke-miterlimit="10" stroke-width="2"/>
+      </g>
+      <text transform="translate(31.34443 1015.67507) rotate(-90)" fill="#231f20" font-family="IBMPlexSansArabic-Bold, &apos;IBM Plex Sans Arabic&apos;" font-size="24" font-weight="700"><tspan x="0" y="0">G</tspan></text>
+    </g>
+    <g id="F">
+      <polygon id="F_AREA" data-name="F AREA" points="895.33069 1418.32288 903.83459 1409.81885 1037.06287 1409.81885 1037.06287 1313.44092 903.83459 1285.09448 895.33069 1276.59045 895.33069 1418.32288" fill="#e6e7e8"/>
+      <g id="F5">
+        <line id="CUT_6_object" data-name="CUT 6 object" x1="895.33069" y1="1418.32288" x2="903.83459" y2="1409.81885" fill="none" stroke="#ed1c24" stroke-miterlimit="10" stroke-width="2"/>
+      </g>
+      <g id="F4">
+        <line id="CUT_8_object" data-name="CUT 8 object" x1="903.83459" y1="1409.81885" x2="1037.06287" y2="1409.81885" fill="none" stroke="#ed1c24" stroke-miterlimit="10" stroke-width="2"/>
+      </g>
+      <g id="F3">
+        <line id="CUT_40_object" data-name="CUT 40 object" x1="1037.06287" y1="1409.81885" x2="1037.06287" y2="1313.44092" fill="none" stroke="#ed1c24" stroke-miterlimit="10" stroke-width="2"/>
+      </g>
+      <g id="F2">
+        <line id="CUT_39_object" data-name="CUT 39 object" x1="903.83459" y1="1285.09448" x2="1037.06287" y2="1313.44092" fill="none" stroke="#ed1c24" stroke-miterlimit="10" stroke-width="2"/>
+      </g>
+      <g id="F1">
+        <line id="CUT_7_object" data-name="CUT 7 object" x1="895.33069" y1="1276.59045" x2="903.83459" y2="1285.09448" fill="none" stroke="#ed1c24" stroke-miterlimit="10" stroke-width="2"/>
+      </g>
+      <g id="F-2" data-name="F">
+        <text transform="translate(958.7933 1355.83292)" fill="#231f20" font-family="IBMPlexSansArabic-Bold, &apos;IBM Plex Sans Arabic&apos;" font-size="24" font-weight="700"><tspan x="0" y="0">F</tspan></text>
+      </g>
+    </g>
+    <g id="E">
+      <polygon id="E_AREA" data-name="E AREA" points="44.93689 1409.81885 44.93689 1313.44092 178.16528 1285.09448 186.66919 1276.59045 186.66919 1418.32288 178.16528 1409.81885 44.93689 1409.81885" fill="#e6e7e8"/>
+      <g id="E5">
+        <line id="CUT_23_object" data-name="CUT 23 object" x1="186.66919" y1="1276.59045" x2="178.16528" y2="1285.09448" fill="none" stroke="#ed1c24" stroke-miterlimit="10" stroke-width="2"/>
+      </g>
+      <g id="E4">
+        <line id="CUT_22_object" data-name="CUT 22 object" x1="178.16528" y1="1285.09448" x2="44.93689" y2="1313.44092" fill="none" stroke="#ed1c24" stroke-miterlimit="10" stroke-width="2"/>
+      </g>
+      <g id="E3">
+        <line id="CUT_25_object" data-name="CUT 25 object" x1="44.93689" y1="1409.81885" x2="44.93689" y2="1313.44092" fill="none" stroke="#ed1c24" stroke-miterlimit="10" stroke-width="2"/>
+      </g>
+      <g id="E2">
+        <line id="CUT_24_object" data-name="CUT 24 object" x1="178.16528" y1="1409.81885" x2="44.93689" y2="1409.81885" fill="none" stroke="#ed1c24" stroke-miterlimit="10" stroke-width="2"/>
+      </g>
+      <g id="E1">
+        <line id="CUT_21_object" data-name="CUT 21 object" x1="186.66919" y1="1418.32288" x2="178.16528" y2="1409.81885" fill="none" stroke="#ed1c24" stroke-miterlimit="10" stroke-width="2"/>
+      </g>
+      <g id="_اللسان_الأيسر_للارتفاع_٢_" data-name="اللسان الأيسر للارتفاع (٢)">
+        <text transform="translate(108.25525 1355.83292)" fill="#231f20" font-family="IBMPlexSansArabic-Bold, &apos;IBM Plex Sans Arabic&apos;" font-size="24" font-weight="700"><tspan x="0" y="0">E</tspan></text>
+      </g>
+    </g>
+    <g id="D">
+      <polygon id="D_AREA" data-name="D AREA" points="895.33069 738.00787 903.83459 729.50391 1037.06287 701.15747 1037.06287 604.77948 903.83459 604.77948 895.33069 596.27557 895.33069 738.00787" fill="#e6e7e8"/>
+      <g id="_اللسان_الأيمن_للارتفاع_١_" data-name="اللسان الأيمن للارتفاع (١)">
+        <text transform="translate(957.50961 675.51749)" fill="#231f20" font-family="IBMPlexSansArabic-Bold, &apos;IBM Plex Sans Arabic&apos;" font-size="24" font-weight="700"><tspan x="0" y="0">D</tspan></text>
+      </g>
+      <g id="D5">
+        <line id="CUT_36_object" data-name="CUT 36 object" x1="895.33069" y1="596.27557" x2="903.83459" y2="604.77948" fill="none" stroke="#ed1c24" stroke-miterlimit="10" stroke-width="2"/>
+      </g>
+      <g id="D4">
+        <line id="CUT_5_object" data-name="CUT 5 object" x1="903.83459" y1="604.77948" x2="1037.06287" y2="604.77948" fill="none" stroke="#ed1c24" stroke-miterlimit="10" stroke-width="2"/>
+      </g>
+      <g id="D3">
+        <line id="CUT_37_object" data-name="CUT 37 object" x1="1037.06287" y1="604.77948" x2="1037.06287" y2="701.15747" fill="none" stroke="#ed1c24" stroke-miterlimit="10" stroke-width="2"/>
+      </g>
+      <g id="D2">
+        <line id="CUT_38_object" data-name="CUT 38 object" x1="903.83459" y1="729.50391" x2="1037.06287" y2="701.15747" fill="none" stroke="#ed1c24" stroke-miterlimit="10" stroke-width="2"/>
+      </g>
+      <g id="D1">
+        <line id="CUT_3_object" data-name="CUT 3 object" x1="895.33069" y1="738.00787" x2="903.83459" y2="729.50391" fill="none" stroke="#ed1c24" stroke-miterlimit="10" stroke-width="2"/>
+      </g>
+    </g>
+    <g id="C">
+      <polygon id="C_AREA" data-name="C AREA" points="44.93689 701.15747 178.16528 729.50391 186.66919 738.00787 186.66919 596.27557 178.16528 604.77948 44.93689 604.77948 44.93689 701.15747" fill="#e6e7e8"/>
+      <line id="C5" x1="186.66919" y1="596.27557" x2="178.16528" y2="604.77948" fill="none" stroke="#ed1c24" stroke-miterlimit="10" stroke-width="2"/>
+      <line id="C4" x1="178.16528" y1="604.77948" x2="44.93689" y2="604.77948" fill="none" stroke="#ed1c24" stroke-miterlimit="10" stroke-width="2"/>
+      <g id="C3">
+        <line id="CUT_44_object" data-name="CUT 44 object" x1="44.93689" y1="604.77948" x2="44.93689" y2="701.15747" fill="none" stroke="#ed1c24" stroke-miterlimit="10" stroke-width="2"/>
+      </g>
+      <g id="C2">
+        <line id="CUT_18_object" data-name="CUT 18 object" x1="178.16528" y1="729.50391" x2="44.93689" y2="701.15747" fill="none" stroke="#ed1c24" stroke-miterlimit="10" stroke-width="2"/>
+      </g>
+      <g id="C1">
+        <line id="CUT_43_object" data-name="CUT 43 object" x1="186.66919" y1="738.00787" x2="178.16528" y2="729.50391" fill="none" stroke="#ed1c24" stroke-miterlimit="10" stroke-width="2"/>
+      </g>
+      <text transform="translate(107.73901 675.51767)" fill="#231f20" font-family="IBMPlexSansArabic-Bold, &apos;IBM Plex Sans Arabic&apos;" font-size="24" font-weight="700"><tspan x="0" y="0">C</tspan></text>
+    </g>
+    <g id="B">
+      <polygon id="B_AREA" data-name="B AREA" points="186.66919 596.27557 895.33069 596.27557 895.33069 57.69287 869.81873 57.69287 869.81873 60.52759 212.18103 60.52759 212.18103 57.69287 186.66919 57.69287 186.66919 596.27557" fill="#e6e7e8"/>
+      <g id="B4">
+        <line id="CUT_2_object" data-name="CUT 2 object" x1="895.33069" y1="57.69287" x2="895.33069" y2="596.27557" fill="none" stroke="#ed1c24" stroke-miterlimit="10" stroke-width="2"/>
+      </g>
+      <g id="B3">
+        <line id="CUT_13_object" data-name="CUT 13 object" x1="893.91321" y1="57.69287" x2="895.33069" y2="57.69287" fill="none" stroke="#ed1c24" stroke-miterlimit="10" stroke-width="2"/>
+      </g>
+      <g id="B2">
+        <line id="CUT_17_object" data-name="CUT 17 object" x1="186.66919" y1="57.69287" x2="186.66919" y2="596.27557" fill="none" stroke="#ed1c24" stroke-miterlimit="10" stroke-width="2"/>
+      </g>
+      <g id="B1">
+        <line id="CUT_30_object" data-name="CUT 30 object" x1="188.08655" y1="57.69287" x2="186.66919" y2="57.69287" fill="none" stroke="#ed1c24" stroke-miterlimit="10" stroke-width="2"/>
+      </g>
+      <text transform="translate(532.55231 335.36005)" fill="#231f20" font-family="IBMPlexSansArabic-Bold, &apos;IBM Plex Sans Arabic&apos;" font-size="24" font-weight="700"><tspan x="0" y="0">B</tspan></text>
+    </g>
+    <g id="A">
+      <path id="A_AREA" data-name="A AREA" d="M869.81873,60.52759H212.18103v-2.83472h-24.09448v-22.67712c0-18.78638,15.22937-34.01575,34.01575-34.01575h637.79529c18.78638,0,34.01562,15.22937,34.01562,34.01575v22.67712h-24.09448v2.83472Z" fill="#e6e7e8"/>
+      <g id="A9">
+        <line id="CUT_35_object" data-name="CUT 35 object" x1="869.81873" y1="63.36218" x2="869.81873" y2="57.69287" fill="none" stroke="#ed1c24" stroke-miterlimit="10" stroke-width="2"/>
+      </g>
+      <g id="A8">
+        <line id="CUT_13_object-2" data-name="CUT 13 object" x1="869.81873" y1="57.69287" x2="893.91321" y2="57.69287" fill="none" stroke="#ed1c24" stroke-miterlimit="10" stroke-width="2"/>
+      </g>
+      <g id="A7">
+        <line id="CUT_12_object" data-name="CUT 12 object" x1="893.91321" y1="35.01575" x2="893.91321" y2="57.69287" fill="none" stroke="#ed1c24" stroke-miterlimit="10" stroke-width="2"/>
+        <line id="CUT_12_object-2" data-name="CUT 12 object" x1="893.91321" y1="35.01575" x2="893.91321" y2="57.69287" fill="none" stroke="#ed1c24" stroke-miterlimit="10" stroke-width="2"/>
+      </g>
+      <g id="A6">
+        <path id="CUT_45_object" data-name="CUT 45 object" d="M859.89758,1c18.78638,0,34.01562,15.22937,34.01562,34.01575" fill="none" stroke="#ed1c24" stroke-miterlimit="10" stroke-width="2"/>
+      </g>
+      <g id="A5">
+        <line id="CUT_46_object" data-name="CUT 46 object" x1="222.10229" y1="1" x2="859.89758" y2="1" fill="none" stroke="#ed1c24" stroke-miterlimit="10" stroke-width="2"/>
+      </g>
+      <g id="A4">
+        <path id="CUT_47_object" data-name="CUT 47 object" d="M188.08655,35.01575c0-18.78638,15.22937-34.01575,34.01575-34.01575" fill="none" stroke="#ed1c24" stroke-miterlimit="10" stroke-width="2"/>
+      </g>
+      <g id="A3">
+        <path id="CUT_29_object" data-name="CUT 29 object" d="M188.08655,57.69287v-22.67712" fill="none" stroke="#ed1c24" stroke-miterlimit="10" stroke-width="2"/>
+      </g>
+      <g id="A2">
+        <line id="CUT_30_object-2" data-name="CUT 30 object" x1="212.18103" y1="57.69287" x2="188.08655" y2="57.69287" fill="none" stroke="#ed1c24" stroke-miterlimit="10" stroke-width="2"/>
+      </g>
+      <g id="A1">
+        <line id="CUT_31_object" data-name="CUT 31 object" x1="212.18103" y1="63.36218" x2="212.18103" y2="57.69287" fill="none" stroke="#ed1c24" stroke-miterlimit="10" stroke-width="2"/>
+      </g>
+      <text transform="translate(532.78015 39.13977)" fill="#231f20" font-family="IBMPlexSansArabic-Bold, &apos;IBM Plex Sans Arabic&apos;" font-size="24" font-weight="700"><tspan x="0" y="0">A</tspan></text>
+    </g>
+  </g>
+  <g id="CREASE">
+    <g id="CREASE_1" data-name="CREASE 1">
+      <line id="CREASE_1_object" data-name="CREASE 1 object" x1="895.33069" y1="738.00787" x2="186.66919" y2="738.00787" fill="none" stroke="#00a651" stroke-miterlimit="10" stroke-width="2"/>
+    </g>
+    <g id="CREASE_2" data-name="CREASE 2">
+      <line id="CREASE_2_object" data-name="CREASE 2 object" x1="186.66919" y1="1276.59045" x2="895.33069" y2="1276.59045" fill="none" stroke="#00a651" stroke-miterlimit="10" stroke-width="2"/>
+    </g>
+    <g id="CREASE_3" data-name="CREASE 3">
+      <line id="CREASE_3_object" data-name="CREASE 3 object" x1="186.66919" y1="596.27557" x2="895.33069" y2="596.27557" fill="none" stroke="#00a651" stroke-miterlimit="10" stroke-width="2"/>
+    </g>
+    <g id="CREASE_4" data-name="CREASE 4">
+      <line id="CREASE_4_object" data-name="CREASE 4 object" x1="212.18103" y1="60.52759" x2="869.81873" y2="60.52759" fill="none" stroke="#00a651" stroke-miterlimit="10" stroke-width="2"/>
+    </g>
+    <g id="CREASE_5" data-name="CREASE 5">
+      <line id="CREASE_5_object" data-name="CREASE 5 object" x1="898.16541" y1="740.84253" x2="1080.99988" y2="923.67712" fill="none" stroke="#00a651" stroke-miterlimit="10" stroke-width="2"/>
+    </g>
+    <g id="CREASE_6" data-name="CREASE 6">
+      <line id="CREASE_6_object" data-name="CREASE 6 object" x1="1037.06287" y1="740.84253" x2="1037.06287" y2="1273.75586" fill="none" stroke="#00a651" stroke-miterlimit="10" stroke-width="2"/>
+    </g>
+    <g id="CREASE_7" data-name="CREASE 7">
+      <line id="CREASE_7_object" data-name="CREASE 7 object" x1="898.16541" y1="1273.75586" x2="1080.99988" y2="1090.92126" fill="none" stroke="#00a651" stroke-miterlimit="10" stroke-width="2"/>
+    </g>
+    <g id="CREASE_8" data-name="CREASE 8">
+      <line id="CREASE_8_object" data-name="CREASE 8 object" x1="183.83459" y1="740.84253" x2="1" y2="923.67712" fill="none" stroke="#00a651" stroke-miterlimit="10" stroke-width="2"/>
+    </g>
+    <g id="CREASE_9" data-name="CREASE 9">
+      <line id="CREASE_9_object" data-name="CREASE 9 object" x1="44.93689" y1="740.84247" x2="44.93689" y2="1273.75586" fill="none" stroke="#00a651" stroke-miterlimit="10" stroke-width="2"/>
+    </g>
+    <g id="CREASE_10" data-name="CREASE 10">
+      <line id="CREASE_10_object" data-name="CREASE 10 object" x1="183.83459" y1="1273.75586" x2="1" y2="1090.92126" fill="none" stroke="#00a651" stroke-miterlimit="10" stroke-width="2"/>
+    </g>
+    <g id="CREASE_11" data-name="CREASE 11">
+      <line id="CREASE_11_object" data-name="CREASE 11 object" x1="895.33069" y1="738.00787" x2="895.33069" y2="596.27557" fill="none" stroke="#00a651" stroke-miterlimit="10" stroke-width="2"/>
+    </g>
+    <g id="CREASE_12" data-name="CREASE 12">
+      <line id="CREASE_12_object" data-name="CREASE 12 object" x1="895.33069" y1="1418.32288" x2="895.33069" y2="1276.59045" fill="none" stroke="#00a651" stroke-miterlimit="10" stroke-width="2"/>
+    </g>
+    <g id="CREASE_13" data-name="CREASE 13">
+      <line id="CREASE_13_object" data-name="CREASE 13 object" x1="895.33069" y1="1276.59045" x2="895.33069" y2="738.00787" fill="none" stroke="#00a651" stroke-miterlimit="10" stroke-width="2"/>
+    </g>
+    <g id="CREASE_14" data-name="CREASE 14">
+      <line id="CREASE_14_object" data-name="CREASE 14 object" x1="186.66919" y1="738.00787" x2="186.66919" y2="596.27557" fill="none" stroke="#00a651" stroke-miterlimit="10" stroke-width="2"/>
+    </g>
+    <g id="CREASE_15" data-name="CREASE 15">
+      <line id="CREASE_15_object" data-name="CREASE 15 object" x1="186.66919" y1="1418.32288" x2="186.66919" y2="1276.59045" fill="none" stroke="#00a651" stroke-miterlimit="10" stroke-width="2"/>
+    </g>
+    <g id="CREASE_16" data-name="CREASE 16">
+      <line id="CREASE_16_object" data-name="CREASE 16 object" x1="186.66919" y1="1276.59045" x2="186.66919" y2="738.00787" fill="none" stroke="#00a651" stroke-miterlimit="10" stroke-width="2"/>
+    </g>
+  </g>
+</svg>

@@ -1,26 +1,49 @@
 import xml.etree.ElementTree as ET
 
-tree = ET.parse('/Users/mslmadl/Downloads/t00010.svg')
+tree = ET.parse('/Users/mslmadl/Documents/Print logic/newbox/BOX 1 TEMPLATE.svg')
 root = tree.getroot()
 
-def pt_to_mm(pt):
-    return pt / 2.834645
+def parse_line(el):
+    return {
+        'type': 'line',
+        'id': el.get('id', ''),
+        'x1': float(el.get('x1')),
+        'y1': float(el.get('y1')),
+        'x2': float(el.get('x2')),
+        'y2': float(el.get('y2')),
+        'stroke': el.get('stroke')
+    }
 
-W_base = 329.40137
-Y_base = 1164.20471
+def parse_path(el):
+    return {
+        'type': 'path',
+        'id': el.get('id', ''),
+        'd': el.get('d'),
+        'stroke': el.get('stroke')
+    }
 
-for elem in root.iter():
-    tag = elem.tag.split('}')[-1]
-    if tag == 'line':
-        x1 = pt_to_mm(float(elem.attrib['x1']) - W_base)
-        y1 = pt_to_mm(float(elem.attrib['y1']) - Y_base)
-        x2 = pt_to_mm(float(elem.attrib['x2']) - W_base)
-        y2 = pt_to_mm(float(elem.attrib['y2']) - Y_base)
-        color = elem.attrib.get('stroke', 'none')
-        print(f"LINE {color}: ({x1:.1f}, {y1:.1f}) -> ({x2:.1f}, {y2:.1f})")
-    elif tag == 'polyline':
-        points = elem.attrib['points'].replace(',', ' ').split()
-        pts = [(pt_to_mm(float(points[i]) - W_base), pt_to_mm(float(points[i+1]) - Y_base)) for i in range(0, len(points), 2)]
-        color = elem.attrib.get('stroke', 'none')
-        pts_str = " -> ".join([f"({x:.1f}, {y:.1f})" for x,y in pts])
-        print(f"POLY {color}: {pts_str}")
+elements = []
+for el in root.iter():
+    if el.tag.endswith('line'):
+        try:
+            elements.append(parse_line(el))
+        except: pass
+    elif el.tag.endswith('path'):
+        try:
+            elements.append(parse_path(el))
+        except: pass
+
+creases = [e for e in elements if e['stroke'] == '#00a651']
+cuts = [e for e in elements if e['stroke'] == '#ed1c24']
+
+print(f"Total creases: {len(creases)}")
+for c in creases:
+    if c['type'] == 'line':
+        print(f"CREASE: ({c['x1']}, {c['y1']}) -> ({c['x2']}, {c['y2']})")
+
+print(f"Total cuts: {len(cuts)}")
+for c in cuts:
+    if c['type'] == 'line':
+        print(f"CUT: ({c['x1']}, {c['y1']}) -> ({c['x2']}, {c['y2']})")
+    else:
+        print(f"CUT PATH: {c['d']}")

@@ -1,0 +1,9 @@
+Reference,Mirror_Target,Mirror_Type,Meaning
+Right lower tongue F1-F5,Left lower tongue E1-E5,Horizontal Mirror,E is the horizontal mirror of F around the main body left/right structure.
+Right upper tongue D1-D5,Left upper tongue C1-C5,Horizontal Mirror,C is the horizontal mirror of D.
+Right lower tongue F1-F5,Right upper tongue D1-D5,Vertical Mirror,D is vertical mirror of F with top/bottom orientation reversed.
+Left lower tongue E1-E5,Left upper tongue C1-C5,Vertical Mirror,C is vertical mirror of E.
+Right side group J/I,Left side group H/G,Horizontal Mirror,Left side side flaps mirror right side side flaps.
+CREASE11 tongue reference,CREASE14 tongue,Horizontal Mirror,Tongue near CREASE14 is horizontal mirror of tongue near CREASE11.
+CREASE11 tongue reference,CREASE12 tongue,Vertical Mirror,Tongue near CREASE12 is vertical mirror of tongue near CREASE11.
+CREASE14 tongue,CREASE15 tongue,Vertical Mirror,Tongue near CREASE15 is vertical mirror of tongue near CREASE14.

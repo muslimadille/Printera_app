@@ -18,10 +18,11 @@ export interface Panel2DInfo {
   w: number;
   h: number;
   polygon?: [number, number][];
+  holes?: [number, number][][];
 }
 
 interface Box3DPreviewProps {
-  boxType?: 'T0001' | 'T0002' | 'T0003' | 'T0004' | 'D001' | 'D003' | 'T0008' | 'T0010';
+  boxType?: 'T0002' | 'T0005' | 'T0006' | 'D001' | 'T0008' | 'T0010';
   lidTongue?: number;
   panelWidths: [number, number, number, number];
   panelHeights: number;
@@ -140,6 +141,20 @@ function buildPanel(
       if (i === 0) shape.moveTo(lx, ly);
       else shape.lineTo(lx, ly);
     });
+    
+    if (coord.holes && coord.holes.length > 0) {
+      coord.holes.forEach(holePoly => {
+        const path = new THREE.Path();
+        holePoly.forEach((pt, idx) => {
+          const lx = (pt[0] - coord.x - coord.w / 2) * S;
+          const ly = -(pt[1] - coord.y - coord.h / 2) * S;
+          if (idx === 0) path.moveTo(lx, ly);
+          else path.lineTo(lx, ly);
+        });
+        shape.holes.push(path);
+      });
+    }
+    
     geo = new THREE.ShapeGeometry(shape);
     
     // Calculate UVs to match exactly how PlaneGeometry does it, so texture aligns
@@ -270,6 +285,8 @@ const Box3DPreview: React.FC<Box3DPreviewProps> = ({
     bf1: THREE.Group; bf2: THREE.Group; bf3: THREE.Group; bf4: THREE.Group;
     tf3Tongue?: THREE.Group;
     bf1Tongue?: THREE.Group;
+    tf3LeftEar?: THREE.Group;
+    tf3RightEar?: THREE.Group;
   } | null>(null);
 
   const [foldPercent, setFoldPercent] = useState(50);
@@ -392,8 +409,8 @@ const Box3DPreview: React.FC<Box3DPreviewProps> = ({
     let texBf1Cover: THREE.CanvasTexture | null = null;
     let texBf1Tongue: THREE.CanvasTexture | null = null;
 
-    const splitTf3 = !!(lidTongue && lidTongue > 0 && tf[2] > lidTongue * S + 0.001);
-    const splitBf1 = !!(lidTongue && lidTongue > 0 && bf[0] > lidTongue * S + 0.001);
+    const splitTf3 = boxType !== 'T0005' && boxType !== 'T0006' && !!(lidTongue && lidTongue > 0 && tf[2] > lidTongue * S + 0.001);
+    const splitBf1 = boxType !== 'T0005' && boxType !== 'T0006' && !!(lidTongue && lidTongue > 0 && bf[0] > lidTongue * S + 0.001);
 
     if (splitTf3) {
       // Top Cover & Tongue
@@ -548,6 +565,8 @@ const Box3DPreview: React.FC<Box3DPreviewProps> = ({
     tf3Pivot.add(tf3Inner);
 
     let tf3TongueG: THREE.Group | undefined = undefined;
+    let tf3LeftEarG: THREE.Group | undefined = undefined;
+    let tf3RightEarG: THREE.Group | undefined = undefined;
 
     if (hasHeight(tf[2])) {
       if (splitTf3) {
@@ -631,6 +650,8 @@ const Box3DPreview: React.FC<Box3DPreviewProps> = ({
       bf1: bf1Inner, bf2: bf2Pivot, bf3: bf3Inner, bf4: bf4Inner,
       tf3Tongue: tf3TongueG,
       bf1Tongue: bf1TongueG,
+      tf3LeftEar: tf3LeftEarG,
+      tf3RightEar: tf3RightEarG,
     };
 
     // ── Render Loop ──
@@ -703,23 +724,40 @@ const Box3DPreview: React.FC<Box3DPreviewProps> = ({
     refs.p4.rotation.y = angle1;
     refs.gluePivot.rotation.y = -angle1;
 
-    // Dust Flaps (tf1, tf2, tf4) -> rotate inwards (negative X)
-    refs.tf1.rotation.x = -angle2;
-    refs.tf2.rotation.x = -angle2;
-    refs.tf4.rotation.x = -angle2;
+    if (boxType === 'T0005' || boxType === 'T0006') {
+      // Dust Flaps (tf2, tf4, bf2, bf4) -> rotate inwards (angle2)
+      refs.tf2.rotation.x = -angle2;
+      refs.tf4.rotation.x = -angle2;
+      refs.bf2.rotation.x = angle2;
+      refs.bf4.rotation.x = angle2;
 
-    // Dust Flaps (bf2, bf3, bf4) -> rotate inwards (positive X)
-    refs.bf2.rotation.x = angle2;
-    refs.bf3.rotation.x = angle2;
-    refs.bf4.rotation.x = angle2;
+      // Tuck & Lock Flaps (tf1, tf3, bf1, bf3) -> rotate inwards (angle4)
+      refs.tf1.rotation.x = -angle4;
+      refs.tf3.rotation.x = -angle4;
+      refs.bf1.rotation.x = angle4;
+      refs.bf3.rotation.x = angle4;
+    } else {
+      // Dust Flaps (tf1, tf2, tf4) -> rotate inwards (negative X)
+      refs.tf1.rotation.x = -angle2;
+      refs.tf2.rotation.x = -angle2;
+      refs.tf4.rotation.x = -angle2;
 
-    // Lid Covers (tf3, bf1) -> rotate inwards (X)
-    refs.tf3.rotation.x = -angle4;
-    refs.bf1.rotation.x = angle4;
+      // Dust Flaps (bf2, bf3, bf4) -> rotate inwards (positive X)
+      refs.bf2.rotation.x = angle2;
+      refs.bf3.rotation.x = angle2;
+      refs.bf4.rotation.x = angle2;
+
+      // Lid Covers (tf3, bf1) -> rotate inwards (X)
+      refs.tf3.rotation.x = -angle4;
+      refs.bf1.rotation.x = angle4;
+    }
 
     // Locking Tongues (tf3Tongue, bf1Tongue) -> rotate inwards relative to covers
     if (refs.tf3Tongue) refs.tf3Tongue.rotation.x = -angle3;
     if (refs.bf1Tongue) refs.bf1Tongue.rotation.x = angle3;
+
+    
+    if (refs.tf3RightEar) refs.tf3RightEar.rotation.y = -angle3;
   }, [foldPercent]);
 
   // ── تفعيل/إيقاف الدوران التلقائي ──

@@ -1,0 +1,10 @@
+Section,Instruction
+Source of truth,Use BOX 1 MAP NEW.svg and BOX 1 TEMPLATE.svg to validate visual match. This Excel is the dynamic geometry blueprint.
+Inputs,"Only L, W, H are editable in this blueprint. All dynamic points and line endpoints derive from them."
+Units,All coordinates and lengths are in mm. Reference SVG uses a 72dpi/mm conversion but this workbook works in mm.
+Line generation,Generate each line from Dynamic_Lines X1/Y1/X2/Y2. Do not independently move line endpoints.
+Layer generation,Layer column must be respected: CUT remains cut/red; CREASE remains crease/green.
+No static geometry,Do not use the attached SVG as static output. Use it only to verify and regenerate dynamic line geometry.
+No global scale,Do not scale the whole SVG. Use the point/line formulas in this workbook.
+Connectivity,Every endpoint is a shared Dynamic_Point. This is the anti-error mechanism to keep the template closed after changes.
+Validation,"After any L/W/H change, check Dynamic_Lines has no broken connections and Angle_Rules lines keep required angles."

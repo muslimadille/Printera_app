@@ -1,0 +1,8 @@
+Test,L,W,H,Expected Delta_L,Expected Delta_W,Expected Delta_H,What to verify
+Reference,250,190,50,0,0,0,Should match source SVG dimensions
+Shorter L,240,190,50,-10,0,0,A5/creases/M1 reduce by 10mm; all right-linked points move left 10mm
+Longer L,280,190,50,30,0,0,A5/creases/M1 extend by 30mm; all connections remain closed
+Smaller W,250,170,50,0,-20,0,W verticals reduce 20mm; side flaps remain connected
+Larger W,250,300,50,0,110,0,W verticals extend 110mm; no gap or overlap
+Smaller H,250,190,40,0,0,-10,H verticals reduce 10mm; 45°/12° slants retain angles
+Larger H,250,190,60,0,0,10,H verticals extend 10mm; all tab lines remain connected

@@ -1,0 +1,80 @@
+Topic,Required System Behavior
+Core principle,Use Inputs L/W/H to regenerate every Dynamic_Point. Lines must only connect Dynamic_Point IDs from Dynamic_Lines.
+No independent endpoints,Never calculate line endpoint coordinates separately if they share a point. This workbook intentionally shares points to prevent gaps.
+L update,Change Inputs!B4. X_Right_Main changes. Right-side anchors move; L lines stretch/contract.
+W update,Change Inputs!B5. Y_Cover_Bottom/Y_Base_Bottom change. W verticals stretch/contract.
+H update,Change Inputs!B6. Y_Top_Depth_Bottom/Y_Bottom change. H verticals stretch/contract. Slants keep angle through shared anchors.
+Build from Excel,"The new system should read Inputs, Dynamic_Points, Dynamic_Lines, Angle_Rules, Mirror_Rules, Connectivity_Checks."
+SVG export,"Use SVG_Line_Export or Dynamic_Lines to create vector lines. CUT red, CREASE green."
+Precision,Use mm coordinates and keep at least 2 decimals.
+Validation,Change L/W/H test cases and verify all lines remain connected and angle groups remain stable.
+,
+V4 Update - H Lines,"H2, H3, J2, J3 were added as H mirror/counterpart lines. They must resize with Delta_H."
+V4 Update - C/D/E/F AREA,C AREA width must always equal L AREA height; implemented as width = H - 3 based on reference 47mm at H=50.
+C AREA Control Lines,C2 and C4 resize. C2 preserves 12°.
+Mirror Areas,"D, E, F areas apply the same rule using D2/D4, E4/E2, F2/F4 with correct mirrored directions."
+A6,A6 was fixed successfully; do not alter A6 in this update.
+System Priority,Use Excel dynamic rules over SVG guessing whenever they conflict.
+Connectivity,Every changed point must remain connected to its original neighboring lines.
+No Global Scale,Do not solve by scaling the whole SVG.
+Export,SVG/PDF must use computed dynamic geometry.
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,
+,

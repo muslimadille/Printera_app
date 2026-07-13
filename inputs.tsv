@@ -1,0 +1,80 @@
+BOX1 Dynamic Geometry Blueprint V3			
+Purpose	Dynamic Excel blueprint with inputs, deltas, anchors, points, lines, angles, and connectivity		
+Editable Inputs	Value (mm)	Reference	Notes
+L	250	250	Main length. Dynamic delta = L - 250
+W	190	190	Main width/panel height. Dynamic delta = W - 190
+H	50	50	Main height/depth. Dynamic delta = H - 50
+			
+Computed Deltas	Formula		
+Delta_L	0		New L - 250
+Delta_W	0		New W - 190
+Delta_H	0		New H - 50
+			
+Dynamic Base Anchors	Formula / Value	Reference Value	Meaning
+			
+X_Left_Main	65.85	65.85	Fixed left body anchor from SVG reference
+X_Right_Main	315.85	315.85	X_Left_Main + L
+Y_Cover_Top	20.35	20.35	Fixed cover top baseline from SVG reference
+Y_Cover_Bottom	210.35	210.35	Y_Cover_Top + W
+Y_Top_Depth_Bottom	260.35	260.35	Y_Cover_Top + W + H
+Y_Base_Bottom	450.35	450.35	Y_Cover_Top + 2W + H
+Y_Bottom	500.35	500.35	Y_Cover_Top + 2W + 2H
+			
+Validation	Formula	Expected	Status/Meaning
+Main_L_Check	250.00000000000003	250	Should equal current L
+Cover_W_Check	190	190	Should equal current W
+Top_H_Check	50.00000000000003	50	Should equal current H
+Bottom_H_Check	50	50	Should equal current H
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

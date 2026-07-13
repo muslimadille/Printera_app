@@ -11,6 +11,7 @@ export interface Segment {
   end: Pt;
   points?: Pt[];
   bezier?: { c1: Pt; c2: Pt };
+  d?: string;
 }
 
 interface InteractiveSvgCanvasProps {
@@ -166,6 +167,9 @@ export function InteractiveSvgCanvas({ segments: initialSegments = [], svgWidth 
         if (s.geometry === "fillet" && s.via && s.bezier) {
           return `<path d="M${s.start.x.toFixed(4)},${s.start.y.toFixed(4)} L${s.via.x.toFixed(4)},${s.via.y.toFixed(4)} C${s.bezier.c1.x.toFixed(4)},${s.bezier.c1.y.toFixed(4)} ${s.bezier.c2.x.toFixed(4)},${s.bezier.c2.y.toFixed(4)} ${s.end.x.toFixed(4)},${s.end.y.toFixed(4)}" stroke="${color}" fill="none" />`;
         }
+        if (s.d) {
+          return `<path d="${s.d}" stroke="${color}" fill="none" />`;
+        }
         if (s.geometry === "line" || !s.geometry) {
           return `<line x1="${s.start.x.toFixed(4)}" y1="${s.start.y.toFixed(4)}" x2="${s.end.x.toFixed(4)}" y2="${s.end.y.toFixed(4)}" stroke="${color}" fill="none" />`;
         }
@@ -313,6 +317,9 @@ export function InteractiveSvgCanvas({ segments: initialSegments = [], svgWidth 
             const renderShape = (props: any) => {
               if (s.geometry === "fillet" && s.via && s.bezier) {
                 return <path d={`M${s.start.x},${s.start.y} L${s.via.x},${s.via.y} C${s.bezier.c1.x},${s.bezier.c1.y} ${s.bezier.c2.x},${s.bezier.c2.y} ${s.end.x},${s.end.y}`} {...props} />;
+              }
+              if (s.d) {
+                return <path d={s.d} {...props} />;
               }
               if (s.geometry === "line" || !s.geometry) {
                 return <line x1={s.start.x} y1={s.start.y} x2={s.end.x} y2={s.end.y} {...props} />;

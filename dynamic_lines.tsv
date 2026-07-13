@@ -1,0 +1,80 @@
+Line_ID	Layer	Source_Object	Start_Point	End_Point	X1_dyn_mm	Y1_dyn_mm	X2_dyn_mm	Y2_dyn_mm	Ref_X1_mm	Ref_Y1_mm	Ref_X2_mm	Ref_Y2_mm	DX_mm	DY_mm	Length_mm	Angle_abs_deg	Affected_By	Angle_Rule	Connectivity / Build Note
+A1	CUT	CUT_31_object	P016	P015	74.85	22.35	74.85	20.35	74.85	22.35	74.85	20.35	0	-2	2	90	Fixed offset linked to L left	Vertical fixed 2mm	Left small vertical at lid start
+A2	CUT	CUT_30_object-2	P015	P017	74.85	20.35	66.35	20.35	74.85	20.35	66.35	20.35	-8.5	0	8.5	0	Linked to L left	Horizontal fixed 8.5mm	Left top short segment
+B1	CUT	CUT_30_object	P017	P010	66.35	20.35	65.85	20.35	66.35	20.35	65.85	20.35	-0.5	0	0.5	0	Linked to L left	Horizontal fixed 0.5mm	Left cover top connector
+B2	CUT	CUT_17_object	P010	P004	65.85	20.35	65.85	210.35	65.85	20.35	65.85	210.35	0	190	190	90	W	Vertical length = W	Left cover side stretches with W
+B3	CUT	CUT_13_object	P020	P009	315.35	20.35	315.85	20.35	315.35	20.35	315.85	20.35	0.5	0	0.5	0	Linked to L right	Horizontal fixed 0.5mm	Right cover top connector
+B4	CUT	CUT_2_object	P009	P003	315.85	20.35	315.85	210.35	315.85	20.35	315.85	210.35	0	190	190	90	W	Vertical length = W	Right cover side stretches with W
+A7	CUT	CUT_12_object	P021	P020	315.35	12.350000000000001	315.35	20.35	315.35	12.35	315.35	20.35	0	8	8	90	Linked to L right	Vertical fixed 8mm	Right lid vertical short segment
+A8	CUT	CUT_13_object-2	P018	P020	306.85	20.35	315.35	20.35	306.85	20.35	315.35	20.35	8.5	0	8.5	0	Linked to L right	Horizontal fixed 8.5mm	Right lid short segment
+A9	CUT	CUT_35_object	P019	P018	306.85	22.35	306.85	20.35	306.85	22.35	306.85	20.35	0	-2	2	90	Linked to L right	Vertical fixed 2mm	Right small vertical at lid start
+A5	CUT	CUT_46_object	P011	P012	78.35	0.3500000000000014	303.35	0.3500000000000014	78.35	0.35	303.35	0.35	225.00000000000003	0	225.00000000000003	0	L	Horizontal length = L - 25mm	Top lid straight segment stretches with L
+C5	CUT	C5	P004	P026	65.85	210.35	62.849999999999994	213.35	65.85	210.35	62.85	213.35	-3	3	4.242640687119285	45	H linked	45 degrees	Upper-left depth tab: fixed 45° corner
+C4	CUT	C4	P026	P027	62.849999999999994	213.35	15.849999999999994	213.35	62.85	213.35	15.85	213.35	-47	0	47	0	H / C_AREA_WIDTH	Horizontal length = C_AREA_Width = H - 3	C4 resizes so C AREA width always equals L AREA height.
+C3	CUT	CUT_44_object	P027	P028	15.849999999999994	213.35	15.849999999999994	247.35000000000002	15.85	213.35	15.85	247.35	0	34.00000000000003	34.00000000000003	90	H	Vertical length = H - 16mm	Upper-left tab vertical stretches with H
+C2	CUT	CUT_18_object	P029	P028	62.849999999999994	257.35	15.849999999999994	247.35000000000002	62.85	257.35	15.85	247.35	-47	-10	48.05205510693585	12.011478386365443	H / C_AREA_WIDTH	12°; horizontal = H - 3; vertical = (H - 3)*TAN(12°)	C2 resizes with C AREA while preserving its 12° angle and endpoint connections.
+C1	CUT	CUT_43_object	P002	P029	65.85	260.35	62.849999999999994	257.35	65.85	260.35	62.85	257.35	-3	-3	4.242640687119285	45	H linked	45 degrees	Upper-left tab lower 45°
+D5	CUT	CUT_36_object	P003	P022	315.85	210.35	318.85	213.35	315.85	210.35	318.85	213.35	3	3	4.242640687119285	45	H linked	45 degrees	Upper-right tab upper 45°
+D4	CUT	CUT_5_object	P022	P023	318.85	213.35	365.85	213.35	318.85	213.35	365.85	213.35	47	0	47	0	H / D_AREA_WIDTH mirror of C4	Horizontal length = D_AREA_Width = H - 3	D4 mirrors C4; resize according to same C AREA rule in D direction.
+D3	CUT	CUT_37_object	P023	P024	365.85	213.35	365.85	247.35000000000002	365.85	213.35	365.85	247.35	0	34.00000000000003	34.00000000000003	90	H	Vertical length = H - 16mm	Upper-right tab vertical stretches with H
+D2	CUT	CUT_38_object	P025	P024	318.85	257.35	365.85	247.35000000000002	318.85	257.35	365.85	247.35	47	-10	48.05205510693585	12.011478386365443	H / D_AREA_WIDTH mirror of C2	12°; horizontal = H - 3; vertical = (H - 3)*TAN(12°)	D2 mirrors C2; preserve 12° while resizing in D direction.
+D1	CUT	CUT_3_object	P001	P025	315.85	260.35	318.85	257.35	315.85	260.35	318.85	257.35	3	-3	4.242640687119285	45	H linked	45 degrees	Upper-right tab lower 45°
+J4	CUT	CUT_11_object	P001	P038	315.85	260.35	316.85	261.35	315.85	260.35	316.85	261.35	1	1	1.4142135623730951	45	Linked	45 degrees fixed 1mm	Right main side top connector
+J3	CUT	CUT_4_object	P038	P039	316.85	261.35	365.85	261.35	316.85	261.35	365.85	261.35	49	0	49	0	Linked	Horizontal fixed 49mm	Right side top horizontal
+J2	CUT	CUT_14_object	P040	P041	316.85	449.35	365.85	449.35	316.85	449.35	365.85	449.35	49	0	49	0	H mirror/counterpart	Horizontal length = 49mm + Delta_H	J3 is H-linked mirror/counterpart; it must stretch/shrink with H and keep both endpoints connected.
+J1	CUT	CUT_15_object	P005	P040	315.85	450.35	316.85	449.35	315.85	450.35	316.85	449.35	1	-1	1.4142135623730951	45	H mirror/counterpart	Horizontal length = 49mm + Delta_H	J2 is H-linked mirror/counterpart; it must stretch/shrink with H and keep both endpoints connected.
+I4	CUT	CUT_9_object	P044	P039	381.35	264.97	365.85	261.35	381.35	264.97	365.85	261.35	-15.5	-3.6200000000000045	15.917110290501855	13.145707214565922	W linked	12 degrees	Right outer top slant keeps 12°
+I3	CUT	CUT_16_object	P043	P044	381.35	445.73	381.35	264.97	381.35	445.73	381.35	264.97	0	-180.76	180.76	90	W	Vertical linked to W	Right outer vertical changes with W
+I2	CUT	CUT_10_object	P042	P043	371.85	449.35	381.35	445.73	371.85	449.35	381.35	445.73	9.5	-3.6200000000000045	10.166336606664174	20.85947386548809	W linked	20.85 degrees	Right outer lower slant keeps 20.85°
+I1	CUT	CUT_41_object	P041	P042	365.85	449.35	371.85	449.35	365.85	449.35	371.85	449.35	6	0	6	0	Linked	Horizontal fixed 6mm	Right lower small horizontal
+H4	CUT	CUT_28_object	P002	P045	65.85	260.35	64.85	261.35	65.85	260.35	64.85	261.35	-1	1	1.4142135623730951	45	Linked	45 degrees fixed 1mm	Left main side top connector
+H3	CUT	CUT_19_object	P045	P046	64.85	261.35	15.849999999999994	261.35	64.85	261.35	15.85	261.35	-49	0	49	0	H mirror/counterpart	Horizontal length = 49mm + Delta_H	H3 is H-linked mirror/counterpart; it must stretch/shrink with H and keep both endpoints connected.
+H2	CUT	CUT_32_object	P047	P048	64.85	449.35	15.849999999999994	449.35	64.85	449.35	15.85	449.35	-49	0	49	0	H mirror/counterpart	Horizontal length = 49mm + Delta_H	H2 is H-linked mirror/counterpart; it must stretch/shrink with H and keep both endpoints connected.
+H1	CUT	CUT_33_object	P006	P047	65.85	450.35	64.85	449.35	65.85	450.35	64.85	449.35	-1	-1	1.4142135623730951	45	Linked	45 degrees fixed 1mm	Left main side bottom connector
+G4	CUT	CUT_26_object	P051	P046	0.3499999999999943	264.97	15.849999999999994	261.35	0.35	264.97	15.85	261.35	15.5	-3.6200000000000045	15.917110290501855	13.145707214565922	W linked	12 degrees	Left outer top slant keeps 12°
+G3	CUT	CUT_34_object	P050	P051	0.3499999999999943	445.73	0.3499999999999943	264.97	0.35	445.73	0.35	264.97	0	-180.76	180.76	90	W	Vertical linked to W	Left outer vertical changes with W
+G2	CUT	CUT_27_object	P049	P050	9.849999999999994	449.35	0.3499999999999943	445.73	9.85	449.35	0.35	445.73	-9.5	-3.6200000000000045	10.166336606664174	20.85947386548809	W linked	20.85 degrees	Left outer lower slant keeps 20.85°
+G1	CUT	CUT_42_object	P048	P049	15.849999999999994	449.35	9.849999999999994	449.35	15.85	449.35	9.85	449.35	-6	0	6	0	Linked	Horizontal fixed 6mm	Left lower small horizontal
+F1	CUT	CUT_7_object	P005	P030	315.85	450.35	318.85	453.35	315.85	450.35	318.85	453.35	3	3	4.242640687119285	45	H linked	45 degrees	Bottom-right tab upper 45°
+F2	CUT	CUT_39_object	P030	P031	318.85	453.35	365.85	463.35	318.85	453.35	365.85	463.35	47	10	48.05205510693585	12.011478386365443	H / F_AREA_WIDTH mirror of C2	12°; horizontal = H - 3; vertical = (H - 3)*TAN(12°)	F2 mirrors C2; preserve 12° while resizing in F direction.
+F3	CUT	CUT_40_object	P032	P031	365.85	497.35	365.85	463.35	365.85	497.35	365.85	463.35	0	-34	34	90	H	Vertical length = H - 16mm	Bottom-right tab vertical stretches with H
+F4	CUT	CUT_8_object	P033	P032	318.85	497.35	365.85	497.35	318.85	497.35	365.85	497.35	47	0	47	0	H / F_AREA_WIDTH mirror of C4	Horizontal length = F_AREA_Width = H - 3	F4 mirrors C4; resize according to same C AREA rule in F direction.
+F5	CUT	CUT_6_object	P007	P033	315.85	500.35	318.85	497.35	315.85	500.35	318.85	497.35	3	-3	4.242640687119285	45	H linked	45 degrees	Bottom-right tab lower 45°
+E1	CUT	CUT_21_object	P008	P037	65.85	500.35	62.849999999999994	497.35	65.85	500.35	62.85	497.35	-3	-3	4.242640687119285	45	H linked	45 degrees	Bottom-left tab lower 45°
+E2	CUT	CUT_24_object	P037	P036	62.849999999999994	497.35	15.849999999999994	497.35	62.85	497.35	15.85	497.35	-47	0	47	0	H / E_AREA_WIDTH mirror of C4	Horizontal length = E_AREA_Width = H - 3	E2 mirrors C4; resize according to same C AREA rule in E direction.
+E3	CUT	CUT_25_object	P036	P035	15.849999999999994	497.35	15.849999999999994	463.35	15.85	497.35	15.85	463.35	0	-34	34	90	H	Vertical length = H - 16mm	Bottom-left tab vertical stretches with H
+E4	CUT	CUT_22_object	P034	P035	62.849999999999994	453.35	15.849999999999994	463.35	62.85	453.35	15.85	463.35	-47	10	48.05205510693585	12.011478386365443	H / E_AREA_WIDTH mirror of C2	12°; horizontal = H - 3; vertical = (H - 3)*TAN(12°)	E4 mirrors C2; preserve 12° while resizing in E direction.
+E5	CUT	CUT_23_object	P006	P034	65.85	450.35	62.849999999999994	453.35	65.85	450.35	62.85	453.35	-3	3	4.242640687119285	45	H linked	45 degrees	Bottom-left tab upper 45°
+M1	CUT	M1 / CUT_1_object	P007	P008	315.85	500.35	65.85	500.35	315.85	500.35	65.85	500.35	-250.00000000000003	0	250.00000000000003	0	L	Horizontal length = L	Bottom main cut line stretches with L
+CREASE1	CREASE	CREASE_1_object	P001	P002	315.85	260.35	65.85	260.35	315.85	260.35	65.85	260.35	-250.00000000000003	0	250.00000000000003	0	L	Horizontal length = L	Main horizontal crease
+CREASE2	CREASE	CREASE_2_object	P006	P005	65.85	450.35	315.85	450.35	65.85	450.35	315.85	450.35	250.00000000000003	0	250.00000000000003	0	L	Horizontal length = L	Main horizontal crease
+CREASE3	CREASE	CREASE_3_object	P004	P003	65.85	210.35	315.85	210.35	65.85	210.35	315.85	210.35	250.00000000000003	0	250.00000000000003	0	L	Horizontal length = L	Main horizontal crease
+CREASE4	CREASE	CREASE_4_object	P013	P014	74.85	21.35	306.85	21.35	74.85	21.35	306.85	21.35	232.00000000000003	0	232.00000000000003	0	L	Horizontal length = L - 18mm	Top cover/lid crease
+CREASE5	CREASE	CREASE_5_object	P038	P052	316.85	261.35	381.35	325.85	316.85	261.35	381.35	325.85	64.5	64.5	91.21677477306463	45	Fixed-angle linked	45 degrees	Right upper diagonal crease
+CREASE6	CREASE	CREASE_6_object	P039	P041	365.85	261.35	365.85	449.35	365.85	261.35	365.85	449.35	0	188	188	90	W	Vertical length = W - 2mm	Right vertical crease
+CREASE7	CREASE	CREASE_7_object	P040	P053	316.85	449.35	381.35	384.85	316.85	449.35	381.35	384.85	64.5	-64.5	91.21677477306463	45	Fixed-angle linked	45 degrees	Right lower diagonal crease
+CREASE8	CREASE	CREASE_8_object	P045	P054	64.85	261.35	0.3499999999999943	325.85	64.85	261.35	0.35	325.85	-64.5	64.5	91.21677477306463	45	Fixed-angle linked	45 degrees	Left upper diagonal crease
+CREASE9	CREASE	CREASE_9_object	P046	P048	15.849999999999994	261.35	15.849999999999994	449.35	15.85	261.35	15.85	449.35	0	188	188	90	W	Vertical length = W - 2mm	Left vertical crease
+CREASE10	CREASE	CREASE_10_object	P047	P055	64.85	449.35	0.3499999999999943	384.85	64.85	449.35	0.35	384.85	-64.5	-64.5	91.21677477306463	45	Fixed-angle linked	45 degrees	Left lower diagonal crease
+CREASE11	CREASE	CREASE_11_object	P001	P003	315.85	260.35	315.85	210.35	315.85	260.35	315.85	210.35	0	-50.00000000000003	50.00000000000003	90	H	Vertical length = H	Right upper H crease
+CREASE12	CREASE	CREASE_12_object	P007	P005	315.85	500.35	315.85	450.35	315.85	500.35	315.85	450.35	0	-50	50	90	H	Vertical length = H	Right lower H crease
+CREASE13	CREASE	CREASE_13_object	P005	P001	315.85	450.35	315.85	260.35	315.85	450.35	315.85	260.35	0	-190	190	90	W	Vertical length = W	Right main W crease
+CREASE14	CREASE	CREASE_14_object	P002	P004	65.85	260.35	65.85	210.35	65.85	260.35	65.85	210.35	0	-50.00000000000003	50.00000000000003	90	H	Vertical length = H	Left upper H crease
+CREASE15	CREASE	CREASE_15_object	P008	P006	65.85	500.35	65.85	450.35	65.85	500.35	65.85	450.35	0	-50	50	90	H	Vertical length = H	Left lower H crease
+CREASE16	CREASE	CREASE_16_object	P006	P002	65.85	450.35	65.85	260.35	65.85	450.35	65.85	260.35	0	-190	190	90	W	Vertical length = W	Left main W crease
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,720 @@
+
+--- Sheet: Inputs ---
+BOX1 Dynamic Geometry Blueprint V3			
+Purpose	Dynamic Excel blueprint with inputs, deltas, anchors, points, lines, angles, and connectivity		
+Editable Inputs	Value (mm)	Reference	Notes
+L	250	250	Main length. Dynamic delta = L - 250
+W	190	190	Main width/panel height. Dynamic delta = W - 190
+H	50	50	Main height/depth. Dynamic delta = H - 50
+			
+Computed Deltas	Formula		
+Delta_L	0		New L - 250
+Delta_W	0		New W - 190
+Delta_H	0		New H - 50
+			
+Dynamic Base Anchors	Formula / Value	Reference Value	Meaning
+			
+X_Left_Main	65.85	65.85	Fixed left body anchor from SVG reference
+X_Right_Main	315.85	315.85	X_Left_Main + L
+Y_Cover_Top	20.35	20.35	Fixed cover top baseline from SVG reference
+Y_Cover_Bottom	210.35	210.35	Y_Cover_Top + W
+Y_Top_Depth_Bottom	260.35	260.35	Y_Cover_Top + W + H
+Y_Base_Bottom	450.35	450.35	Y_Cover_Top + 2W + H
+Y_Bottom	500.35	500.35	Y_Cover_Top + 2W + 2H
+			
+Validation	Formula	Expected	Status/Meaning
+Main_L_Check	250.00000000000003	250	Should equal current L
+Cover_W_Check	190	190	Should equal current W
+Top_H_Check	50.00000000000003	50	Should equal current H
+Bottom_H_Check	50	50	Should equal current H
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--- Sheet: Dynamic_Points ---
+Point_ID	Description	Rule / Meaning	Ref_X_mm	Dyn_X_mm	Ref_Y_mm	Dyn_Y_mm	Connected_Lines
+P001	Right main corner: top-depth/base hinge	Dynamic anchor from Inputs; shared by all connected lines	315.85	315.85	260.35	260.35	D1, J4, CREASE1, CREASE11, CREASE13
+P002	Left main corner: top-depth/base hinge	Dynamic anchor from Inputs; shared by all connected lines	65.85	65.85	260.35	260.35	C1, H4, CREASE1, CREASE14, CREASE16
+P003	Right cover-bottom / top-depth start	Dynamic anchor from Inputs; shared by all connected lines	315.85	315.85	210.35	210.35	B4, D5, CREASE3, CREASE11
+P004	Left cover-bottom / top-depth start	Dynamic anchor from Inputs; shared by all connected lines	65.85	65.85	210.35	210.35	B2, C5, CREASE3, CREASE14
+P005	Right base-bottom / bottom-depth start	Dynamic anchor from Inputs; shared by all connected lines	315.85	315.85	450.35	450.35	J1, F1, CREASE2, CREASE12, CREASE13
+P006	Left base-bottom / bottom-depth start	Dynamic anchor from Inputs; shared by all connected lines	65.85	65.85	450.35	450.35	H1, E5, CREASE2, CREASE15, CREASE16
+P007	Right bottom of template	Dynamic anchor from Inputs; shared by all connected lines	315.85	315.85	500.35	500.35	F5, M1, CREASE12
+P008	Left bottom of template	Dynamic anchor from Inputs; shared by all connected lines	65.85	65.85	500.35	500.35	E1, M1, CREASE15
+P009	Right cover top	Dynamic anchor from Inputs; shared by all connected lines	315.85	315.85	20.35	20.35	B3, B4
+P010	Left cover top	Dynamic anchor from Inputs; shared by all connected lines	65.85	65.85	20.35	20.35	B1, B2
+P011	Top lid straight left; A5 stretches with L	Dynamic anchor from Inputs; shared by all connected lines	78.35	78.35	0.35	0.3500000000000014	A5
+P012	Top lid straight right; A5 stretches with L	Dynamic anchor from Inputs; shared by all connected lines	303.35	303.35	0.35	0.3500000000000014	A5
+P013	CREASE4 left; L-dependent	Dynamic anchor from Inputs; shared by all connected lines	74.85	74.85	21.35	21.35	CREASE4
+P014	CREASE4 right; L-dependent	Dynamic anchor from Inputs; shared by all connected lines	306.85	306.85	21.35	21.35	CREASE4
+P015	A1 top	Dynamic anchor from Inputs; shared by all connected lines	74.85	74.85	20.35	20.35	A1, A2
+P016	A1 bottom	Dynamic anchor from Inputs; shared by all connected lines	74.85	74.85	22.35	22.35	A1
+P017	A2/B1 connector left	Dynamic anchor from Inputs; shared by all connected lines	66.35	66.35	20.35	20.35	A2, B1
+P018	A9 top	Dynamic anchor from Inputs; shared by all connected lines	306.85	306.85	20.35	20.35	A8, A9
+P019	A9 bottom	Dynamic anchor from Inputs; shared by all connected lines	306.85	306.85	22.35	22.35	A9
+P020	A8/B3 connector right	Dynamic anchor from Inputs; shared by all connected lines	315.35	315.35	20.35	20.35	B3, A7, A8
+P021	A7 top	Dynamic anchor from Inputs; shared by all connected lines	315.35	315.35	12.35	12.350000000000001	A7
+P022	D5 end / D4 start	Dynamic anchor from Inputs; shared by all connected lines	318.85	318.85	213.35	213.35	D5, D4
+P023	D4 end / D3 start	Dynamic anchor from Inputs; shared by all connected lines	365.85	365.85	213.35	213.35	D4, D3
+P024	D3 end / D2 end; H-dependent	Dynamic anchor from Inputs; shared by all connected lines	365.85	365.85	247.35	247.35000000000002	D3, D2
+P025	D2 start / D1 end	Dynamic anchor from Inputs; shared by all connected lines	318.85	318.85	257.35	257.35	D2, D1
+P026	C5 end / C4 start	Dynamic anchor from Inputs; shared by all connected lines	62.85	62.849999999999994	213.35	213.35	C5, C4
+P027	C4 end / C3 start	Dynamic anchor from Inputs; shared by all connected lines	15.85	15.849999999999994	213.35	213.35	C4, C3
+P028	C3 end / C2 end; H-dependent	Dynamic anchor from Inputs; shared by all connected lines	15.85	15.849999999999994	247.35	247.35000000000002	C3, C2
+P029	C2 start / C1 end	Dynamic anchor from Inputs; shared by all connected lines	62.85	62.849999999999994	257.35	257.35	C2, C1
+P030	F1 end / F2 start	Dynamic anchor from Inputs; shared by all connected lines	318.85	318.85	453.35	453.35	F1, F2
+P031	F2 end / F3 end	Dynamic anchor from Inputs; shared by all connected lines	365.85	365.85	463.35	463.35	F2, F3
+P032	F3 start / F4 end	Dynamic anchor from Inputs; shared by all connected lines	365.85	365.85	497.35	497.35	F3, F4
+P033	F4 start / F5 end	Dynamic anchor from Inputs; shared by all connected lines	318.85	318.85	497.35	497.35	F4, F5
+P034	E5 end / E4 start	Dynamic anchor from Inputs; shared by all connected lines	62.85	62.849999999999994	453.35	453.35	E4, E5
+P035	E4 end / E3 end	Dynamic anchor from Inputs; shared by all connected lines	15.85	15.849999999999994	463.35	463.35	E3, E4
+P036	E3 start / E2 end	Dynamic anchor from Inputs; shared by all connected lines	15.85	15.849999999999994	497.35	497.35	E2, E3
+P037	E2 start / E1 end	Dynamic anchor from Inputs; shared by all connected lines	62.85	62.849999999999994	497.35	497.35	E1, E2
+P038	J4 end / J3 start	Dynamic anchor from Inputs; shared by all connected lines	316.85	316.85	261.35	261.35	J4, J3, CREASE5
+P039	J3 end / I4 end / crease6 top	Dynamic anchor from Inputs; shared by all connected lines	365.85	365.85	261.35	261.35	J3, I4, CREASE6
+P040	J2 start / J1 end	Dynamic anchor from Inputs; shared by all connected lines	316.85	316.85	449.35	449.35	J2, J1, CREASE7
+P041	J2 end / I1 start / crease6 bottom	Dynamic anchor from Inputs; shared by all connected lines	365.85	365.85	449.35	449.35	J2, I1, CREASE6
+P042	I1 end / I2 start	Dynamic anchor from Inputs; shared by all connected lines	371.85	371.85	449.35	449.35	I2, I1
+P043	I2 end / I3 start	Dynamic anchor from Inputs; shared by all connected lines	381.35	381.35	445.73	445.73	I3, I2
+P044	I3 end / I4 start	Dynamic anchor from Inputs; shared by all connected lines	381.35	381.35	264.97	264.97	I4, I3
+P045	H4 end / H3 start	Dynamic anchor from Inputs; shared by all connected lines	64.85	64.85	261.35	261.35	H4, H3, CREASE8
+P046	H3 end / G4 end / crease9 top	Dynamic anchor from Inputs; shared by all connected lines	15.85	15.849999999999994	261.35	261.35	H3, G4, CREASE9
+P047	H2 start / H1 end	Dynamic anchor from Inputs; shared by all connected lines	64.85	64.85	449.35	449.35	H2, H1, CREASE10
+P048	H2 end / G1 start / crease9 bottom	Dynamic anchor from Inputs; shared by all connected lines	15.85	15.849999999999994	449.35	449.35	H2, G1, CREASE9
+P049	G1 end / G2 start	Dynamic anchor from Inputs; shared by all connected lines	9.85	9.849999999999994	449.35	449.35	G2, G1
+P050	G2 end / G3 start	Dynamic anchor from Inputs; shared by all connected lines	0.35	0.3499999999999943	445.73	445.73	G3, G2
+P051	G3 end / G4 start	Dynamic anchor from Inputs; shared by all connected lines	0.35	0.3499999999999943	264.97	264.97	G4, G3
+P052	CREASE5 end; 45 degrees	Dynamic anchor from Inputs; shared by all connected lines	381.35	381.35	325.85	325.85	CREASE5
+P053	CREASE7 end; 45 degrees	Dynamic anchor from Inputs; shared by all connected lines	381.35	381.35	384.85	384.85	CREASE7
+P054	CREASE8 end; 45 degrees	Dynamic anchor from Inputs; shared by all connected lines	0.35	0.3499999999999943	325.85	325.85	CREASE8
+P055	CREASE10 end; 45 degrees	Dynamic anchor from Inputs; shared by all connected lines	0.35	0.3499999999999943	384.85	384.85	CREASE10
+--- Sheet: Dynamic_Lines ---
+Line_ID	Layer	Source_Object	Start_Point	End_Point	X1_dyn_mm	Y1_dyn_mm	X2_dyn_mm	Y2_dyn_mm	Ref_X1_mm	Ref_Y1_mm	Ref_X2_mm	Ref_Y2_mm	DX_mm	DY_mm	Length_mm	Angle_abs_deg	Affected_By	Angle_Rule	Connectivity / Build Note
+A1	CUT	CUT_31_object	P016	P015	74.85	22.35	74.85	20.35	74.85	22.35	74.85	20.35	0	-2	2	90	Fixed offset linked to L left	Vertical fixed 2mm	Left small vertical at lid start
+A2	CUT	CUT_30_object-2	P015	P017	74.85	20.35	66.35	20.35	74.85	20.35	66.35	20.35	-8.5	0	8.5	0	Linked to L left	Horizontal fixed 8.5mm	Left top short segment
+B1	CUT	CUT_30_object	P017	P010	66.35	20.35	65.85	20.35	66.35	20.35	65.85	20.35	-0.5	0	0.5	0	Linked to L left	Horizontal fixed 0.5mm	Left cover top connector
+B2	CUT	CUT_17_object	P010	P004	65.85	20.35	65.85	210.35	65.85	20.35	65.85	210.35	0	190	190	90	W	Vertical length = W	Left cover side stretches with W
+B3	CUT	CUT_13_object	P020	P009	315.35	20.35	315.85	20.35	315.35	20.35	315.85	20.35	0.5	0	0.5	0	Linked to L right	Horizontal fixed 0.5mm	Right cover top connector
+B4	CUT	CUT_2_object	P009	P003	315.85	20.35	315.85	210.35	315.85	20.35	315.85	210.35	0	190	190	90	W	Vertical length = W	Right cover side stretches with W
+A7	CUT	CUT_12_object	P021	P020	315.35	12.350000000000001	315.35	20.35	315.35	12.35	315.35	20.35	0	8	8	90	Linked to L right	Vertical fixed 8mm	Right lid vertical short segment
+A8	CUT	CUT_13_object-2	P018	P020	306.85	20.35	315.35	20.35	306.85	20.35	315.35	20.35	8.5	0	8.5	0	Linked to L right	Horizontal fixed 8.5mm	Right lid short segment
+A9	CUT	CUT_35_object	P019	P018	306.85	22.35	306.85	20.35	306.85	22.35	306.85	20.35	0	-2	2	90	Linked to L right	Vertical fixed 2mm	Right small vertical at lid start
+A5	CUT	CUT_46_object	P011	P012	78.35	0.3500000000000014	303.35	0.3500000000000014	78.35	0.35	303.35	0.35	225.00000000000003	0	225.00000000000003	0	L	Horizontal length = L - 25mm	Top lid straight segment stretches with L
+C5	CUT	C5	P004	P026	65.85	210.35	62.849999999999994	213.35	65.85	210.35	62.85	213.35	-3	3	4.242640687119285	45	H linked	45 degrees	Upper-left depth tab: fixed 45° corner
+C4	CUT	C4	P026	P027	62.849999999999994	213.35	15.849999999999994	213.35	62.85	213.35	15.85	213.35	-47	0	47	0	H / C_AREA_WIDTH	Horizontal length = C_AREA_Width = H - 3	C4 resizes so C AREA width always equals L AREA height.
+C3	CUT	CUT_44_object	P027	P028	15.849999999999994	213.35	15.849999999999994	247.35000000000002	15.85	213.35	15.85	247.35	0	34.00000000000003	34.00000000000003	90	H	Vertical length = H - 16mm	Upper-left tab vertical stretches with H
+C2	CUT	CUT_18_object	P029	P028	62.849999999999994	257.35	15.849999999999994	247.35000000000002	62.85	257.35	15.85	247.35	-47	-10	48.05205510693585	12.011478386365443	H / C_AREA_WIDTH	12°; horizontal = H - 3; vertical = (H - 3)*TAN(12°)	C2 resizes with C AREA while preserving its 12° angle and endpoint connections.
+C1	CUT	CUT_43_object	P002	P029	65.85	260.35	62.849999999999994	257.35	65.85	260.35	62.85	257.35	-3	-3	4.242640687119285	45	H linked	45 degrees	Upper-left tab lower 45°
+D5	CUT	CUT_36_object	P003	P022	315.85	210.35	318.85	213.35	315.85	210.35	318.85	213.35	3	3	4.242640687119285	45	H linked	45 degrees	Upper-right tab upper 45°
+D4	CUT	CUT_5_object	P022	P023	318.85	213.35	365.85	213.35	318.85	213.35	365.85	213.35	47	0	47	0	H / D_AREA_WIDTH mirror of C4	Horizontal length = D_AREA_Width = H - 3	D4 mirrors C4; resize according to same C AREA rule in D direction.
+D3	CUT	CUT_37_object	P023	P024	365.85	213.35	365.85	247.35000000000002	365.85	213.35	365.85	247.35	0	34.00000000000003	34.00000000000003	90	H	Vertical length = H - 16mm	Upper-right tab vertical stretches with H
+D2	CUT	CUT_38_object	P025	P024	318.85	257.35	365.85	247.35000000000002	318.85	257.35	365.85	247.35	47	-10	48.05205510693585	12.011478386365443	H / D_AREA_WIDTH mirror of C2	12°; horizontal = H - 3; vertical = (H - 3)*TAN(12°)	D2 mirrors C2; preserve 12° while resizing in D direction.
+D1	CUT	CUT_3_object	P001	P025	315.85	260.35	318.85	257.35	315.85	260.35	318.85	257.35	3	-3	4.242640687119285	45	H linked	45 degrees	Upper-right tab lower 45°
+J4	CUT	CUT_11_object	P001	P038	315.85	260.35	316.85	261.35	315.85	260.35	316.85	261.35	1	1	1.4142135623730951	45	Linked	45 degrees fixed 1mm	Right main side top connector
+J3	CUT	CUT_4_object	P038	P039	316.85	261.35	365.85	261.35	316.85	261.35	365.85	261.35	49	0	49	0	Linked	Horizontal fixed 49mm	Right side top horizontal
+J2	CUT	CUT_14_object	P040	P041	316.85	449.35	365.85	449.35	316.85	449.35	365.85	449.35	49	0	49	0	H mirror/counterpart	Horizontal length = 49mm + Delta_H	J3 is H-linked mirror/counterpart; it must stretch/shrink with H and keep both endpoints connected.
+J1	CUT	CUT_15_object	P005	P040	315.85	450.35	316.85	449.35	315.85	450.35	316.85	449.35	1	-1	1.4142135623730951	45	H mirror/counterpart	Horizontal length = 49mm + Delta_H	J2 is H-linked mirror/counterpart; it must stretch/shrink with H and keep both endpoints connected.
+I4	CUT	CUT_9_object	P044	P039	381.35	264.97	365.85	261.35	381.35	264.97	365.85	261.35	-15.5	-3.6200000000000045	15.917110290501855	13.145707214565922	W linked	12 degrees	Right outer top slant keeps 12°
+I3	CUT	CUT_16_object	P043	P044	381.35	445.73	381.35	264.97	381.35	445.73	381.35	264.97	0	-180.76	180.76	90	W	Vertical linked to W	Right outer vertical changes with W
+I2	CUT	CUT_10_object	P042	P043	371.85	449.35	381.35	445.73	371.85	449.35	381.35	445.73	9.5	-3.6200000000000045	10.166336606664174	20.85947386548809	W linked	20.85 degrees	Right outer lower slant keeps 20.85°
+I1	CUT	CUT_41_object	P041	P042	365.85	449.35	371.85	449.35	365.85	449.35	371.85	449.35	6	0	6	0	Linked	Horizontal fixed 6mm	Right lower small horizontal
+H4	CUT	CUT_28_object	P002	P045	65.85	260.35	64.85	261.35	65.85	260.35	64.85	261.35	-1	1	1.4142135623730951	45	Linked	45 degrees fixed 1mm	Left main side top connector
+H3	CUT	CUT_19_object	P045	P046	64.85	261.35	15.849999999999994	261.35	64.85	261.35	15.85	261.35	-49	0	49	0	H mirror/counterpart	Horizontal length = 49mm + Delta_H	H3 is H-linked mirror/counterpart; it must stretch/shrink with H and keep both endpoints connected.
+H2	CUT	CUT_32_object	P047	P048	64.85	449.35	15.849999999999994	449.35	64.85	449.35	15.85	449.35	-49	0	49	0	H mirror/counterpart	Horizontal length = 49mm + Delta_H	H2 is H-linked mirror/counterpart; it must stretch/shrink with H and keep both endpoints connected.
+H1	CUT	CUT_33_object	P006	P047	65.85	450.35	64.85	449.35	65.85	450.35	64.85	449.35	-1	-1	1.4142135623730951	45	Linked	45 degrees fixed 1mm	Left main side bottom connector
+G4	CUT	CUT_26_object	P051	P046	0.3499999999999943	264.97	15.849999999999994	261.35	0.35	264.97	15.85	261.35	15.5	-3.6200000000000045	15.917110290501855	13.145707214565922	W linked	12 degrees	Left outer top slant keeps 12°
+G3	CUT	CUT_34_object	P050	P051	0.3499999999999943	445.73	0.3499999999999943	264.97	0.35	445.73	0.35	264.97	0	-180.76	180.76	90	W	Vertical linked to W	Left outer vertical changes with W
+G2	CUT	CUT_27_object	P049	P050	9.849999999999994	449.35	0.3499999999999943	445.73	9.85	449.35	0.35	445.73	-9.5	-3.6200000000000045	10.166336606664174	20.85947386548809	W linked	20.85 degrees	Left outer lower slant keeps 20.85°
+G1	CUT	CUT_42_object	P048	P049	15.849999999999994	449.35	9.849999999999994	449.35	15.85	449.35	9.85	449.35	-6	0	6	0	Linked	Horizontal fixed 6mm	Left lower small horizontal
+F1	CUT	CUT_7_object	P005	P030	315.85	450.35	318.85	453.35	315.85	450.35	318.85	453.35	3	3	4.242640687119285	45	H linked	45 degrees	Bottom-right tab upper 45°
+F2	CUT	CUT_39_object	P030	P031	318.85	453.35	365.85	463.35	318.85	453.35	365.85	463.35	47	10	48.05205510693585	12.011478386365443	H / F_AREA_WIDTH mirror of C2	12°; horizontal = H - 3; vertical = (H - 3)*TAN(12°)	F2 mirrors C2; preserve 12° while resizing in F direction.
+F3	CUT	CUT_40_object	P032	P031	365.85	497.35	365.85	463.35	365.85	497.35	365.85	463.35	0	-34	34	90	H	Vertical length = H - 16mm	Bottom-right tab vertical stretches with H
+F4	CUT	CUT_8_object	P033	P032	318.85	497.35	365.85	497.35	318.85	497.35	365.85	497.35	47	0	47	0	H / F_AREA_WIDTH mirror of C4	Horizontal length = F_AREA_Width = H - 3	F4 mirrors C4; resize according to same C AREA rule in F direction.
+F5	CUT	CUT_6_object	P007	P033	315.85	500.35	318.85	497.35	315.85	500.35	318.85	497.35	3	-3	4.242640687119285	45	H linked	45 degrees	Bottom-right tab lower 45°
+E1	CUT	CUT_21_object	P008	P037	65.85	500.35	62.849999999999994	497.35	65.85	500.35	62.85	497.35	-3	-3	4.242640687119285	45	H linked	45 degrees	Bottom-left tab lower 45°
+E2	CUT	CUT_24_object	P037	P036	62.849999999999994	497.35	15.849999999999994	497.35	62.85	497.35	15.85	497.35	-47	0	47	0	H / E_AREA_WIDTH mirror of C4	Horizontal length = E_AREA_Width = H - 3	E2 mirrors C4; resize according to same C AREA rule in E direction.
+E3	CUT	CUT_25_object	P036	P035	15.849999999999994	497.35	15.849999999999994	463.35	15.85	497.35	15.85	463.35	0	-34	34	90	H	Vertical length = H - 16mm	Bottom-left tab vertical stretches with H
+E4	CUT	CUT_22_object	P034	P035	62.849999999999994	453.35	15.849999999999994	463.35	62.85	453.35	15.85	463.35	-47	10	48.05205510693585	12.011478386365443	H / E_AREA_WIDTH mirror of C2	12°; horizontal = H - 3; vertical = (H - 3)*TAN(12°)	E4 mirrors C2; preserve 12° while resizing in E direction.
+E5	CUT	CUT_23_object	P006	P034	65.85	450.35	62.849999999999994	453.35	65.85	450.35	62.85	453.35	-3	3	4.242640687119285	45	H linked	45 degrees	Bottom-left tab upper 45°
+M1	CUT	M1 / CUT_1_object	P007	P008	315.85	500.35	65.85	500.35	315.85	500.35	65.85	500.35	-250.00000000000003	0	250.00000000000003	0	L	Horizontal length = L	Bottom main cut line stretches with L
+CREASE1	CREASE	CREASE_1_object	P001	P002	315.85	260.35	65.85	260.35	315.85	260.35	65.85	260.35	-250.00000000000003	0	250.00000000000003	0	L	Horizontal length = L	Main horizontal crease
+CREASE2	CREASE	CREASE_2_object	P006	P005	65.85	450.35	315.85	450.35	65.85	450.35	315.85	450.35	250.00000000000003	0	250.00000000000003	0	L	Horizontal length = L	Main horizontal crease
+CREASE3	CREASE	CREASE_3_object	P004	P003	65.85	210.35	315.85	210.35	65.85	210.35	315.85	210.35	250.00000000000003	0	250.00000000000003	0	L	Horizontal length = L	Main horizontal crease
+CREASE4	CREASE	CREASE_4_object	P013	P014	74.85	21.35	306.85	21.35	74.85	21.35	306.85	21.35	232.00000000000003	0	232.00000000000003	0	L	Horizontal length = L - 18mm	Top cover/lid crease
+CREASE5	CREASE	CREASE_5_object	P038	P052	316.85	261.35	381.35	325.85	316.85	261.35	381.35	325.85	64.5	64.5	91.21677477306463	45	Fixed-angle linked	45 degrees	Right upper diagonal crease
+CREASE6	CREASE	CREASE_6_object	P039	P041	365.85	261.35	365.85	449.35	365.85	261.35	365.85	449.35	0	188	188	90	W	Vertical length = W - 2mm	Right vertical crease
+CREASE7	CREASE	CREASE_7_object	P040	P053	316.85	449.35	381.35	384.85	316.85	449.35	381.35	384.85	64.5	-64.5	91.21677477306463	45	Fixed-angle linked	45 degrees	Right lower diagonal crease
+CREASE8	CREASE	CREASE_8_object	P045	P054	64.85	261.35	0.3499999999999943	325.85	64.85	261.35	0.35	325.85	-64.5	64.5	91.21677477306463	45	Fixed-angle linked	45 degrees	Left upper diagonal crease
+CREASE9	CREASE	CREASE_9_object	P046	P048	15.849999999999994	261.35	15.849999999999994	449.35	15.85	261.35	15.85	449.35	0	188	188	90	W	Vertical length = W - 2mm	Left vertical crease
+CREASE10	CREASE	CREASE_10_object	P047	P055	64.85	449.35	0.3499999999999943	384.85	64.85	449.35	0.35	384.85	-64.5	-64.5	91.21677477306463	45	Fixed-angle linked	45 degrees	Left lower diagonal crease
+CREASE11	CREASE	CREASE_11_object	P001	P003	315.85	260.35	315.85	210.35	315.85	260.35	315.85	210.35	0	-50.00000000000003	50.00000000000003	90	H	Vertical length = H	Right upper H crease
+CREASE12	CREASE	CREASE_12_object	P007	P005	315.85	500.35	315.85	450.35	315.85	500.35	315.85	450.35	0	-50	50	90	H	Vertical length = H	Right lower H crease
+CREASE13	CREASE	CREASE_13_object	P005	P001	315.85	450.35	315.85	260.35	315.85	450.35	315.85	260.35	0	-190	190	90	W	Vertical length = W	Right main W crease
+CREASE14	CREASE	CREASE_14_object	P002	P004	65.85	260.35	65.85	210.35	65.85	260.35	65.85	210.35	0	-50.00000000000003	50.00000000000003	90	H	Vertical length = H	Left upper H crease
+CREASE15	CREASE	CREASE_15_object	P008	P006	65.85	500.35	65.85	450.35	65.85	500.35	65.85	450.35	0	-50	50	90	H	Vertical length = H	Left lower H crease
+CREASE16	CREASE	CREASE_16_object	P006	P002	65.85	450.35	65.85	260.35	65.85	450.35	65.85	260.35	0	-190	190	90	W	Vertical length = W	Left main W crease
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--- Sheet: Movement_Rules ---
+Rule_ID	Input	Reference	Delta Formula	Lines / Anchors affected	Required Behavior
+MR-L	L	250	0	A5, CREASE1, CREASE2, CREASE3, CREASE4, M1; right-side anchors move with X_Right_Main	When L changes, X_Right_Main = X_Left_Main + L; all right-side points move by Delta_L while left anchors stay fixed, keeping all line endpoints connected.
+MR-W	W	190	0	B2, B4, G3, I3, CREASE6, CREASE9, CREASE13, CREASE16 and all vertically linked side anchors	When W changes, Y_Cover_Bottom, Y_Base_Bottom, and related vertical anchors move so W-dependent lines stretch/shrink by Delta_W.
+MR-H	H	50	0	C3, D3, E3, F3, H2, H3, J2, J3, CREASE11, CREASE12, CREASE14, CREASE15 and H-linked slanted/mirror anchors	When H changes, all H primary and mirror/counterpart lines stretch/shrink by Delta_H. H2/H3/J2/J3 must not remain fixed; they are H mirror/counterpart lines and must keep connections closed.
+MR-Connectivity	All	Reference SVG	N/A	All points shared by multiple lines	Every line endpoint is a Dynamic_Point. Connected lines reference the same point ID, so the system must not create independent endpoints that can separate.
+MR-No-Scale	All	N/A	N/A	All geometry	Do not use global scale. Regenerate point coordinates from Inputs and line rules.
+MR-AREA-CDEF	H / L_AREA_HEIGHT	50	C_AREA_Width = L_AREA_Height; at reference C/D/E/F straight width is 47mm, so width = 47 + Delta_H = H - 3	C2, C4 and mirrored counterparts D2, D4, E4, E2, F2, F4	C/D/E/F areas resize through the listed straight/slanted edges; slanted edges keep 12° by recalculating vertical offset from the dynamic horizontal width.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--- Sheet: Angle_Rules ---
+Angle_Group	Lines	Required Angle	How preserved
+45 degree lines	C1, C5, D1, D5, E1, E5, F1, F5, CREASE5, CREASE7, CREASE8, CREASE10	45°	Endpoints are calculated with equal X/Y offsets or fixed 45° dynamic anchors.
+12 degree H-linked lines	C2, D2, E4, F2	≈12°	These slanted lines are part of the C/D/E/F area width rule. Horizontal offset = C_AREA_Width (=H-3). Vertical offset = C_AREA_Width × TAN(12°), preserving 12° while resizing.
+12 degree side lines	G4, I4	≈12°	Corrected from G4-14 to G4-I4. Preserve their dynamic endpoints and angle.
+20.85 degree side lines	G2, I2	20.85°	Offsets 9.5mm x 3.62mm are preserved at side lower connectors.
+Vertical W lines	B2, B4, G3, I3, CREASE6, CREASE9, CREASE13, CREASE16	90°	Only length changes. X coordinate remains fixed or moves as linked anchor.
+Vertical H lines	C3, D3, E3, F3, H2, H3, J2, J3, CREASE11, CREASE12, CREASE14, CREASE15	90° / 0° depending line orientation	These are H-linked primary and mirror/counterpart lines. Length changes with Delta_H while endpoints remain connected to neighboring lines.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--- Sheet: Mirror_Rules ---
+Reference	Mirror_Target	Mirror_Type	Meaning
+Right lower tongue F1-F5	Left lower tongue E1-E5	Horizontal Mirror	E is the horizontal mirror of F around the main body left/right structure.
+Right upper tongue D1-D5	Left upper tongue C1-C5	Horizontal Mirror	C is the horizontal mirror of D.
+Right lower tongue F1-F5	Right upper tongue D1-D5	Vertical Mirror	D is vertical mirror of F with top/bottom orientation reversed.
+Left lower tongue E1-E5	Left upper tongue C1-C5	Vertical Mirror	C is vertical mirror of E.
+Right side group J/I	Left side group H/G	Horizontal Mirror	Left side side flaps mirror right side side flaps.
+CREASE11 tongue reference	CREASE14 tongue	Horizontal Mirror	Tongue near CREASE14 is horizontal mirror of tongue near CREASE11.
+CREASE11 tongue reference	CREASE12 tongue	Vertical Mirror	Tongue near CREASE12 is vertical mirror of tongue near CREASE11.
+CREASE14 tongue	CREASE15 tongue	Vertical Mirror	Tongue near CREASE15 is vertical mirror of tongue near CREASE14.
+--- Sheet: Connectivity_Checks ---
+Point_ID	Connected Lines Count	Connected Lines	Rule
+P001	5	D1, J4, CREASE1, CREASE11, CREASE13	All connected lines must use this same dynamic point; never calculate independent endpoints.
+P002	5	C1, H4, CREASE1, CREASE14, CREASE16	All connected lines must use this same dynamic point; never calculate independent endpoints.
+P003	4	B4, D5, CREASE3, CREASE11	All connected lines must use this same dynamic point; never calculate independent endpoints.
+P004	4	B2, C5, CREASE3, CREASE14	All connected lines must use this same dynamic point; never calculate independent endpoints.
+P005	5	J1, F1, CREASE2, CREASE12, CREASE13	All connected lines must use this same dynamic point; never calculate independent endpoints.
+P006	5	H1, E5, CREASE2, CREASE15, CREASE16	All connected lines must use this same dynamic point; never calculate independent endpoints.
+P007	3	F5, M1, CREASE12	All connected lines must use this same dynamic point; never calculate independent endpoints.
+P008	3	E1, M1, CREASE15	All connected lines must use this same dynamic point; never calculate independent endpoints.
+P009	2	B3, B4	All connected lines must use this same dynamic point; never calculate independent endpoints.
+P010	2	B1, B2	All connected lines must use this same dynamic point; never calculate independent endpoints.
+P015	2	A1, A2	All connected lines must use this same dynamic point; never calculate independent endpoints.
+P017	2	A2, B1	All connected lines must use this same dynamic point; never calculate independent endpoints.
+P018	2	A8, A9	All connected lines must use this same dynamic point; never calculate independent endpoints.
+P020	3	B3, A7, A8	All connected lines must use this same dynamic point; never calculate independent endpoints.
+P022	2	D5, D4	All connected lines must use this same dynamic point; never calculate independent endpoints.
+P023	2	D4, D3	All connected lines must use this same dynamic point; never calculate independent endpoints.
+P024	2	D3, D2	All connected lines must use this same dynamic point; never calculate independent endpoints.
+P025	2	D2, D1	All connected lines must use this same dynamic point; never calculate independent endpoints.
+P026	2	C5, C4	All connected lines must use this same dynamic point; never calculate independent endpoints.
+P027	2	C4, C3	All connected lines must use this same dynamic point; never calculate independent endpoints.
+P028	2	C3, C2	All connected lines must use this same dynamic point; never calculate independent endpoints.
+P029	2	C2, C1	All connected lines must use this same dynamic point; never calculate independent endpoints.
+P030	2	F1, F2	All connected lines must use this same dynamic point; never calculate independent endpoints.
+P031	2	F2, F3	All connected lines must use this same dynamic point; never calculate independent endpoints.
+P032	2	F3, F4	All connected lines must use this same dynamic point; never calculate independent endpoints.
+P033	2	F4, F5	All connected lines must use this same dynamic point; never calculate independent endpoints.
+P034	2	E4, E5	All connected lines must use this same dynamic point; never calculate independent endpoints.
+P035	2	E3, E4	All connected lines must use this same dynamic point; never calculate independent endpoints.
+P036	2	E2, E3	All connected lines must use this same dynamic point; never calculate independent endpoints.
+P037	2	E1, E2	All connected lines must use this same dynamic point; never calculate independent endpoints.
+P038	3	J4, J3, CREASE5	All connected lines must use this same dynamic point; never calculate independent endpoints.
+P039	3	J3, I4, CREASE6	All connected lines must use this same dynamic point; never calculate independent endpoints.
+P040	3	J2, J1, CREASE7	All connected lines must use this same dynamic point; never calculate independent endpoints.
+P041	3	J2, I1, CREASE6	All connected lines must use this same dynamic point; never calculate independent endpoints.
+P042	2	I2, I1	All connected lines must use this same dynamic point; never calculate independent endpoints.
+P043	2	I3, I2	All connected lines must use this same dynamic point; never calculate independent endpoints.
+P044	2	I4, I3	All connected lines must use this same dynamic point; never calculate independent endpoints.
+P045	3	H4, H3, CREASE8	All connected lines must use this same dynamic point; never calculate independent endpoints.
+P046	3	H3, G4, CREASE9	All connected lines must use this same dynamic point; never calculate independent endpoints.
+P047	3	H2, H1, CREASE10	All connected lines must use this same dynamic point; never calculate independent endpoints.
+P048	3	H2, G1, CREASE9	All connected lines must use this same dynamic point; never calculate independent endpoints.
+P049	2	G2, G1	All connected lines must use this same dynamic point; never calculate independent endpoints.
+P050	2	G3, G2	All connected lines must use this same dynamic point; never calculate independent endpoints.
+P051	2	G4, G3	All connected lines must use this same dynamic point; never calculate independent endpoints.
+--- Sheet: SVG_Build_Notes ---
+Section	Instruction
+Source of truth	Use BOX 1 MAP NEW.svg and BOX 1 TEMPLATE.svg to validate visual match. This Excel is the dynamic geometry blueprint.
+Inputs	Only L, W, H are editable in this blueprint. All dynamic points and line endpoints derive from them.
+Units	All coordinates and lengths are in mm. Reference SVG uses a 72dpi/mm conversion but this workbook works in mm.
+Line generation	Generate each line from Dynamic_Lines X1/Y1/X2/Y2. Do not independently move line endpoints.
+Layer generation	Layer column must be respected: CUT remains cut/red; CREASE remains crease/green.
+No static geometry	Do not use the attached SVG as static output. Use it only to verify and regenerate dynamic line geometry.
+No global scale	Do not scale the whole SVG. Use the point/line formulas in this workbook.
+Connectivity	Every endpoint is a shared Dynamic_Point. This is the anti-error mechanism to keep the template closed after changes.
+Validation	After any L/W/H change, check Dynamic_Lines has no broken connections and Angle_Rules lines keep required angles.
+--- Sheet: Test_Cases ---
+Test	L	W	H	Expected Delta_L	Expected Delta_W	Expected Delta_H	What to verify
+Reference	250	190	50	0	0	0	Should match source SVG dimensions
+Shorter L	240	190	50	-10	0	0	A5/creases/M1 reduce by 10mm; all right-linked points move left 10mm
+Longer L	280	190	50	30	0	0	A5/creases/M1 extend by 30mm; all connections remain closed
+Smaller W	250	170	50	0	-20	0	W verticals reduce 20mm; side flaps remain connected
+Larger W	250	300	50	0	110	0	W verticals extend 110mm; no gap or overlap
+Smaller H	250	190	40	0	0	-10	H verticals reduce 10mm; 45°/12° slants retain angles
+Larger H	250	190	60	0	0	10	H verticals extend 10mm; all tab lines remain connected
+--- Sheet: SVG_Line_Export ---
+Line_ID	Layer	X1	Y1	X2	Y2	Stroke	SVG_Line_Tag	Build Note
+A1	CUT	74.85	22.35	74.85	20.35	#ED1C24		Use dynamic values from Dynamic_Lines; all units are mm
+A2	CUT	74.85	20.35	66.35	20.35	#ED1C24		Use dynamic values from Dynamic_Lines; all units are mm
+B1	CUT	66.35	20.35	65.85	20.35	#ED1C24		Use dynamic values from Dynamic_Lines; all units are mm
+B2	CUT	65.85	20.35	65.85	210.35	#ED1C24		Use dynamic values from Dynamic_Lines; all units are mm
+B3	CUT	315.35	20.35	315.85	20.35	#ED1C24		Use dynamic values from Dynamic_Lines; all units are mm
+B4	CUT	315.85	20.35	315.85	210.35	#ED1C24		Use dynamic values from Dynamic_Lines; all units are mm
+A7	CUT	315.35	12.350000000000001	315.35	20.35	#ED1C24		Use dynamic values from Dynamic_Lines; all units are mm
+A8	CUT	306.85	20.35	315.35	20.35	#ED1C24		Use dynamic values from Dynamic_Lines; all units are mm
+A9	CUT	306.85	22.35	306.85	20.35	#ED1C24		Use dynamic values from Dynamic_Lines; all units are mm
+A5	CUT	78.35	0.3500000000000014	303.35	0.3500000000000014	#ED1C24		Use dynamic values from Dynamic_Lines; all units are mm
+C5	CUT	65.85	210.35	62.849999999999994	213.35	#ED1C24		Use dynamic values from Dynamic_Lines; all units are mm
+C4	CUT	62.849999999999994	213.35	15.849999999999994	213.35	#ED1C24		Use dynamic values from Dynamic_Lines; all units are mm
+C3	CUT	15.849999999999994	213.35	15.849999999999994	247.35000000000002	#ED1C24		Use dynamic values from Dynamic_Lines; all units are mm
+C2	CUT	62.849999999999994	257.35	15.849999999999994	247.35000000000002	#ED1C24		Use dynamic values from Dynamic_Lines; all units are mm
+C1	CUT	65.85	260.35	62.849999999999994	257.35	#ED1C24		Use dynamic values from Dynamic_Lines; all units are mm
+D5	CUT	315.85	210.35	318.85	213.35	#ED1C24		Use dynamic values from Dynamic_Lines; all units are mm
+D4	CUT	318.85	213.35	365.85	213.35	#ED1C24		Use dynamic values from Dynamic_Lines; all units are mm
+D3	CUT	365.85	213.35	365.85	247.35000000000002	#ED1C24		Use dynamic values from Dynamic_Lines; all units are mm
+D2	CUT	318.85	257.35	365.85	247.35000000000002	#ED1C24		Use dynamic values from Dynamic_Lines; all units are mm
+D1	CUT	315.85	260.35	318.85	257.35	#ED1C24		Use dynamic values from Dynamic_Lines; all units are mm
+J4	CUT	315.85	260.35	316.85	261.35	#ED1C24		Use dynamic values from Dynamic_Lines; all units are mm
+J3	CUT	316.85	261.35	365.85	261.35	#ED1C24		Use dynamic values from Dynamic_Lines; all units are mm
+J2	CUT	316.85	449.35	365.85	449.35	#ED1C24		Use dynamic values from Dynamic_Lines; all units are mm
+J1	CUT	315.85	450.35	316.85	449.35	#ED1C24		Use dynamic values from Dynamic_Lines; all units are mm
+I4	CUT	381.35	264.97	365.85	261.35	#ED1C24		Use dynamic values from Dynamic_Lines; all units are mm
+I3	CUT	381.35	445.73	381.35	264.97	#ED1C24		Use dynamic values from Dynamic_Lines; all units are mm
+I2	CUT	371.85	449.35	381.35	445.73	#ED1C24		Use dynamic values from Dynamic_Lines; all units are mm
+I1	CUT	365.85	449.35	371.85	449.35	#ED1C24		Use dynamic values from Dynamic_Lines; all units are mm
+H4	CUT	65.85	260.35	64.85	261.35	#ED1C24		Use dynamic values from Dynamic_Lines; all units are mm
+H3	CUT	64.85	261.35	15.849999999999994	261.35	#ED1C24		Use dynamic values from Dynamic_Lines; all units are mm
+H2	CUT	64.85	449.35	15.849999999999994	449.35	#ED1C24		Use dynamic values from Dynamic_Lines; all units are mm
+H1	CUT	65.85	450.35	64.85	449.35	#ED1C24		Use dynamic values from Dynamic_Lines; all units are mm
+G4	CUT	0.3499999999999943	264.97	15.849999999999994	261.35	#ED1C24		Use dynamic values from Dynamic_Lines; all units are mm
+G3	CUT	0.3499999999999943	445.73	0.3499999999999943	264.97	#ED1C24		Use dynamic values from Dynamic_Lines; all units are mm
+G2	CUT	9.849999999999994	449.35	0.3499999999999943	445.73	#ED1C24		Use dynamic values from Dynamic_Lines; all units are mm
+G1	CUT	15.849999999999994	449.35	9.849999999999994	449.35	#ED1C24		Use dynamic values from Dynamic_Lines; all units are mm
+F1	CUT	315.85	450.35	318.85	453.35	#ED1C24		Use dynamic values from Dynamic_Lines; all units are mm
+F2	CUT	318.85	453.35	365.85	463.35	#ED1C24		Use dynamic values from Dynamic_Lines; all units are mm
+F3	CUT	365.85	497.35	365.85	463.35	#ED1C24		Use dynamic values from Dynamic_Lines; all units are mm
+F4	CUT	318.85	497.35	365.85	497.35	#ED1C24		Use dynamic values from Dynamic_Lines; all units are mm
+F5	CUT	315.85	500.35	318.85	497.35	#ED1C24		Use dynamic values from Dynamic_Lines; all units are mm
+E1	CUT	65.85	500.35	62.849999999999994	497.35	#ED1C24		Use dynamic values from Dynamic_Lines; all units are mm
+E2	CUT	62.849999999999994	497.35	15.849999999999994	497.35	#ED1C24		Use dynamic values from Dynamic_Lines; all units are mm
+E3	CUT	15.849999999999994	497.35	15.849999999999994	463.35	#ED1C24		Use dynamic values from Dynamic_Lines; all units are mm
+E4	CUT	62.849999999999994	453.35	15.849999999999994	463.35	#ED1C24		Use dynamic values from Dynamic_Lines; all units are mm
+E5	CUT	65.85	450.35	62.849999999999994	453.35	#ED1C24		Use dynamic values from Dynamic_Lines; all units are mm
+M1	CUT	315.85	500.35	65.85	500.35	#ED1C24		Use dynamic values from Dynamic_Lines; all units are mm
+CREASE1	CREASE	315.85	260.35	65.85	260.35	#00A651		Use dynamic values from Dynamic_Lines; all units are mm
+CREASE2	CREASE	65.85	450.35	315.85	450.35	#00A651		Use dynamic values from Dynamic_Lines; all units are mm
+CREASE3	CREASE	65.85	210.35	315.85	210.35	#00A651		Use dynamic values from Dynamic_Lines; all units are mm
+CREASE4	CREASE	74.85	21.35	306.85	21.35	#00A651		Use dynamic values from Dynamic_Lines; all units are mm
+CREASE5	CREASE	316.85	261.35	381.35	325.85	#00A651		Use dynamic values from Dynamic_Lines; all units are mm
+CREASE6	CREASE	365.85	261.35	365.85	449.35	#00A651		Use dynamic values from Dynamic_Lines; all units are mm
+CREASE7	CREASE	316.85	449.35	381.35	384.85	#00A651		Use dynamic values from Dynamic_Lines; all units are mm
+CREASE8	CREASE	64.85	261.35	0.3499999999999943	325.85	#00A651		Use dynamic values from Dynamic_Lines; all units are mm
+CREASE9	CREASE	15.849999999999994	261.35	15.849999999999994	449.35	#00A651		Use dynamic values from Dynamic_Lines; all units are mm
+CREASE10	CREASE	64.85	449.35	0.3499999999999943	384.85	#00A651		Use dynamic values from Dynamic_Lines; all units are mm
+CREASE11	CREASE	315.85	260.35	315.85	210.35	#00A651		Use dynamic values from Dynamic_Lines; all units are mm
+CREASE12	CREASE	315.85	500.35	315.85	450.35	#00A651		Use dynamic values from Dynamic_Lines; all units are mm
+CREASE13	CREASE	315.85	450.35	315.85	260.35	#00A651		Use dynamic values from Dynamic_Lines; all units are mm
+CREASE14	CREASE	65.85	260.35	65.85	210.35	#00A651		Use dynamic values from Dynamic_Lines; all units are mm
+CREASE15	CREASE	65.85	500.35	65.85	450.35	#00A651		Use dynamic values from Dynamic_Lines; all units are mm
+CREASE16	CREASE	65.85	450.35	65.85	260.35	#00A651		Use dynamic values from Dynamic_Lines; all units are mm
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--- Sheet: System_Readme ---
+Topic	Required System Behavior
+Core principle	Use Inputs L/W/H to regenerate every Dynamic_Point. Lines must only connect Dynamic_Point IDs from Dynamic_Lines.
+No independent endpoints	Never calculate line endpoint coordinates separately if they share a point. This workbook intentionally shares points to prevent gaps.
+L update	Change Inputs!B4. X_Right_Main changes. Right-side anchors move; L lines stretch/contract.
+W update	Change Inputs!B5. Y_Cover_Bottom/Y_Base_Bottom change. W verticals stretch/contract.
+H update	Change Inputs!B6. Y_Top_Depth_Bottom/Y_Bottom change. H verticals stretch/contract. Slants keep angle through shared anchors.
+Build from Excel	The new system should read Inputs, Dynamic_Points, Dynamic_Lines, Angle_Rules, Mirror_Rules, Connectivity_Checks.
+SVG export	Use SVG_Line_Export or Dynamic_Lines to create vector lines. CUT red, CREASE green.
+Precision	Use mm coordinates and keep at least 2 decimals.
+Validation	Change L/W/H test cases and verify all lines remain connected and angle groups remain stable.
+
+V4 Update - H Lines	H2, H3, J2, J3 were added as H mirror/counterpart lines. They must resize with Delta_H.
+V4 Update - C/D/E/F AREA	C AREA width must always equal L AREA height; implemented as width = H - 3 based on reference 47mm at H=50.
+C AREA Control Lines	C2 and C4 resize. C2 preserves 12°.
+Mirror Areas	D, E, F areas apply the same rule using D2/D4, E4/E2, F2/F4 with correct mirrored directions.
+A6	A6 was fixed successfully; do not alter A6 in this update.
+System Priority	Use Excel dynamic rules over SVG guessing whenever they conflict.
+Connectivity	Every changed point must remain connected to its original neighboring lines.
+No Global Scale	Do not solve by scaling the whole SVG.
+Export	SVG/PDF must use computed dynamic geometry.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--- Sheet: Area_Dynamic_Rules ---
+Area	Rule	Reference Width	Dynamic Width Formula	Straight edge(s)	Slanted edge(s)	Slant Angle	Slant Vertical Offset Formula	Mirror Direction	Implementation Note
+C AREA	Width = L AREA Height	47	47	C4	C2	12°	9.990158398491038	Reference	Resize C2/C4; C2 keeps 12°; endpoints remain connected.
+D AREA	Same as C AREA	47	47	D4	D2	12°	9.990158398491038	Mirror of C AREA in D direction	Resize D2/D4 with correct mirrored direction.
+E AREA	Same as C AREA	47	47	E2	E4	12°	9.990158398491038	Mirror of C AREA in E direction	Resize E2/E4 with correct mirrored direction.
+F AREA	Same as C AREA	47	47	F4	F2	12°	9.990158398491038	Mirror of C AREA in F direction	Resize F2/F4 with correct mirrored direction.
+
+
+H-linked added lines	H2, H3, J2, J3
+Rule	These are mirror/counterpart H lines and must resize with Delta_H, not remain fixed.
+Reference length	49mm
+Dynamic length formula	49
+Equivalent formula	49
+Connection requirement	Their endpoints must remain connected to the same neighboring lines as in MAP/TEMPLATE.
+Do not change	A6 correction is already successful; do not modify A6 again.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
