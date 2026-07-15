@@ -29,8 +29,6 @@ import T0005SheetNestingPreview from './T0005SheetNestingPreview';
 import T0005PrintSummary from './T0005PrintSummary';
 import Box3DPreview, { type Panel2DInfo } from './Box3DPreview';
 import { InteractiveSvgCanvas, type Segment } from '@/components/InteractiveSvgCanvas';
-import { downloadT0005SingleTemplate, downloadT0005SingleTemplatePdf } from '@/lib/t0005/exportSingle';
-import { downloadT0005SheetLayout, downloadT0005SheetLayoutPdf } from '@/lib/t0005/exportSheet';
 
 const DEFAULT_NESTING: T0005NestingParams = {
   horizontalGap: 3,
@@ -86,17 +84,19 @@ const T0005Calculator = ({ isAdmin = false }: { isAdmin?: boolean }) => {
     setNesting(prev => ({ ...prev, [k]: v }));
 
   const set = <K extends keyof T0005Params>(k: K, v: T0005Params[K]) => {
-    setParams(prev => {
-      const next = { ...prev, [k]: v };
-      return next;
-    });
-  };
-
-  const resetToDefaults = () => {
-    setParams(T0005_DEFAULTS);
-    setNesting(DEFAULT_NESTING);
+    setParams(prev => ({ ...prev, [k]: v }));
+    // Clear overrides when params are updated by inputs
     setSegmentOverrides({ svg: null, segments: null });
   };
+
+  const reset = () => {
+    setParams({ ...T0005_DEFAULTS });
+    setNesting({ ...DEFAULT_NESTING });
+    setSegmentOverrides({ svg: null, segments: null });
+  };
+
+  const usable = useMemo(() => usableSheet(params), [params]);
+  const nestingResult = useMemo(() => computeT0005Nesting(params, nesting), [params, nesting]);
 
   // Base geometry calculation
   const baseGeo = useMemo(() => buildT0005Geometry(params), [params]);
@@ -107,14 +107,23 @@ const T0005Calculator = ({ isAdmin = false }: { isAdmin?: boolean }) => {
       const segs = segmentOverrides.segments;
       let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
       for (const s of segs) {
-        if (s.start.x < minX) minX = s.start.x;
-        if (s.start.x > maxX) maxX = s.start.x;
-        if (s.end.x < minX) minX = s.end.x;
-        if (s.end.x > maxX) maxX = s.end.x;
-        if (s.start.y < minY) minY = s.start.y;
-        if (s.start.y > maxY) maxY = s.start.y;
-        if (s.end.y < minY) minY = s.end.y;
-        if (s.end.y > maxY) maxY = s.end.y;
+        if (s.geometry === 'line') {
+          if (s.start.x < minX) minX = s.start.x;
+          if (s.start.x > maxX) maxX = s.start.x;
+          if (s.end.x < minX) minX = s.end.x;
+          if (s.end.x > maxX) maxX = s.end.x;
+          if (s.start.y < minY) minY = s.start.y;
+          if (s.start.y > maxY) maxY = s.start.y;
+          if (s.end.y < minY) minY = s.end.y;
+          if (s.end.y > maxY) maxY = s.end.y;
+        } else if (s.geometry === 'polyline' && s.points) {
+          s.points.forEach(pt => {
+            if (pt.x < minX) minX = pt.x;
+            if (pt.x > maxX) maxX = pt.x;
+            if (pt.y < minY) minY = pt.y;
+            if (pt.y > maxY) maxY = pt.y;
+          });
+        }
       }
       const w = maxX - minX > 0 ? maxX - minX : baseGeo.bbox.w;
       const h = maxY - minY > 0 ? maxY - minY : baseGeo.bbox.h;
@@ -254,9 +263,6 @@ const T0005Calculator = ({ isAdmin = false }: { isAdmin?: boolean }) => {
     };
   }, [params]);
 
-  // Compute Nesting Layout
-  const nestingResult = useMemo(() => computeT0005Nesting(params, nesting), [params, nesting]);
-
   // Sheet layout dimension overlay values
   const distributionFootprint = useMemo(() => {
     const grid = nestingResult.bestOrientation === 'rotated' ? nestingResult.rotated : nestingResult.normal;
@@ -269,223 +275,254 @@ const T0005Calculator = ({ isAdmin = false }: { isAdmin?: boolean }) => {
     return { w, h };
   }, [nestingResult, geo.bbox]);
 
-  // Exporter handlers
-  const handleExportSingleSvg = () => {
-    downloadT0005SingleTemplate(geo, `T0005-single-W${params.width}-H${params.height}-D${params.depth}.svg`);
-  };
+  const derived = useMemo(() => ({
+    faceHeight: T0005_RULES.faceHeight(params.height),
+    depth1: params.depth,
+    depth2: T0005_RULES.d2(params.depth),
+  }), [params]);
 
-  const handleExportSinglePdf = async () => {
-    const singleSvg = buildT0005DimensionsSvg(params, dimUnit);
-    const combinedSvg = geo.svg.replace('</svg>', `${singleSvg}</svg>`);
-    await downloadT0005SingleTemplatePdf(combinedSvg, `T0005-single-W${params.width}-H${params.height}-D${params.depth}.pdf`);
-  };
+  const refOn = !!params.referenceMode;
 
-  const handleExportSheetSvg = () => {
-    downloadT0005SheetLayout(params, nesting, nestingResult);
-  };
-
-  const handleExportSheetPdf = async () => {
-    await downloadT0005SheetLayoutPdf(params, nesting, nestingResult);
-  };
-
-  // Dimensions Overlay markup inside 2D SVG canvas
-  const dimensionsMarkup = useMemo(() => {
-    if (!showDimensions) return '';
-    return buildT0005DimensionsSvg(params, dimUnit);
-  }, [params, showDimensions, dimUnit]);
+  const dimsSvg = useMemo(
+    () => (showDimensions ? buildT0005DimensionsSvg(params, dimUnit) : ''),
+    [showDimensions, params, dimUnit],
+  );
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 p-1" dir="rtl">
-      {/* Parameters Panel */}
-      <div className="lg:col-span-4 space-y-6">
-        <Card className="shadow-sm">
-          <CardHeader className="pb-3 flex flex-row items-center justify-between">
-            <CardTitle className="text-lg font-bold">معلمات القالب T0005</CardTitle>
-            <Button variant="ghost" size="icon" onClick={resetToDefaults} title="إعادة تعيين القوالب">
-              <RotateCcw className="w-4 h-4" />
-            </Button>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {/* Reference Mode Switch */}
-            <div className="flex items-center justify-between border-b pb-3">
-              <div className="space-y-0.5">
-                <Label className="text-sm font-semibold">تثبيت النموذج المرجعي</Label>
-                <p className="text-[11px] text-muted-foreground">توليد أبعاد القالب المرجعي بدقة مطابقة للتصميم</p>
-              </div>
-              <Switch checked={!!params.referenceMode} onCheckedChange={v => set('referenceMode', v)} />
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <NumField label="العرض (W)" value={params.width} onChange={v => set('width', v)} unit={dimUnit} disabled={params.referenceMode} />
-              <NumField label="الارتفاع (H)" value={params.height} onChange={v => set('height', v)} unit={dimUnit} disabled={params.referenceMode} />
-              <NumField label="العمق (D)" value={params.depth} onChange={v => set('depth', v)} unit={dimUnit} disabled={params.referenceMode} />
-              <NumField label="لسان اللصق" value={params.glueFlap} onChange={v => set('glueFlap', v)} unit={dimUnit} disabled={params.referenceMode} />
-              <NumField label="ارتفاع لسان القفل" value={params.lidTongue} onChange={v => set('lidTongue', v)} unit={dimUnit} disabled={params.referenceMode} />
-              <NumField label="ارتفاع لسان الغبار" value={params.dustFlap} onChange={v => set('dustFlap', v)} unit={dimUnit} disabled={params.referenceMode} />
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Sheet Nesting controls */}
-        <Card className="shadow-sm">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-md font-bold">معلمات التوزيع (Sheet Nesting)</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 gap-3">
-              <NumField label="عرض الشيت" value={params.sheetWidth} onChange={v => set('sheetWidth', v)} unit={dimUnit} />
-              <NumField label="ارتفاع الشيت" value={params.sheetHeight} onChange={v => set('sheetHeight', v)} unit={dimUnit} />
-              <NumField label="الهامش" value={params.sheetMargin} onChange={v => set('sheetMargin', v)} unit={dimUnit} />
-              <NumField label="القابض (Gripper)" value={params.gripper} onChange={v => set('gripper', v)} unit={dimUnit} />
-              <NumField label="تباعد أفقي" value={nesting.horizontalGap} onChange={v => setN('horizontalGap', v)} unit={dimUnit} />
-              <NumField label="تباعد عمودي" value={nesting.verticalGap} onChange={v => setN('verticalGap', v)} unit={dimUnit} />
-            </div>
-
-            <div className="flex items-center justify-between border-t pt-3">
-              <div className="space-y-0.5">
-                <Label className="text-xs font-semibold">توزيع ذكي تلقائي (Smart Auto)</Label>
-                <p className="text-[10px] text-muted-foreground">حساب تداخل متداخل بناءً على مجسم العلبة</p>
-              </div>
-              <Switch checked={!!nesting.smartAuto} onCheckedChange={v => setN('smartAuto', v)} />
-            </div>
-
-            {!nesting.smartAuto && (
-              <div className="grid grid-cols-2 gap-3 border-t pt-3">
-                <NumField label="تداخل أفقي يدوي" value={nesting.horizontalInterlock} onChange={v => setN('horizontalInterlock', v)} unit={dimUnit} />
-                <NumField label="تداخل عمودي يدوي" value={nesting.verticalInterlock} onChange={v => setN('verticalInterlock', v)} unit={dimUnit} />
-              </div>
-            )}
-
-            <div className="flex items-center justify-between border-t pt-3">
-              <div className="space-y-0.5">
-                <Label className="text-xs font-semibold font-sans">السماح بتدوير القالب 90°</Label>
-              </div>
-              <Switch checked={!!nesting.allowRotation} onCheckedChange={v => setN('allowRotation', v)} />
-            </div>
-
-            {nesting.allowRotation && (
-              <div className="flex items-center justify-between">
-                <Label className="text-xs">وضعية التدوير</Label>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="outline" size="sm" className="h-8 gap-1">
-                      {nesting.rotationMode === 'normal' ? 'Normal' : nesting.rotationMode === 'rotated' ? 'Rotated' : 'Auto'}
-                      <ChevronDown className="w-3 h-3" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => setN('rotationMode', 'normal')}>Normal</DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => setN('rotationMode', 'rotated')}>Rotated</DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => setN('rotationMode', 'auto')}>Auto</DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Main Canvas Area */}
-      <div className="lg:col-span-8 space-y-4">
-        <div className="flex items-center justify-between border-b pb-3 flex-wrap gap-3">
-          <div className="flex items-center gap-1.5 bg-muted/60 p-0.5 rounded-lg border">
-            <Button variant={previewMode === 'template' ? 'default' : 'ghost'} size="sm" onClick={() => setPreviewMode('template')} className="text-xs">المعاينة الثنائية (2D)</Button>
-            <Button variant={previewMode === 'sheet' ? 'default' : 'ghost'} size="sm" onClick={() => setPreviewMode('sheet')} className="text-xs">معاينة التوزيع</Button>
-            <Button variant={previewMode === 'three' ? 'default' : 'ghost'} size="sm" onClick={() => setPreviewMode('three')} className="text-xs">المعاينة المجسمة (3D)</Button>
-          </div>
-
+    <div dir="rtl" className="space-y-4">
+      {/* Header / Reference mode toggle */}
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle className="text-lg">T0005 — صندوق غطاء مفتوح مع إغلاق قفل (Open-Top Box)</CardTitle>
           <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-muted-foreground">أبعاد المعاينة:</span>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="sm" className="h-8 gap-1 font-sans">
-                    {dimUnit}
-                    <ChevronDown className="w-3 h-3" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => setDimUnit('mm')}>mm</DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setDimUnit('cm')}>cm</DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setDimUnit('in')}>in</DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+            <Label htmlFor="t0005-ref" className="text-sm font-normal cursor-pointer">
+              وضع المرجعية Reference Mode {refOn && <span className="text-emerald-600">(مفعّل)</span>}
+            </Label>
+            <Switch id="t0005-ref" checked={refOn}
+              onCheckedChange={v => set('referenceMode', v)} />
+          </div>
+        </CardHeader>
+        {refOn && (
+          <CardContent>
+            <div className="rounded-md bg-amber-50 border border-amber-200 p-3 text-sm text-amber-900">
+              وضع المرجعية مفعّل: الأبعاد الافتراضية مقفلة للمعايرة (W={T0005_REFERENCE.width}، H={T0005_REFERENCE.height}،
+              D={T0005_REFERENCE.depth}، Glue_Flap={T0005_REFERENCE.glueFlap}،
+              Lid_Tongue={T0005_REFERENCE.lidTongue}، Dust_Flap={T0005_REFERENCE.dustFlap} مم).
+            </div>
+          </CardContent>
+        )}
+      </Card>
+
+      {/* Derived dimensions (WIP / admin view) */}
+      <Card className={hiddenCls}>
+        <CardHeader>
+          <CardTitle className="text-lg">الأبعاد المشتقة</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm">
+            <div>Face_Height = H + 0.5 = <b>{derived.faceHeight.toFixed(2)}</b></div>
+            <div>Depth_1 = D = <b>{derived.depth1.toFixed(2)}</b></div>
+            <div>Depth_2 = D − 0.5 = <b>{derived.depth2.toFixed(2)}</b></div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Smart Auto Nesting controls */}
+      <Card className={hiddenCls}>
+        <CardHeader>
+          <CardTitle className="text-lg">إعدادات التوزيع الذكي</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            <div className="sm:col-span-2 flex flex-col gap-2">
+              <Label>التعشيق الذكي Smart Auto</Label>
+              <div className="flex items-center gap-2 h-10">
+                <Switch id="t0005-smart" checked={!!nesting.smartAuto}
+                  onCheckedChange={v => setN('smartAuto', v)} />
+                <Label htmlFor="t0005-smart" className="text-sm font-normal">
+                  {nesting.smartAuto ? 'يحسب Pitch و Interlock تلقائياً' : 'يدوي (Interlock من المستخدم)'}
+                </Label>
+              </div>
+            </div>
+            <div>
+              <Label>التداخل الأفقي ({dimUnit})</Label>
+              <Input type="number" step="0.1" min="0" value={toDisplay(nesting.horizontalInterlock, dimUnit)}
+                disabled={!!nesting.smartAuto}
+                onChange={e => setN('horizontalInterlock', toMm(num(e.target.value, toDisplay(nesting.horizontalInterlock, dimUnit)), dimUnit))} />
+            </div>
+            <div>
+              <Label>التداخل العمودي ({dimUnit})</Label>
+              <Input type="number" step="0.1" min="0" value={toDisplay(nesting.verticalInterlock, dimUnit)}
+                disabled={!!nesting.smartAuto}
+                onChange={e => setN('verticalInterlock', toMm(num(e.target.value, toDisplay(nesting.verticalInterlock, dimUnit)), dimUnit))} />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Sheet preview + side input panel */}
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between gap-3">
+          <div className="flex gap-2">
+            <button type="button" onClick={() => setPreviewMode('template')}
+              className={`px-3 py-1.5 rounded-md text-sm font-medium border transition-colors ${previewMode === 'template' ? 'bg-primary text-primary-foreground border-primary' : 'bg-background text-foreground border-input hover:bg-muted'}`}>
+              معاينة القالب
+            </button>
+            <button type="button" onClick={() => setPreviewMode('sheet')}
+              className={`px-3 py-1.5 rounded-md text-sm font-medium border transition-colors ${previewMode === 'sheet' ? 'bg-primary text-primary-foreground border-primary' : 'bg-background text-foreground border-input hover:bg-muted'}`}>
+              معاينة التوزيع على الشيت
+            </button>
+            <button type="button" onClick={() => setPreviewMode('three')}
+              className={`px-3 py-1.5 rounded-md text-sm font-medium border transition-colors ${previewMode === 'three' ? 'bg-primary text-primary-foreground border-primary' : 'bg-background text-foreground border-input hover:bg-muted'}`}>
+              معاينة ثلاثية الأبعاد 3D
+            </button>
+            <div className="flex items-center gap-2 pl-3 ml-1 border-l border-input">
+              {previewMode === 'template' && (
+                <>
+                  <Switch id="t0005-show-dims" checked={showDimensions} onCheckedChange={setShowDimensions} />
+                  <Label htmlFor="t0005-show-dims" className="text-sm font-normal cursor-pointer">إظهار القياسات</Label>
+                </>
+              )}
+              <select className="h-8 rounded-md border border-input bg-background px-2 text-sm"
+                value={dimUnit} onChange={e => setDimUnit(e.target.value as 'mm' | 'cm' | 'in')}>
+                <option value="mm">mm</option>
+                <option value="cm">cm</option>
+                <option value="in">in</option>
+              </select>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={() => setPrintOpen(true)}>
+              ملخص الطباعة
+            </Button>
+            <ExportSingleButton params={params} geo={geo} />
+            <ExportSheetButton params={params} nesting={nesting} result={nestingResult} />
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 lg:grid-cols-[1fr_440px] gap-4 items-start">
+            <div className="min-w-0">
+              {previewMode === 'template' ? (
+                <div className="space-y-2">
+                  <div className="text-xs text-muted-foreground">
+                    القطع والخطوط الخارجية: <b>{geo.segments.length}</b>
+                    {' · '}مقاس القالب: <b>{geo.bbox.w.toFixed(2)} × {geo.bbox.h.toFixed(2)} مم</b>
+                  </div>
+                  <InteractiveSvgCanvas
+                    segments={geo.segments}
+                    svgWidth={geo.bbox.w}
+                    svgHeight={geo.bbox.h}
+                    dimensionsMarkup={dimsSvg}
+                    onChange={(newSvg, newSegs) => {
+                      setSegmentOverrides({ svg: newSvg, segments: newSegs });
+                    }}
+                  />
+                </div>
+              ) : previewMode === 'sheet' ? (
+                <T0005SheetNestingPreview params={params} nesting={nesting} result={nestingResult} />
+              ) : (
+                <Box3DPreview
+                  boxType="T0005"
+                  lidTongue={params.lidTongue}
+                  panelWidths={[params.width, params.depth, params.width, params.depth - 0.5]}
+                  panelHeights={params.height}
+                  glueFlapWidth={params.glueFlap}
+                  topFlapHeights={[0, 0, 0, 0]}
+                  bottomFlapHeights={[
+                    faceCoords.bottomFlaps[0].h,
+                    faceCoords.bottomFlaps[1].h,
+                    faceCoords.bottomFlaps[2].h,
+                    faceCoords.bottomFlaps[3].h
+                  ]}
+                  svgMarkup={geo.svg}
+                  svgWidth={geo.bbox.w}
+                  svgHeight={geo.bbox.h}
+                  faceCoords={faceCoords}
+                />
+              )}
             </div>
 
-            {previewMode === 'template' && (
-              <div className="flex items-center gap-2 border-r pr-3">
-                <Switch checked={showDimensions} onCheckedChange={setShowDimensions} id="show-dims" />
-                <Label htmlFor="show-dims" className="text-xs">عرض الأبعاد</Label>
-              </div>
-            )}
+            <aside className="space-y-5 rounded-lg border bg-muted/30 p-4">
+              {/* أبعاد القالب */}
+              <section>
+                <h3 className="text-sm font-bold mb-2">أبعاد العلبة</h3>
+                <div className="grid grid-cols-3 gap-2">
+                  <NumField label="العرض" value={params.width} disabled={refOn} unit={dimUnit} onChange={v => set('width', v)} />
+                  <NumField label="الارتفاع" value={params.height} disabled={refOn} unit={dimUnit} onChange={v => set('height', v)} />
+                  <NumField label="العمق" value={params.depth} disabled={refOn} unit={dimUnit} onChange={v => set('depth', v)} />
+                </div>
+              </section>
 
-            <Button size="sm" className="text-xs" onClick={() => setPrintOpen(true)}>عرض ملخص السعر</Button>
+              {/* تخصيص متقدم */}
+              <section>
+                <h3 className="text-sm font-bold mb-2">تخصيص متقدم</h3>
+                <div className="grid grid-cols-3 gap-2">
+                  <NumField label="لسان اللصق" value={params.glueFlap} disabled={refOn} unit={dimUnit} onChange={v => set('glueFlap', v)} />
+                  <NumField label="ارتفاع لسان القفل" value={params.lidTongue} disabled={refOn} unit={dimUnit} onChange={v => set('lidTongue', v)} />
+                  <NumField label="ارتفاع لسان الغبار" value={params.dustFlap} disabled={refOn} unit={dimUnit} onChange={v => set('dustFlap', v)} />
+                </div>
+              </section>
 
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm" className="h-8 gap-1">
-                  <Download className="w-3.5 h-3.5" />
-                  تصدير
-                  <ChevronDown className="w-3 h-3" />
+              {/* إعدادات الشيت */}
+              <section>
+                <h3 className="text-sm font-bold mb-2">إعدادات الشيت</h3>
+                <div className="grid grid-cols-3 gap-2">
+                  <NumField label="عرض الشيت" value={params.sheetWidth} unit={dimUnit} onChange={v => set('sheetWidth', v)} />
+                  <NumField label="ارتفاع الشيت" value={params.sheetHeight} unit={dimUnit} onChange={v => set('sheetHeight', v)} />
+                  <NumField label="القابض" value={params.gripper} unit={dimUnit} onChange={v => set('gripper', v)} />
+                </div>
+                <div className="grid grid-cols-3 gap-2 mt-2">
+                  <NumField label="الهامش" value={params.sheetMargin} unit={dimUnit} onChange={v => set('sheetMargin', v)} />
+                  <NumField label="التباعد الأفقي" value={nesting.horizontalGap} step="0.1" min="0" unit={dimUnit} onChange={v => setN('horizontalGap', v)} />
+                  <NumField label="التباعد العمودي" value={nesting.verticalGap} step="0.1" min="0" unit={dimUnit} onChange={v => setN('verticalGap', v)} />
+                </div>
+                <div className="mt-2 text-[11px] text-muted-foreground space-y-0.5">
+                  <div>الصافي: {usable.width.toFixed(2)} × {usable.height.toFixed(2)} مم</div>
+                </div>
+              </section>
+
+              {/* خيارات التدوير */}
+              <section className="space-y-3">
+                <h3 className="text-sm font-bold border-b pb-1">خيارات التدوير والتكرار</h3>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="t0005-allow-rot" className="text-xs">السماح بتدوير التصميم 90°</Label>
+                    <Switch id="t0005-allow-rot" checked={nesting.allowRotation} onCheckedChange={v => setN('allowRotation', v)} />
+                  </div>
+                  {nesting.allowRotation && (
+                    <div className="flex items-center justify-between gap-2">
+                      <Label htmlFor="t0005-rot-mode" className="text-xs">وضع التدوير</Label>
+                      <select id="t0005-rot-mode" className="h-8 rounded-md border border-input bg-background px-2 text-sm"
+                        value={nesting.rotationMode} onChange={e => setN('rotationMode', e.target.value as RotationMode)}>
+                        <option value="auto">تلقائي (الأفضل)</option>
+                        <option value="normal">بدون تدوير (0°)</option>
+                        <option value="rotated">تدوير فقط (90°)</option>
+                      </select>
+                    </div>
+                  )}
+                </div>
+              </section>
+
+              {/* ملخص التوزيع */}
+              <section className="pt-3 border-t">
+                <h3 className="text-sm font-bold mb-2">ملخص التوزيع</h3>
+                <div className="grid grid-cols-1 gap-1 text-sm">
+                  <div>الإجمالي: <b>{nestingResult.bestTotal}</b></div>
+                  <div>مقاس التوزيع: <b>{toDisplay(distributionFootprint.w, dimUnit)} × {toDisplay(distributionFootprint.h, dimUnit)} {dimUnit}</b></div>
+                </div>
+              </section>
+
+              {/* إعادة الضبط */}
+              <div className="flex justify-end gap-2 border-t pt-3">
+                <Button variant="ghost" size="sm" onClick={reset} className="text-muted-foreground hover:text-foreground">
+                  <RotateCcw className="w-3.5 h-3.5 ml-1" />
+                  إعادة تعيين
                 </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="text-right">
-                <DropdownMenuItem onClick={handleExportSingleSvg}>SVG للمنتج</DropdownMenuItem>
-                <DropdownMenuItem onClick={handleExportSinglePdf}>PDF للمنتج (مع الأبعاد)</DropdownMenuItem>
-                <DropdownMenuItem onClick={handleExportSheetSvg} disabled={nestingResult.fitStatus === 'too_large'}>SVG لشيت التوزيع</DropdownMenuItem>
-                <DropdownMenuItem onClick={handleExportSheetPdf} disabled={nestingResult.fitStatus === 'too_large'}>PDF لشيت التوزيع</DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        </div>
-
-        {previewMode === 'template' && (
-          <div className="space-y-4">
-            <InteractiveSvgCanvas
-              segments={geo.segments}
-              svgWidth={geo.bbox.w}
-              svgHeight={geo.bbox.h}
-              dimensionsMarkup={dimensionsMarkup}
-              onChange={(updated) => setSegmentOverrides({ svg: null, segments: updated })}
-            />
-            {segmentOverrides.segments && (
-              <div className="flex justify-end">
-                <Button variant="ghost" size="sm" onClick={() => setSegmentOverrides({ svg: null, segments: null })} className="text-xs text-destructive gap-1">
-                  <RotateCcw className="w-3 h-3" />
-                  إلغاء التعديلات اليدوية
-                </Button>
               </div>
-            )}
+            </aside>
           </div>
-        )}
-
-        {previewMode === 'sheet' && (
-          <T0005SheetNestingPreview params={params} nesting={nesting} result={nestingResult} />
-        )}
-
-        {previewMode === 'three' && (
-          <div className="border rounded-lg bg-card overflow-hidden">
-            <Box3DPreview
-              boxType="T0005"
-              lidTongue={params.lidTongue}
-              panelWidths={[params.width, params.depth, params.width, params.depth - 0.5]}
-              panelHeights={params.height}
-              glueFlapWidth={params.glueFlap}
-              topFlapHeights={[0, 0, 0, 0]}
-              bottomFlapHeights={[
-                faceCoords.bottomFlaps[0].h,
-                faceCoords.bottomFlaps[1].h,
-                faceCoords.bottomFlaps[2].h,
-                faceCoords.bottomFlaps[3].h
-              ]}
-              svgMarkup={geo.svg}
-              svgWidth={geo.bbox.w}
-              svgHeight={geo.bbox.h}
-              faceCoords={faceCoords}
-            />
-          </div>
-        )}
-      </div>
+        </CardContent>
+      </Card>
 
       <T0005PrintSummary
         open={printOpen}
@@ -495,13 +532,71 @@ const T0005Calculator = ({ isAdmin = false }: { isAdmin?: boolean }) => {
         nestingResult={nestingResult}
         dimUnit={dimUnit}
         distributionFootprint={distributionFootprint}
-        derived={{
-          faceHeight: T0005_RULES.faceHeight(params.height),
-          depth1: params.depth,
-          depth2: T0005_RULES.d2(params.depth),
-        }}
+        derived={derived}
       />
     </div>
+  );
+};
+
+const ExportSingleButton = ({ params, geo }: { params: T0005Params; geo: T0005Geometry }) => {
+  const onExportSvg = async () => {
+    const { downloadT0005SingleTemplate } = await import('@/lib/t0005/exportSingle');
+    const name = `T0005_${params.width}x${params.height}x${params.depth}.svg`;
+    downloadT0005SingleTemplate(geo, name);
+  };
+  const onExportPdf = async () => {
+    const { buildT0005SingleTemplateSvg, downloadT0005SingleTemplatePdf } = await import('@/lib/t0005/exportSingle');
+    const svg = buildT0005SingleTemplateSvg(geo);
+    const name = `T0005_${params.width}x${params.height}x${params.depth}.pdf`;
+    await downloadT0005SingleTemplatePdf(svg, name);
+  };
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="default" size="sm">
+          <Download className="w-4 h-4 ml-1.5" />
+          تصدير القالب
+          <ChevronDown className="w-3 h-3 mr-1.5" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        <DropdownMenuItem onSelect={onExportSvg}>تصدير SVG</DropdownMenuItem>
+        <DropdownMenuItem onSelect={onExportPdf}>تصدير PDF</DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+};
+
+const ExportSheetButton = ({
+  params, nesting, result,
+}: {
+  params: T0005Params;
+  nesting: T0005NestingParams;
+  result: ReturnType<typeof computeT0005Nesting>;
+}) => {
+  const disabled = result.fitStatus !== 'fits' || result.bestTotal <= 0;
+  const onExportSvg = async () => {
+    const { downloadT0005SheetLayout } = await import('@/lib/t0005/exportSheet');
+    downloadT0005SheetLayout(params, nesting, result);
+  };
+  const onExportPdf = async () => {
+    const { downloadT0005SheetLayoutPdf } = await import('@/lib/t0005/exportSheet');
+    await downloadT0005SheetLayoutPdf(params, nesting, result);
+  };
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="default" size="sm" disabled={disabled}>
+          <Download className="w-4 h-4 ml-1.5" />
+          تصدير التوزيع
+          <ChevronDown className="w-3 h-3 mr-1.5" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        <DropdownMenuItem onSelect={onExportSvg}>تصدير SVG</DropdownMenuItem>
+        <DropdownMenuItem onSelect={onExportPdf}>تصدير PDF</DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 };
 

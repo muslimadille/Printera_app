@@ -42,8 +42,8 @@ const TAB_LABELS: Record<string, string> = {
   box_d001: 'علب — D001',
   box_t0001: 'علب — T0001',
   box_t0002: 'علب — T0002',
-  box_t0003: 'علب — T0003',
   box_t0004: 'علب — T0004',
+  box_t0005: 'علب — T0005',
 };
 
 // عناصر إظهار/إخفاء داخل قسم التكاليف المحفوظة (Visibility Control فقط)

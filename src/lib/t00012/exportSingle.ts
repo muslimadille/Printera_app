@@ -12,19 +12,12 @@ const CUT_COLOR = "#ED1C24";
 const CREASE_COLOR = "#00A651";
 const r = (n: number) => Math.round(n * 100000) / 100000;
 
-function renderSeg(s: Segment): string {
-  if (s.geometry === "fillet" && s.via && s.bezier) {
-    return `    <path d="M${s.start.x},${s.start.y} L${s.via.x},${s.via.y} C${s.bezier.c1.x},${s.bezier.c1.y} ${s.bezier.c2.x},${s.bezier.c2.y} ${s.end.x},${s.end.y}" data-id="${s.svgId}"/>`;
-  }
-  if (s.geometry === "bezier" && s.bezier) {
-    return `    <path d="M${s.start.x},${s.start.y} C${s.bezier.c1.x},${s.bezier.c1.y} ${s.bezier.c2.x},${s.bezier.c2.y} ${s.end.x},${s.end.y}" data-id="${s.svgId}"/>`;
-  }
-  if (s.geometry === "polyline" && s.points && s.points.length >= 2) {
-    const pts = s.points.map(p => `${p.x},${p.y}`).join(" ");
-    return `    <polyline points="${pts}" data-id="${s.svgId}"/>`;
+function renderSeg(s: any): string {
+  if (s.d) {
+    return `    <path d="${s.d}" data-id="${s.svgId || ''}"/>`;
   }
   if (s.start.x === s.end.x && s.start.y === s.end.y) return "";
-  return `    <line x1="${s.start.x}" y1="${s.start.y}" x2="${s.end.x}" y2="${s.end.y}" data-id="${s.svgId}"/>`;
+  return `    <line x1="${s.start.x}" y1="${s.start.y}" x2="${s.end.x}" y2="${s.end.y}" data-id="${s.svgId || ''}"/>`;
 }
 
 export function buildT00012SingleTemplateSvg(geo: T00012Geometry): string {

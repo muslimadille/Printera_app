@@ -7,6 +7,10 @@ export interface T00012Params {
   depth: number;
   referenceMode?: boolean;
 
+  dustFlapLength?: number;
+  topFlapTuckLength?: number;
+  sideFlapsLength?: number;
+
   sheetWidth: number;
   sheetHeight: number;
   gripper: number;
@@ -19,12 +23,18 @@ export const T00012_REFERENCE: Required<Omit<T00012Params, 'referenceMode' | 'sh
   width: 250, 
   height: 190, 
   depth: 50, 
+  dustFlapLength: 50,
+  topFlapTuckLength: 20,
+  sideFlapsLength: 15.5,
 };
 
 export const T00012_DEFAULTS: T00012Params = {
   width: 250,
   height: 190,
   depth: 50,
+  dustFlapLength: 50,
+  topFlapTuckLength: 20,
+  sideFlapsLength: 15.5,
   referenceMode: false,
   sheetWidth: 1000,
   sheetHeight: 700,

@@ -26,6 +26,8 @@ import T00012SheetNestingPreview from './T00012SheetNestingPreview';
 import T00012PrintSummary from './T00012PrintSummary';
 import MailerBox3DPreview from './MailerBox3DPreview';
 import { InteractiveSvgCanvas, type Segment } from '@/components/InteractiveSvgCanvas';
+import { downloadT00012SingleTemplate, downloadT00012SingleTemplatePdf, buildT00012SingleTemplateSvg } from '@/lib/t00012/exportSingle';
+import { downloadT00012SheetLayout, downloadT00012SheetLayoutPdf } from '@/lib/t00012/exportSheet';
 
 const DEFAULT_NESTING: T00012NestingParams = {
   horizontalGap: 3,
@@ -171,9 +173,10 @@ const T00012Calculator = ({ isAdmin = false, onSaveBox }: { isAdmin?: boolean; o
 
   return (
     <div dir="rtl" className="space-y-4">
+      {/* Header / Reference mode toggle */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="text-lg">T00012 — علبة بريدية (Mailer Box / Roll End Tuck Top)</CardTitle>
+          <CardTitle className="text-lg">T00012 — علبة بريدية مغلقة (Mailer Box - Roll End Tuck Top)</CardTitle>
           <div className="flex items-center gap-3">
             <Label htmlFor="t00012-ref" className="text-sm font-normal cursor-pointer">
               وضع المرجعية Reference Mode {refOn && <span className="text-emerald-600">(مفعّل)</span>}
@@ -185,13 +188,13 @@ const T00012Calculator = ({ isAdmin = false, onSaveBox }: { isAdmin?: boolean; o
         {refOn && (
           <CardContent>
             <div className="rounded-md bg-amber-50 border border-amber-200 p-3 text-sm text-amber-900">
-              وضع المرجعية مفعّل: الأبعاد الافتراضية مقفلة للمعايرة (W={T00012_REFERENCE.width}، H={T00012_REFERENCE.height}،
-              D={T00012_REFERENCE.depth} مم).
+              وضع المرجعية مفعّل: الأبعاد الافتراضية مقفلة للمعايرة.
             </div>
           </CardContent>
         )}
       </Card>
 
+      {/* Smart Auto Nesting controls */}
       <Card className={hiddenCls}>
         <CardHeader>
           <CardTitle className="text-lg">إعدادات التوزيع الذكي</CardTitle>
@@ -224,6 +227,7 @@ const T00012Calculator = ({ isAdmin = false, onSaveBox }: { isAdmin?: boolean; o
         </CardContent>
       </Card>
 
+      {/* Sheet preview + side input panel */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between gap-3">
           <div className="flex gap-2">
@@ -294,6 +298,7 @@ const T00012Calculator = ({ isAdmin = false, onSaveBox }: { isAdmin?: boolean; o
             </div>
 
             <aside className="space-y-5 rounded-lg border bg-muted/30 p-4">
+              {/* أبعاد القالب */}
               <section>
                 <h3 className="text-sm font-bold mb-2">أبعاد العلبة</h3>
                 <div className="grid grid-cols-3 gap-2">
@@ -301,8 +306,14 @@ const T00012Calculator = ({ isAdmin = false, onSaveBox }: { isAdmin?: boolean; o
                   <NumField label="الارتفاع" value={params.height} disabled={refOn} unit={dimUnit} onChange={v => set('height', v)} />
                   <NumField label="العمق" value={params.depth} disabled={refOn} unit={dimUnit} onChange={v => set('depth', v)} />
                 </div>
+                <div className="grid grid-cols-3 gap-2 mt-2">
+                  <NumField label="لسان الغبار" value={params.dustFlapLength ?? params.depth} disabled={refOn} unit={dimUnit} onChange={v => set('dustFlapLength', v)} />
+                  <NumField label="اللسان العلوي" value={params.topFlapTuckLength ?? 20} disabled={refOn} unit={dimUnit} onChange={v => set('topFlapTuckLength', v)} />
+                  <NumField label="الألسنة الجانبية" value={params.sideFlapsLength ?? 15.5} disabled={refOn} unit={dimUnit} onChange={v => set('sideFlapsLength', v)} />
+                </div>
               </section>
 
+              {/* إعدادات الشيت */}
               <section>
                 <h3 className="text-sm font-bold mb-2">إعدادات الشيت</h3>
                 <div className="grid grid-cols-3 gap-2">
@@ -320,6 +331,7 @@ const T00012Calculator = ({ isAdmin = false, onSaveBox }: { isAdmin?: boolean; o
                 </div>
               </section>
 
+              {/* خيارات التدوير */}
               <section className="space-y-3">
                 <h3 className="text-sm font-bold border-b pb-1">خيارات التدوير والتكرار</h3>
                 <div className="space-y-2">
@@ -341,6 +353,7 @@ const T00012Calculator = ({ isAdmin = false, onSaveBox }: { isAdmin?: boolean; o
                 </div>
               </section>
 
+              {/* ملخص التوزيع */}
               <section className="pt-3 border-t">
                 <h3 className="text-sm font-bold mb-2">ملخص التوزيع</h3>
                 <div className="grid grid-cols-1 gap-1 text-sm">
@@ -349,6 +362,7 @@ const T00012Calculator = ({ isAdmin = false, onSaveBox }: { isAdmin?: boolean; o
                 </div>
               </section>
 
+              {/* إعادة الضبط */}
               <div className="flex justify-end gap-2 border-t pt-3">
                 <Button variant="ghost" size="sm" onClick={reset} className="text-muted-foreground hover:text-foreground">
                   <RotateCcw className="w-3.5 h-3.5 ml-1" />
