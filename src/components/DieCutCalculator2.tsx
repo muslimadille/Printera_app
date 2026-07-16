@@ -20,6 +20,7 @@ import {
   type DieCutV2TemplateBox,
 } from '@/lib/dieCutEngineV2';
 import { buildDieCutV2Svg, type DieCutV2ExportMode } from '@/lib/dieCutExportV2';
+import { usePreviewSettings } from '@/hooks/usePreviewSettings';
 
 const SectionHeader = ({ title, icon: Icon }: { title: string; icon: any }) => (
   <div className="flex items-center gap-3 mb-4">
@@ -143,6 +144,8 @@ const SheetPreview = ({
 
 /* ──────────────────────────────────────────────────────────── */
 const DieCutCalculator2 = () => {
+  const { showNestingPreview, show3DPreview } = usePreviewSettings();
+
   const [pieceSvg, setPieceSvg] = useState<string>('');
   const [attachedFileName, setAttachedFileName] = useState<string>('');
   const [inputs, setInputs] = useState<DieCutV2Inputs>({ ...DEFAULT_V2_BASE_INPUTS });
@@ -390,7 +393,7 @@ const DieCutCalculator2 = () => {
           <Card>
             <CardContent className="p-4 space-y-4">
               <div className="flex flex-wrap items-center justify-between gap-3">
-                <SectionHeader title="معاينة التوزيع" icon={Maximize2} />
+                {showNestingPreview && <SectionHeader title="معاينة التوزيع" icon={Maximize2} />}
                 <div className="flex flex-wrap gap-2">
                   <Badge variant="default" className="text-sm">
                     {best.total} قطعة
@@ -401,7 +404,7 @@ const DieCutCalculator2 = () => {
                   <Badge variant="outline">{best.orientation}</Badge>
                 </div>
               </div>
-              <SheetPreview result={result} svg={pieceSvg} bbox={bbox} />
+              {showNestingPreview && <SheetPreview result={result} svg={pieceSvg} bbox={bbox} />}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-[11px]">
                 <div className="p-2 rounded-lg bg-muted/40">
                   <p className="text-muted-foreground">Footprint</p>

@@ -22,6 +22,7 @@ import { computeD001Nesting, type D001NestingParams, type RotationMode } from '@
 import D001SheetNestingPreview from './D001SheetNestingPreview';
 import D001PrintSummary from './D001PrintSummary';
 import Box3DPreview, { type Panel2DInfo } from './Box3DPreview';
+import { usePreviewSettings } from '@/hooks/usePreviewSettings';
 
 
 const DEFAULT_NESTING: D001NestingParams = {
@@ -119,6 +120,8 @@ const NumField = ({
 
 
 const D001Calculator = ({ isAdmin = false }: { isAdmin?: boolean }) => {
+  const { showNestingPreview, show3DPreview } = usePreviewSettings();
+
   const hiddenCls = isAdmin ? '' : 'hidden';
 
   const [params, setParams] = useState<D001Params>(D001_DEFAULTS);
@@ -399,7 +402,7 @@ const D001Calculator = ({ isAdmin = false }: { isAdmin?: boolean }) => {
             >
               معاينة القالب
             </button>
-            <button
+            {showNestingPreview && (<button
               type="button"
               onClick={() => setPreviewMode('sheet')}
               className={`px-3 py-1.5 rounded-md text-sm font-medium border transition-colors ${
@@ -409,8 +412,8 @@ const D001Calculator = ({ isAdmin = false }: { isAdmin?: boolean }) => {
               }`}
             >
               معاينة التوزيع على الشيت
-            </button>
-            <button
+            </button>)}
+            {show3DPreview && (<button
               type="button"
               onClick={() => setPreviewMode('three')}
               className={`px-3 py-1.5 rounded-md text-sm font-medium border transition-colors ${
@@ -420,7 +423,7 @@ const D001Calculator = ({ isAdmin = false }: { isAdmin?: boolean }) => {
               }`}
             >
               معاينة ثلاثية الأبعاد 3D
-            </button>
+            </button>)}
             <div className="flex items-center gap-2 pl-3 ml-1 border-l border-input">
               {previewMode === 'template' && (
                 <>

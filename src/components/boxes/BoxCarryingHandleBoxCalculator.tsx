@@ -23,6 +23,7 @@ import { exportCarryAsPdf } from '@/lib/carryingHandleBoxPdfExport';
 type CarryExportFormat = 'svg' | 'pdf';
 import CarryingHandleBoxMappingDialog from '../CarryingHandleBoxMappingDialog';
 import CarryingHandleBoxDebugDialog from '../CarryingHandleBoxDebugDialog';
+import { usePreviewSettings } from '@/hooks/usePreviewSettings';
 
 const SectionHeader = ({ title, icon: Icon }: { title: string; icon: any }) => (
   <div className="flex items-center gap-3 mb-4">
@@ -107,6 +108,8 @@ const SheetPreview = ({
 };
 
 const CarryingHandleBoxCalculator = () => {
+  const { showNestingPreview, show3DPreview } = usePreviewSettings();
+
   const [inputs, setInputs] = useState<CarryHandleInputs>({ ...DEFAULT_CARRY_INPUTS });
   const [zonesOpen, setZonesOpen] = useState(false);
   const [auditOpen, setAuditOpen] = useState(false);
@@ -281,7 +284,7 @@ const CarryingHandleBoxCalculator = () => {
           <Card>
             <CardContent className="p-4 space-y-4">
               <div className="flex flex-wrap items-center justify-between gap-3">
-                <SectionHeader title="معاينة التوزيع (Preview = Export)" icon={Maximize2} />
+                {showNestingPreview && <SectionHeader title="معاينة التوزيع (Preview = Export)" icon={Maximize2} />}
                 <div className="flex flex-wrap gap-2">
                   <Badge variant="default" className="text-sm">{best.total} قطعة</Badge>
                   <Badge variant="outline">{best.cols} × {best.rows}</Badge>
@@ -289,12 +292,12 @@ const CarryingHandleBoxCalculator = () => {
                   {best.flipSheet && <Badge variant="outline">Sheet swap</Badge>}
                 </div>
               </div>
-              <SheetPreview
+              {showNestingPreview && <SheetPreview
                 result={result}
                 svg={dieline}
                 sheetW={inputs.sheetWidth}
                 sheetH={inputs.sheetHeight}
-              />
+              />}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-[11px]">
                 <div className="p-2 rounded-lg bg-muted/40">
                   <p className="text-muted-foreground">Footprint</p>

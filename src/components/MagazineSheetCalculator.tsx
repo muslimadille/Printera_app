@@ -39,6 +39,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '
 import { toast } from 'sonner';
 import { calcTypeLabels } from '@/lib/calcTypeLabels';
 import {
+import { usePreviewSettings } from '@/hooks/usePreviewSettings';
   buildMagazineScenarios,
   computeFoldedSheet,
   validatePagesCount,
@@ -384,6 +385,8 @@ const findDefaultPaper = (
 };
 
 const MagazineSheetCalculator = ({ onNavigateToQuote, sessionToken }: Props) => {
+  const { showNestingPreview, show3DPreview } = usePreviewSettings();
+
   const { paperTypes, priceSettings, currentUsername } = usePrintingStore();
 
   /* ── Per-user draft key ── */

@@ -44,6 +44,7 @@ import ProfitMargins from '@/components/ProfitMargins';
 import { saveQuote, updateQuote } from '@/lib/userApi';
 import { buildScenarioLabel } from '@/lib/magazineLabel';
 import { toast } from 'sonner';
+import { usePreviewSettings } from '@/hooks/usePreviewSettings';
 
 /* ── Helpers (parity with NewMagazineCalculator) ── */
 function migrateSizePricing(s: any): SizePricing {

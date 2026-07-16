@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+
+<style>doc-page:not(:defined){visibility:hidden}</style>
+<helmet>
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&display=swap">
+  <style>
+    body { background: #faf6f0; }
+    body, p, div, h1, h2, h3, h4, table, td, th { font-family: 'Cairo', sans-serif; }
+    table { border-collapse: collapse; width: 100%; }
+    td, th { padding: 8px 10px; font-size: 13px; text-align: right; }
+    th { background: #f4ede1; color: #5a4c3c; font-weight: 700; border-bottom: 1px solid #e6dccb; }
+    td { border-bottom: 1px solid #eee2cf; color: #2b2013; }
+    .spec-table { break-inside: avoid; margin-bottom: 18px; }
+    h2 { font-size: 16px; margin: 0 0 10px; border-bottom: 2px solid #2b2013; padding-bottom: 6px; break-after: avoid; }
+  </style>
+</helmet>
+
+<x-import component-from-global-scope="doc-page" from="./doc-page.js" size="letter" margin="0.75in" hint-size="100%,100%">
+  <div dir="rtl" style="color:#2b2013;">
+
+    <div style="display:flex; align-items:center; gap:6px; font-size:12px; color:#9c8f7c; margin-bottom:14px;">
+      <span>مكتبة القوالب</span>
+      <i class="ph ph-caret-left" style="font-size:10px;"></i>
+      <span style="color:#5a4c3c;">{{ t.categoryLabel }}</span>
+      <i class="ph ph-caret-left" style="font-size:10px;"></i>
+      <span style="color:#2b2013; font-weight:600;">{{ t.id }}</span>
+    </div>
+
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:6px;">
+      <div style="display:flex; align-items:center; gap:10px;">
+        <span style="width:30px; height:30px; border-radius:8px; background:#2b2013; display:inline-flex; align-items:center; justify-content:center; color:#fff; font-size:15px; font-weight:700;">ق</span>
+        <div style="font-weight:700; font-size:16px;">قوالب<span style="color:#a9622f;">لاين</span></div>
+      </div>
+      <div style="font-size:11px; color:#9c8f7c;">ملخص طباعة القالب</div>
+    </div>
+
+    <h1 style="font-size:26px; margin:14px 0 4px;">{{ t.title }} — {{ t.id }}</h1>
+    <p style="margin:0 0 20px; color:#8a7d6d; font-size:13px; max-width:64ch;">{{ t.desc }}</p>
+
+    <div style="display:flex; justify-content:center; margin:0 0 24px; break-inside:avoid;">
+      <div style="width:70%; max-width:380px; background:#faf6f0; border:1px solid #e6dccb; border-radius:12px; padding:20px;">
+        <img src="{{ t.svg }}" alt="{{ t.title }}" style="width:100%; height:auto; display:block;">
+      </div>
+    </div>
+
+    <div class="spec-table">
+      <h2>أبعاد العلبة ({{ unit }})</h2>
+      <table>
+        <thead><tr><th>العرض</th><th>الارتفاع</th><th>العمق</th></tr></thead>
+        <tbody><tr><td>{{ dims.width }}</td><td>{{ dims.height }}</td><td>{{ dims.depth }}</td></tr></tbody>
+      </table>
+    </div>
+
+    <div class="spec-table">
+      <h2>تخصيص متقدم ({{ unit }})</h2>
+      <table>
+        <thead><tr><th>لسان اللصق</th><th>لسان القفل</th><th>لسان الغبار</th></tr></thead>
+        <tbody><tr><td>{{ dims.glueFlap }}</td><td>{{ dims.lidTongue }}</td><td>{{ dims.dustFlap }}</td></tr></tbody>
+      </table>
+    </div>
+
+    <div class="spec-table">
+      <h2>إعدادات الشيت ({{ unit }})</h2>
+      <table>
+        <thead><tr><th>عرض الشيت</th><th>ارتفاع الشيت</th><th>القابض</th><th>الهامش</th></tr></thead>
+        <tbody><tr><td>{{ dims.sheetWidth }}</td><td>{{ dims.sheetHeight }}</td><td>{{ dims.gripper }}</td><td>{{ dims.sheetMargin }}</td></tr></tbody>
+      </table>
+      <p style="font-size:11.5px; color:#9c8f7c; margin:8px 0 0;">الصافي: {{ usableLabel }}</p>
+    </div>
+
+    <div class="spec-table">
+      <h2>خيارات التدوير</h2>
+      <table>
+        <tbody>
+          <tr><td style="width:60%;">السماح بتدوير التصميم 90°</td><td>{{ rotationLabel }}</td></tr>
+          <tr><td>وضع التدوير</td><td>{{ rotationModeLabel }}</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="spec-table">
+      <h2>ملخص التوزيع</h2>
+      <table>
+        <tbody>
+          <tr><td style="width:60%;">إجمالي القطع على الشيت</td><td>{{ nestingTotal }}</td></tr>
+          <tr><td>مقاس التوزيع (صفوف × أعمدة)</td><td>{{ footprintLabel }}</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+</x-import>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;t&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;{id:string,title:string,desc:string,pro:boolean,svg:string,categoryLabel:string}&quot;},&quot;unit&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;string&quot;},&quot;params&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;object&quot;},&quot;allowRotation&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;boolean&quot;},&quot;rotationMode&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;string&quot;}}">
+
+class Component extends DCLogic {
+  UNIT_FACTORS = { mm: 1, cm: 10, in: 25.4 };
+  toDisplay(mm, unit) { return parseFloat((mm / this.UNIT_FACTORS[unit]).toFixed(2)); }
+
+  componentDidMount() {
+    (async () => {
+      try { await document.fonts.ready; } catch (e) {}
+      const imgs = Array.from(document.images).filter((i) => !i.complete);
+      await Promise.race([
+        Promise.allSettled(imgs.map((i) => i.decode())),
+        new Promise((r) => setTimeout(r, 8000)),
+      ]);
+      setTimeout(() => window.print(), 500);
+    })();
+  }
+
+  renderVals() {
+    const t = this.props.t || {
+      id: 'T0005', title: 'صندوق غطاء مفتوح بقفل', categoryLabel: 'طي وصواني',
+      desc: 'غطاء علوي مفتوح مع لسان قفل ولسان غبار جانبي لثبات إضافي.',
+      pro: false, svg: 'public/templates/preview/A10_20_02_02.svg',
+    };
+    const unit = this.props.unit || 'mm';
+    const params = this.props.params || {
+      width: 200, height: 120, depth: 80,
+      glueFlap: 15, lidTongue: 20, dustFlap: 18,
+      sheetWidth: 700, sheetHeight: 1000, gripper: 12, sheetMargin: 5,
+    };
+    const allowRotation = this.props.allowRotation ?? true;
+    const rotationMode = this.props.rotationMode || 'auto';
+    const rotationModeLabels = { auto: 'تلقائي (الأفضل)', normal: 'بدون تدوير (0°)', rotated: 'تدوير فقط (90°)' };
+
+    const dims = {};
+    Object.keys(params).forEach((k) => { dims[k] = this.toDisplay(params[k], unit); });
+
+    const bboxW = params.width * 2 + params.depth * 1.5 + params.glueFlap;
+    const bboxH = params.height + params.lidTongue + params.dustFlap + 20;
+    const usableW = params.sheetWidth - params.sheetMargin * 2;
+    const usableH = params.sheetHeight - params.gripper - params.sheetMargin;
+    const cols = Math.max(1, Math.floor(usableW / (bboxW + 3)));
+    const rows = Math.max(1, Math.floor(usableH / (bboxH + 3)));
+
+    return {
+      t, unit, dims,
+      usableLabel: `${this.toDisplay(usableW, unit)} × ${this.toDisplay(usableH, unit)} ${unit}`,
+      rotationLabel: allowRotation ? 'مفعّل' : 'غير مفعّل',
+      rotationModeLabel: rotationModeLabels[rotationMode] || rotationMode,
+      nestingTotal: cols * rows,
+      footprintLabel: `${rows} × ${cols}`,
+    };
+  }
+}
+
+</script>
+</body>
+</html>

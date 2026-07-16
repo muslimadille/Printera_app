@@ -28,6 +28,7 @@ import {
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AlertTriangle } from 'lucide-react';
 import { saveQuote, updateQuote } from '@/lib/userApi';
+import { usePreviewSettings } from '@/hooks/usePreviewSettings';
 
 /* ── Section Header ── */
 const SectionHeader = ({ title, icon: Icon }: { title: string; icon: any }) => (
@@ -260,6 +261,8 @@ const createEmptySheet = (): SheetData => ({
 
 /* ═══════════════════════════════════════════════════════ */
 const CostCalculator = ({ onNavigateToQuote, sessionToken }: { onNavigateToQuote?: () => void; sessionToken?: string }) => {
+  const { showNestingPreview, show3DPreview } = usePreviewSettings();
+
   const { paperTypes, priceSettings, setInputs, editingQuoteData, setEditingQuoteData } = usePrintingStore();
   const calc = useCalculations();
 

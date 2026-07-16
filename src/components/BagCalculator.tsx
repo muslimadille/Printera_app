@@ -13,6 +13,7 @@ import { usePrintingStore } from '@/store/printingStore';
 import { calculateBag, type BagInputs } from '@/lib/bagCalcEngine';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { calcTypeLabels } from '@/lib/calcTypeLabels';
+import { usePreviewSettings } from '@/hooks/usePreviewSettings';
 
 interface BagFinishingItem {
   name: string;
@@ -34,6 +35,8 @@ interface Props {
 }
 
 const BagCalculator = ({}: Props) => {
+  const { showNestingPreview, show3DPreview } = usePreviewSettings();
+
   const { paperTypes, priceSettings } = usePrintingStore();
 
   const [width, setWidth] = useState(33);

@@ -30,8 +30,11 @@ const SectionHeader = ({ icon: Icon, title, subtitle }: { icon: any; title: stri
 );
 
 import ItemInfoCard, { ItemInfo, validateItemInfo } from '@/components/ItemInfoCard';
+import { usePreviewSettings } from '@/hooks/usePreviewSettings';
 
 const PricingCalculator = ({ onNavigateToQuote }: { onNavigateToQuote?: () => void }) => {
+  const { showNestingPreview, show3DPreview } = usePreviewSettings();
+
   const { inputs, setInputs, paperTypes, setUnifiedQuote, setQuoteInfo, editingQuoteData, setEditingQuoteData } = usePrintingStore();
   const calc = useCalculations();
   const [itemInfo, setItemInfo] = useState<ItemInfo>(() => {

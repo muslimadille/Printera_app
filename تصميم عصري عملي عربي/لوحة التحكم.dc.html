@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+
+<helmet>
+  <link rel="stylesheet" href="_ds/nocturne-d3cbf094-b35e-408c-8a1b-816eee968494/styles.css">
+  <script src="_ds/nocturne-d3cbf094-b35e-408c-8a1b-816eee968494/_ds_bundle.js"></script>
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&display=swap">
+  <style>
+    body { background: #faf6f0; }
+    body, .btn, .input, p, a, span, div, h1, h2, h3, h4, h5, h6, button, label { font-family: 'Cairo', var(--font-body), sans-serif; }
+    a { text-decoration: none; }
+    ::-webkit-scrollbar { width: 10px; height: 10px; }
+    ::-webkit-scrollbar-thumb { background: #d8cbb5; border-radius: 8px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    .hover-lift { transition: transform .2s ease, box-shadow .2s ease; }
+    .hover-lift:hover { transform: translateY(-4px); box-shadow: 0 14px 28px rgba(43,32,19,0.10); }
+    .btn-anim { transition: transform .18s ease, box-shadow .18s ease; }
+    .btn-anim:hover { transform: translateY(-2px); box-shadow: 0 10px 20px rgba(43,32,19,0.12); }
+    .tab-btn { transition: background .2s ease, color .2s ease; }
+  </style>
+</helmet>
+
+<div dir="rtl" style="min-height:100vh; background:#faf6f0; color:#2b2013; font-family:var(--font-body);">
+
+  <!-- ===== Nav (same as public pages) ===== -->
+  <header style="display:flex; align-items:center; gap:var(--space-6); border-bottom:1px solid #e8ded0; padding:var(--space-4) var(--space-8); background:#faf6f0; position:sticky; top:0; z-index:20;">
+    <a href="مكتبة القوالب.dc.html" style="display:flex; align-items:center; gap:10px; font-weight:700; font-size:18px; letter-spacing:-0.01em;">
+      <span style="width:30px; height:30px; border-radius:var(--radius-md); background:#2b2013; display:inline-flex; align-items:center; justify-content:center; color:#fff; font-size:15px; font-weight:700;">ق</span>
+      قوالب<span style="color:#a9622f;">لاين</span>
+    </a>
+    <nav style="display:flex; align-items:center; gap:var(--space-6); margin-inline-end:auto;">
+      <a href="مكتبة القوالب.dc.html#library" style="display:flex; align-items:center; gap:6px; color:#5a4c3c;">
+        <i class="ph ph-cube" style="font-size:16px;"></i> العلب
+      </a>
+      <a href="مكتبة القوالب.dc.html#categories" style="display:flex; align-items:center; gap:6px; color:#5a4c3c;">
+        <i class="ph ph-squares-four" style="font-size:16px;"></i> التصنيفات
+      </a>
+    </nav>
+    <a href="لوحة التحكم.dc.html" style="display:flex; align-items:center; gap:8px; font-weight:700; color:#2b2013;">
+      <div style="width:30px; height:30px; border-radius:50%; background:#a9622f; color:#fff; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:13px;">{{ userInitial }}</div>
+      حسابي
+    </a>
+  </header>
+
+  <div style="padding:var(--space-8); max-width:960px; margin:0 auto;">
+
+    <!-- Profile header -->
+    <div style="display:flex; align-items:center; gap:var(--space-4); margin-bottom:var(--space-8); flex-wrap:wrap;">
+      <div style="width:76px; height:76px; border-radius:50%; background:#a9622f; color:#fff; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:28px; flex-shrink:0;">
+        {{ userInitial }}
+      </div>
+      <div style="flex:1; min-width:200px;">
+        <h1 style="font-size:24px; margin:0 0 4px;">{{ userName }}</h1>
+        <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+          <span style="font-size:13.5px; color:#8a7d6d;">{{ userEmail }}</span>
+          <span style="background:#f3e7d8; color:#a9622f; font-size:11.5px; font-weight:700; padding:3px 10px; border-radius:999px;">{{ userPlan }}</span>
+        </div>
+      </div>
+      <a href="#" style="display:flex; align-items:center; gap:6px; border:1px solid #e6dccb; color:#5a4c3c; font-weight:600; font-size:13.5px; padding:10px 16px; border-radius:999px;" class="btn-anim">
+        <i class="ph ph-pencil-simple"></i> تعديل الملف الشخصي
+      </a>
+      <a href="تسجيل الدخول.dc.html" style="display:flex; align-items:center; gap:6px; color:#9c8f7c; font-size:13.5px; padding:10px 12px;">
+        <i class="ph ph-sign-out"></i> خروج
+      </a>
+    </div>
+
+    <!-- Tabs -->
+    <div style="display:flex; gap:6px; border-bottom:1px solid #e8ded0; margin-bottom:var(--space-6);">
+      <sc-for list="{{ tabs }}" as="tab" hint-placeholder-count="3">
+        <button type="button" onclick="{{ tab.onSelect }}" class="tab-btn" style="{{ tab.style }}">{{ tab.label }}</button>
+      </sc-for>
+      <a href="تفاصيل الفوترة.dc.html" style="padding:12px 18px; font-size:14px; font-weight:600; color:#9c8f7c; border-bottom:2px solid transparent; margin-bottom:-1px;">الفوترة</a>
+    </div>
+
+    <!-- Saved templates tab -->
+    <sc-if value="{{ isSavedTab }}" hint-placeholder-val="{{ true }}">
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:var(--space-4);">
+        <h2 style="margin:0; font-size:17px;">قوالبي المحفوظة</h2>
+        <a href="مكتبة القوالب.dc.html#library" style="font-size:13.5px; font-weight:700; color:#2b2013; display:flex; align-items:center; gap:4px;">
+          تصفح المزيد <i class="ph ph-arrow-left"></i>
+        </a>
+      </div>
+      <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(220px, 1fr)); gap:var(--space-4);">
+        <sc-for list="{{ myTemplates }}" as="t" hint-placeholder-count="4">
+          <a href="تفاصيل القالب.dc.html" class="hover-lift" style="background:#fff; border:1px solid #e6dccb; border-radius:var(--radius-lg); overflow:hidden; display:block;">
+            <div style="aspect-ratio:4/3; background:#f4ede1; display:flex; align-items:center; justify-content:center; padding:var(--space-3);">
+              <img src="{{ t.svg }}" alt="{{ t.title }}" style="width:100%; height:100%; object-fit:contain;">
+            </div>
+            <div style="padding:var(--space-3);">
+              <div style="font-size:13.5px; font-weight:700; margin-bottom:2px;">{{ t.title }}</div>
+              <div style="font-size:11.5px; color:#9c8f7c;">آخر تعديل: {{ t.updated }}</div>
+            </div>
+          </a>
+        </sc-for>
+      </div>
+    </sc-if>
+
+    <!-- Orders tab -->
+    <sc-if value="{{ isOrdersTab }}" hint-placeholder-val="{{ false }}">
+      <h2 style="margin:0 0 var(--space-4); font-size:17px;">سجل التصدير</h2>
+      <div style="background:#fff; border:1px solid #e6dccb; border-radius:var(--radius-lg); overflow:hidden;">
+        <sc-for list="{{ exportHistory }}" as="e" hint-placeholder-count="4">
+          <div style="display:flex; align-items:center; justify-content:space-between; padding:var(--space-4); border-bottom:1px solid #eee2cf;">
+            <div style="display:flex; align-items:center; gap:12px;">
+              <i class="ph ph-file-arrow-down" style="font-size:20px; color:#a9622f;"></i>
+              <div>
+                <div style="font-size:14px; font-weight:600;">{{ e.name }}</div>
+                <div style="font-size:12px; color:#9c8f7c;">{{ e.date }}</div>
+              </div>
+            </div>
+            <span style="font-size:12px; color:#8a7d6d;">{{ e.format }}</span>
+          </div>
+        </sc-for>
+      </div>
+    </sc-if>
+
+    <!-- Account settings tab -->
+    <sc-if value="{{ isAccountTab }}" hint-placeholder-val="{{ false }}">
+      <h2 style="margin:0 0 var(--space-4); font-size:17px;">معلومات الحساب</h2>
+      <div style="background:#fff; border:1px solid #e6dccb; border-radius:var(--radius-lg); padding:var(--space-6); display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:var(--space-6);">
+        <div>
+          <div style="font-size:12px; color:#9c8f7c; margin-bottom:4px;">الاسم</div>
+          <div style="font-size:14px; font-weight:600;">{{ userName }}</div>
+        </div>
+        <div>
+          <div style="font-size:12px; color:#9c8f7c; margin-bottom:4px;">البريد الإلكتروني</div>
+          <div style="font-size:14px; font-weight:600;">{{ userEmail }}</div>
+        </div>
+        <div>
+          <div style="font-size:12px; color:#9c8f7c; margin-bottom:4px;">الخطة الحالية</div>
+          <div style="font-size:14px; font-weight:600; color:#a9622f;">{{ userPlan }}</div>
+        </div>
+        <div style="display:flex; align-items:center;">
+          <a href="#" style="font-size:13.5px; font-weight:700; color:#2b2013; border:1px solid #e6dccb; padding:8px 16px; border-radius:999px;">إدارة الاشتراك</a>
+        </div>
+      </div>
+    </sc-if>
+  </div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+
+class Component extends DCLogic {
+  state = { activeTab: 'saved' };
+
+  myTemplates = [
+    { title: 'صندوق غطاء مفتوح بقفل — T0005', svg: 'public/templates/preview/A10_20_02_02.svg', updated: 'منذ يومين' },
+    { title: 'علبة مستقيمة الإغلاق — T0002', svg: 'public/templates/preview/A10_10_03_03.svg', updated: 'منذ 5 أيام' },
+    { title: 'علبة قفل مزدوج الجدار — T0006', svg: 'public/templates/preview/A10_75_03_03.svg', updated: 'الأسبوع الماضي' },
+    { title: 'علبة كيك بمقبض حمل', svg: 'public/templates/preview/A10_10_02_02_11.svg', updated: 'منذ 3 أسابيع' },
+  ];
+
+  exportHistory = [
+    { name: 'T0005_200x120x80.pdf', date: '12 يوليو 2026', format: 'PDF' },
+    { name: 'T0002_180x100x60.svg', date: '9 يوليو 2026', format: 'SVG' },
+    { name: 'T0006_sheet_layout.pdf', date: '2 يوليو 2026', format: 'PDF' },
+    { name: 'D001_handle_box.dxf', date: '28 يونيو 2026', format: 'DXF' },
+  ];
+
+  onSelectTab = (id) => this.setState({ activeTab: id });
+
+  renderVals() {
+    const active = this.state.activeTab;
+    const tabs = [
+      { id: 'saved', label: 'قوالبي المحفوظة' },
+      { id: 'orders', label: 'سجل التصدير' },
+      { id: 'account', label: 'الحساب' },
+    ].map((tab) => {
+      const isActive = tab.id === active;
+      return {
+        ...tab,
+        onSelect: () => this.onSelectTab(tab.id),
+        style: `padding:12px 18px; border:none; background:transparent; cursor:pointer;
+          font-family:'Cairo',sans-serif; font-size:14px; font-weight:${isActive ? 700 : 600};
+          color:${isActive ? '#2b2013' : '#9c8f7c'};
+          border-bottom:2px solid ${isActive ? '#a9622f' : 'transparent'}; margin-bottom:-1px;`,
+      };
+    });
+
+    return {
+      tabs,
+      isSavedTab: active === 'saved',
+      isOrdersTab: active === 'orders',
+      isAccountTab: active === 'account',
+      myTemplates: this.myTemplates,
+      exportHistory: this.exportHistory,
+      userName: 'محمد العتيبي',
+      userEmail: 'mohammed@company.com',
+      userPlan: 'خطة برو',
+      userInitial: 'م',
+    };
+  }
+}
+
+</script>
+</body>
+</html>

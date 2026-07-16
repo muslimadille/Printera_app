@@ -30,6 +30,7 @@ import {
   RotateCw, RotateCcw, RefreshCw, Save, Grid3x3, Hash, Plus,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { usePreviewSettings } from '@/hooks/usePreviewSettings';
 
 type DistributionStats = {
   finalCopies: number;
@@ -275,6 +276,8 @@ const newId = () => Math.random().toString(36).slice(2, 9);
 interface Props { isAdmin?: boolean }
 
 const SvgAutoNestingCalculator = ({}: Props) => {
+  const { showNestingPreview, show3DPreview } = usePreviewSettings();
+
   // Source SVG
   const [parsed, setParsed] = useState<ParsedSvg | null>(null);
   const [cutColor, setCutColor] = useState<string>(ALL_VISIBLE);

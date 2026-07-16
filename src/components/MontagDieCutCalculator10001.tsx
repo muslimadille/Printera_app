@@ -31,6 +31,7 @@ import { usePrintingStore, type ExtraColorConfig, type CalculatorInputs, type Fi
 import { calculateQuote } from '@/lib/calcEngine';
 import { calcTypeLabels } from '@/lib/calcTypeLabels';
 import { DollarSign } from 'lucide-react';
+import { usePreviewSettings } from '@/hooks/usePreviewSettings';
 
 /* ── Types ── */
 interface DieTemplate {
@@ -292,6 +293,8 @@ const SheetPreview = ({
 /*  Main calculator                                            */
 /* ──────────────────────────────────────────────────────────── */
 const MontagDieCutCalculator10001 = ({ isAdmin = true }: { isAdmin?: boolean } = {}) => {
+  const { showNestingPreview, show3DPreview } = usePreviewSettings();
+
   const [pieceSvg, setPieceSvg] = useState<string>('');
   const [templates, setTemplates] = useState<DieTemplate[]>([]);
   const [activeTemplateId, setActiveTemplateId] = useState<string>('');
@@ -1054,8 +1057,8 @@ const MontagDieCutCalculator10001 = ({ isAdmin = true }: { isAdmin?: boolean } =
         <div className="lg:col-span-7 space-y-4">
           <Card>
             <CardContent className="p-3 sm:p-4">
-              <SectionHeader title="معاينة التوزيع داخل الشيت" icon={Layers} />
-              <SheetPreview result={result} svg={pieceSvg} zones={zones} />
+              {showNestingPreview && <SectionHeader title="معاينة التوزيع داخل الشيت" icon={Layers} />}
+              {showNestingPreview && <SheetPreview result={result} svg={pieceSvg} zones={zones} />}
             </CardContent>
           </Card>
 

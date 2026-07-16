@@ -19,6 +19,7 @@ import {
   type DieCut5Inputs, type DieCut5Result,
 } from '@/lib/diecut5Engine';
 import { buildDieCut5ExportSvg, type DieCut5ExportMode } from '@/lib/diecut5Export';
+import { usePreviewSettings } from '@/hooks/usePreviewSettings';
 
 const SectionHeader = ({ title, icon: Icon }: { title: string; icon: any }) => (
   <div className="flex items-center gap-3 mb-4">
@@ -103,6 +104,8 @@ const SheetPreview = ({
 };
 
 const DieCutCalculator5 = () => {
+  const { showNestingPreview, show3DPreview } = usePreviewSettings();
+
   const [inputs, setInputs] = useState<DieCut5Inputs>({ ...DEFAULT_D5_INPUTS });
   const [calibrationOpen, setCalibrationOpen] = useState(false);
   const [zonesOpen, setZonesOpen] = useState(false);
@@ -274,14 +277,14 @@ const DieCutCalculator5 = () => {
           <Card>
             <CardContent className="p-4 space-y-4">
               <div className="flex flex-wrap items-center justify-between gap-3">
-                <SectionHeader title="معاينة التوزيع (Preview = Export)" icon={Maximize2} />
+                {showNestingPreview && <SectionHeader title="معاينة التوزيع (Preview = Export)" icon={Maximize2} />}
                 <div className="flex flex-wrap gap-2">
                   <Badge variant="default" className="text-sm">{best.total} قطعة</Badge>
                   <Badge variant="outline">{best.cols} × {best.rows}</Badge>
                   <Badge variant="outline">{best.orientation}</Badge>
                 </div>
               </div>
-              <SheetPreview result={result} svg={dielineSvg} />
+              {showNestingPreview && <SheetPreview result={result} svg={dielineSvg} />}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-[11px]">
                 <div className="p-2 rounded-lg bg-muted/40">
                   <p className="text-muted-foreground">Footprint</p>

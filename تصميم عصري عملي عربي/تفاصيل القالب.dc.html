@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+
+<helmet>
+  <link rel="stylesheet" href="_ds/nocturne-d3cbf094-b35e-408c-8a1b-816eee968494/styles.css">
+  <script src="_ds/nocturne-d3cbf094-b35e-408c-8a1b-816eee968494/_ds_bundle.js"></script>
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&display=swap">
+  <style>
+    body { background: #faf6f0; }
+    body, .btn, .input, p, a, span, div, h1, h2, h3, h4, h5, h6, button, select, label { font-family: 'Cairo', var(--font-body), sans-serif; }
+    ::-webkit-scrollbar { width: 10px; height: 10px; }
+    ::-webkit-scrollbar-thumb { background: #d8cbb5; border-radius: 8px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    a { text-decoration: none; }
+    input[type=number]::-webkit-inner-spin-button, input[type=number]::-webkit-outer-spin-button { opacity: 1; }
+  </style>
+</helmet>
+
+<div dir="rtl" style="min-height:100vh; background:#faf6f0; color:#2b2013; font-family:var(--font-body);">
+
+  <!-- ===== Nav ===== -->
+  <header style="display:flex; align-items:center; gap:var(--space-6); border-bottom:1px solid #e8ded0; padding:var(--space-4) var(--space-8); background:#faf6f0; position:sticky; top:0; z-index:20;">
+    <div style="display:flex; align-items:center; gap:10px; font-weight:700; font-size:18px; letter-spacing:-0.01em;">
+      <span style="width:30px; height:30px; border-radius:var(--radius-md); background:#2b2013; display:inline-flex; align-items:center; justify-content:center; color:#fff; font-size:15px; font-weight:700;">ق</span>
+      قوالب<span style="color:#a9622f;">لاين</span>
+    </div>
+    <nav style="display:flex; align-items:center; gap:var(--space-6); margin-inline-end:auto;">
+      <a href="مكتبة القوالب.dc.html#library" style="display:flex; align-items:center; gap:6px; color:#5a4c3c;">
+        <i class="ph ph-cube" style="font-size:16px;"></i> العلب
+      </a>
+      <a href="مكتبة القوالب.dc.html#categories" style="display:flex; align-items:center; gap:6px; color:#5a4c3c;">
+        <i class="ph ph-squares-four" style="font-size:16px;"></i> التصنيفات
+      </a>
+    </nav>
+    <a href="تسجيل الدخول.dc.html" class="btn-anim" style="color:#5a4c3c; font-size:14px; font-weight:600; border-radius:999px; padding:8px 10px;">تسجيل الدخول</a>
+  </header>
+
+  <!-- ===== Breadcrumb + title ===== -->
+  <div style="padding:var(--space-6) var(--space-8) 0;">
+    <div style="display:flex; align-items:center; gap:6px; font-size:13px; color:#9c8f7c; margin-bottom:var(--space-3);">
+      <a href="مكتبة القوالب.dc.html#library" style="color:#9c8f7c;">مكتبة القوالب</a>
+      <i class="ph ph-caret-left" style="font-size:11px;"></i>
+      <span style="color:#5a4c3c;">{{ t.categoryLabel }}</span>
+      <i class="ph ph-caret-left" style="font-size:11px;"></i>
+      <span style="color:#2b2013; font-weight:600;">{{ t.id }}</span>
+    </div>
+    <div style="display:flex; align-items:flex-end; justify-content:space-between; gap:var(--space-4); flex-wrap:wrap;">
+      <div>
+        <div style="display:flex; align-items:center; gap:10px; margin-bottom:6px;">
+          <h1 style="margin:0; font-size:30px;">{{ t.title }}</h1>
+          <sc-if value="{{ t.pro }}" hint-placeholder-val="{{ false }}">
+            <span style="background:#c1461f; color:#fff; font-size:11px; font-weight:700; padding:3px 10px; border-radius:6px;">PRO</span>
+          </sc-if>
+        </div>
+        <p style="margin:0; color:#8a7d6d; max-width:56ch; font-size:14px;">{{ t.desc }}</p>
+      </div>
+      <div style="display:flex; gap:var(--space-2);">
+        <button type="button" onclick="{{ resetAll }}" style="display:flex; align-items:center; gap:6px; background:#fff; color:#5a4c3c; font-weight:600; font-size:14px; padding:10px 16px; border-radius:999px; border:1px solid #e6dccb; cursor:pointer;">
+          <i class="ph ph-arrow-counter-clockwise"></i> إعادة تعيين
+        </button>
+        <button type="button" style="display:flex; align-items:center; gap:6px; background:#2b2013; color:#fff; font-weight:700; font-size:14px; padding:10px 18px; border-radius:999px; border:none; cursor:pointer;" class="btn-anim">
+          <i class="ph ph-download-simple"></i> تصدير القالب
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== Main workspace ===== -->
+  <div style="padding:var(--space-6) var(--space-8) var(--space-8); display:grid; grid-template-columns:1fr 380px; gap:var(--space-6); align-items:start;">
+
+    <!-- Preview column -->
+    <div style="background:#fff; border:1px solid #e6dccb; border-radius:var(--radius-lg); overflow:hidden;">
+      <div style="display:flex; align-items:center; justify-content:space-between; gap:var(--space-3); padding:var(--space-3) var(--space-4); border-bottom:1px solid #e8ded0; flex-wrap:wrap;">
+        <div style="display:flex; gap:6px;">
+          <sc-for list="{{ previewTabs }}" as="tab" hint-placeholder-count="3">
+            <button type="button" onclick="{{ tab.onSelect }}" style="{{ tab.style }}">{{ tab.label }}</button>
+          </sc-for>
+        </div>
+        <div style="display:flex; align-items:center; gap:var(--space-3);">
+          <label style="display:flex; align-items:center; gap:6px; font-size:13px; color:#5a4c3c; cursor:pointer;">
+            <input type="checkbox" checked="{{ showDimensions }}" onchange="{{ onToggleDims }}">
+            إظهار القياسات
+          </label>
+          <select value="{{ unit }}" onchange="{{ onUnitChange }}" style="height:32px; border-radius:8px; border:1px solid #e6dccb; background:#fff; padding:0 10px; font-size:13px; font-family:'Cairo',sans-serif; color:#2b2013;">
+            <option value="mm">mm</option>
+            <option value="cm">cm</option>
+            <option value="in">in</option>
+          </select>
+        </div>
+      </div>
+
+      <div style="padding:var(--space-6); min-height:520px; display:flex; align-items:center; justify-content:center; background:#faf6f0; background-image:radial-gradient(circle at 1px 1px, #e9ddc9 1px, transparent 0); background-size:22px 22px;">
+        <div style="position:relative; width:100%; max-width:520px;">
+          <img src="{{ t.svg }}" alt="{{ t.title }}" style="width:100%; height:auto; display:block; filter:drop-shadow(0 10px 24px rgba(43,32,19,0.12));">
+          <div style="position:absolute; bottom:-28px; left:0; right:0; text-align:center; font-size:12px; color:#9c8f7c;">
+            مقاس القالب: {{ bboxLabel }}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Controls sidebar -->
+    <aside style="background:#fff; border:1px solid #e6dccb; border-radius:var(--radius-lg); padding:var(--space-6); display:flex; flex-direction:column; gap:var(--space-6);">
+
+      <section>
+        <h3 style="margin:0 0 10px; font-size:14px; font-weight:700;">أبعاد العلبة</h3>
+        <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:10px;">
+          <sc-for list="{{ dimFields }}" as="f" hint-placeholder-count="3">
+            <div>
+              <label style="display:block; font-size:11px; color:#8a7d6d; margin-bottom:4px;">{{ f.label }} <span style="color:#b6a891;">({{ unit }})</span></label>
+              <input type="number" step="0.1" value="{{ f.value }}" oninput="{{ f.onChange }}"
+                style="width:100%; box-sizing:border-box; height:38px; border-radius:8px; border:1px solid #e6dccb; background:#fdfaf5; padding:0 10px; font-size:13.5px; font-family:'Cairo',sans-serif; color:#2b2013;">
+            </div>
+          </sc-for>
+        </div>
+      </section>
+
+      <div style="height:1px; background:#eee2cf;"></div>
+
+      <section>
+        <h3 style="margin:0 0 10px; font-size:14px; font-weight:700;">تخصيص متقدم</h3>
+        <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:10px;">
+          <sc-for list="{{ advFields }}" as="f" hint-placeholder-count="3">
+            <div>
+              <label style="display:block; font-size:11px; color:#8a7d6d; margin-bottom:4px;">{{ f.label }} <span style="color:#b6a891;">({{ unit }})</span></label>
+              <input type="number" step="0.1" value="{{ f.value }}" oninput="{{ f.onChange }}"
+                style="width:100%; box-sizing:border-box; height:38px; border-radius:8px; border:1px solid #e6dccb; background:#fdfaf5; padding:0 10px; font-size:13.5px; font-family:'Cairo',sans-serif; color:#2b2013;">
+            </div>
+          </sc-for>
+        </div>
+      </section>
+
+      <div style="height:1px; background:#eee2cf;"></div>
+
+      <section>
+        <h3 style="margin:0 0 10px; font-size:14px; font-weight:700;">إعدادات الشيت</h3>
+        <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:10px;">
+          <sc-for list="{{ sheetFields }}" as="f" hint-placeholder-count="3">
+            <div>
+              <label style="display:block; font-size:11px; color:#8a7d6d; margin-bottom:4px;">{{ f.label }} <span style="color:#b6a891;">({{ unit }})</span></label>
+              <input type="number" step="0.1" value="{{ f.value }}" oninput="{{ f.onChange }}"
+                style="width:100%; box-sizing:border-box; height:38px; border-radius:8px; border:1px solid #e6dccb; background:#fdfaf5; padding:0 10px; font-size:13.5px; font-family:'Cairo',sans-serif; color:#2b2013;">
+            </div>
+          </sc-for>
+        </div>
+        <div style="margin-top:8px; font-size:11.5px; color:#9c8f7c;">
+          الصافي: {{ usableLabel }}
+        </div>
+      </section>
+
+      <div style="height:1px; background:#eee2cf;"></div>
+
+      <section>
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;">
+          <h3 style="margin:0; font-size:14px; font-weight:700;">خيارات التدوير</h3>
+          <label style="display:flex; align-items:center; gap:8px; font-size:12.5px; color:#5a4c3c; cursor:pointer;">
+            السماح بالتدوير 90°
+            <input type="checkbox" checked="{{ allowRotation }}" onchange="{{ onToggleRotation }}">
+          </label>
+        </div>
+        <sc-if value="{{ allowRotation }}" hint-placeholder-val="{{ true }}">
+          <select value="{{ rotationMode }}" onchange="{{ onRotationModeChange }}" style="width:100%; box-sizing:border-box; height:36px; border-radius:8px; border:1px solid #e6dccb; background:#fdfaf5; padding:0 10px; font-size:13px; font-family:'Cairo',sans-serif; color:#2b2013;">
+            <option value="auto">تلقائي (الأفضل)</option>
+            <option value="normal">بدون تدوير (0°)</option>
+            <option value="rotated">تدوير فقط (90°)</option>
+          </select>
+        </sc-if>
+      </section>
+
+      <div style="height:1px; background:#eee2cf;"></div>
+
+      <section>
+        <h3 style="margin:0 0 10px; font-size:14px; font-weight:700;">ملخص التوزيع</h3>
+        <div style="display:flex; flex-direction:column; gap:6px; font-size:13.5px;">
+          <div style="display:flex; justify-content:space-between;"><span style="color:#8a7d6d;">إجمالي القطع</span><strong>{{ nestingTotal }}</strong></div>
+          <div style="display:flex; justify-content:space-between;"><span style="color:#8a7d6d;">مقاس التوزيع</span><strong>{{ footprintLabel }}</strong></div>
+        </div>
+      </section>
+    </aside>
+  </div>
+
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;t&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;{id:string,title:string,desc:string,pro:boolean,svg:string,categoryLabel:string}&quot;}}">
+
+class Component extends DCLogic {
+  state = {
+    previewMode: 'template',
+    showDimensions: true,
+    unit: 'mm',
+    allowRotation: true,
+    rotationMode: 'auto',
+    params: {
+      width: 200, height: 120, depth: 80,
+      glueFlap: 15, lidTongue: 20, dustFlap: 18,
+      sheetWidth: 700, sheetHeight: 1000, gripper: 12, sheetMargin: 5,
+    },
+  };
+
+  UNIT_FACTORS = { mm: 1, cm: 10, in: 25.4 };
+
+  toDisplay(mm, unit) {
+    return parseFloat((mm / this.UNIT_FACTORS[unit]).toFixed(3));
+  }
+  toMm(v, unit) {
+    return v * this.UNIT_FACTORS[unit];
+  }
+
+  onUnitChange = (e) => this.setState({ unit: e.target.value });
+  onToggleDims = (e) => this.setState({ showDimensions: e.target.checked });
+  onToggleRotation = (e) => this.setState({ allowRotation: e.target.checked });
+  onRotationModeChange = (e) => this.setState({ rotationMode: e.target.value });
+  onSelectTab = (mode) => this.setState({ previewMode: mode });
+
+  setParam = (key, unit) => (e) => {
+    const raw = parseFloat(e.target.value);
+    if (!Number.isFinite(raw)) return;
+    const mm = this.toMm(raw, unit);
+    this.setState((s) => ({ params: { ...s.params, [key]: mm } }));
+  };
+
+  resetAll = () => {
+    this.setState({
+      previewMode: 'template', showDimensions: true, unit: 'mm',
+      allowRotation: true, rotationMode: 'auto',
+      params: {
+        width: 200, height: 120, depth: 80,
+        glueFlap: 15, lidTongue: 20, dustFlap: 18,
+        sheetWidth: 700, sheetHeight: 1000, gripper: 12, sheetMargin: 5,
+      },
+    });
+  };
+
+  renderVals() {
+    const t = this.props.t || {
+      id: 'T0005', title: 'صندوق غطاء مفتوح بقفل', categoryLabel: 'طي وصواني',
+      desc: 'غطاء علوي مفتوح مع لسان قفل ولسان غبار جانبي لثبات إضافي.',
+      pro: false, svg: 'public/templates/preview/A10_20_02_02.svg',
+    };
+    const { params, unit, previewMode } = this.state;
+
+    const previewTabs = [
+      { id: 'template', label: 'معاينة القالب' },
+      { id: 'sheet', label: 'معاينة التوزيع' },
+      { id: 'three', label: '3D' },
+    ].map((tab) => {
+      const active = tab.id === previewMode;
+      return {
+        ...tab,
+        onSelect: () => this.onSelectTab(tab.id),
+        style: `padding:8px 16px; border-radius:8px; font-size:13px; font-weight:${active ? 700 : 600};
+          border:none; cursor:pointer; font-family:'Cairo',sans-serif;
+          background:${active ? '#2b2013' : 'transparent'};
+          color:${active ? '#ffffff' : '#5a4c3c'};`,
+      };
+    });
+
+    const mk = (key, label) => ({
+      key, label,
+      value: this.toDisplay(params[key], unit),
+      onChange: this.setParam(key, unit),
+    });
+
+    const dimFields = [mk('width', 'العرض'), mk('height', 'الارتفاع'), mk('depth', 'العمق')];
+    const advFields = [mk('glueFlap', 'لسان اللصق'), mk('lidTongue', 'لسان القفل'), mk('dustFlap', 'لسان الغبار')];
+    const sheetFields = [mk('sheetWidth', 'عرض الشيت'), mk('sheetHeight', 'ارتفاع الشيت'), mk('gripper', 'القابض')];
+
+    const bboxW = params.width * 2 + params.depth * 1.5 + params.glueFlap;
+    const bboxH = params.height + params.lidTongue + params.dustFlap + 20;
+    const usableW = params.sheetWidth - params.sheetMargin * 2;
+    const usableH = params.sheetHeight - params.gripper - params.sheetMargin;
+    const cols = Math.max(1, Math.floor(usableW / (bboxW + 3)));
+    const rows = Math.max(1, Math.floor(usableH / (bboxH + 3)));
+
+    return {
+      t,
+      previewTabs,
+      showDimensions: this.state.showDimensions,
+      onToggleDims: this.onToggleDims,
+      unit,
+      onUnitChange: this.onUnitChange,
+      dimFields,
+      advFields,
+      sheetFields,
+      allowRotation: this.state.allowRotation,
+      onToggleRotation: this.onToggleRotation,
+      rotationMode: this.state.rotationMode,
+      onRotationModeChange: this.onRotationModeChange,
+      resetAll: this.resetAll,
+      bboxLabel: `${bboxW.toFixed(1)} × ${bboxH.toFixed(1)} ${unit === 'mm' ? 'مم' : unit}`,
+      usableLabel: `${this.toDisplay(usableW, unit)} × ${this.toDisplay(usableH, unit)} ${unit}`,
+      nestingTotal: cols * rows,
+      footprintLabel: `${cols} × ${rows}`,
+    };
+  }
+}
+
+</script>
+</body>
+</html>

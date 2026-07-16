@@ -156,8 +156,11 @@ function calcPiece(piece: PieceInputs, quantity: number, paperTypes: PaperType[]
 
 import ItemInfoCard, { ItemInfo, validateItemInfo } from '@/components/ItemInfoCard';
 import VoiceInput from '@/components/VoiceInput';
+import { usePreviewSettings } from '@/hooks/usePreviewSettings';
 
 const BoxPricingCalculator = ({ onNavigateToQuote }: { onNavigateToQuote?: () => void }) => {
+  const { showNestingPreview, show3DPreview } = usePreviewSettings();
+
   const { paperTypes, priceSettings, setUnifiedQuote, setQuoteInfo, editingQuoteData, setEditingQuoteData } = usePrintingStore();
   const [itemInfo, setItemInfo] = useState<ItemInfo>(() => {
     if (editingQuoteData?.sourceType === 'boxpricing') {

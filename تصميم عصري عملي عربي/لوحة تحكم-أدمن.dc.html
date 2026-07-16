@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="_ds/nocturne-d3cbf094-b35e-408c-8a1b-816eee968494/styles.css">
+  <script src="_ds/nocturne-d3cbf094-b35e-408c-8a1b-816eee968494/_ds_bundle.js"></script>
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&display=swap">
+  <style>
+    body { background: #faf6f0; }
+    body, .btn, .input, p, a, span, div, h1, h2, h3, h4, h5, h6, button, label { font-family: 'Cairo', var(--font-body), sans-serif; }
+    a { text-decoration: none; }
+    ::-webkit-scrollbar { width: 10px; height: 10px; }
+    ::-webkit-scrollbar-thumb { background: #d8cbb5; border-radius: 8px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    .hover-lift { transition: transform .2s ease, box-shadow .2s ease; }
+    .hover-lift:hover { transform: translateY(-3px); box-shadow: 0 14px 28px rgba(43,32,19,0.10); }
+    .side-link { transition: background .18s ease, color .18s ease; }
+    .row-hover:hover { background: #faf6ef; }
+  </style>
+</helmet>
+
+<div dir="rtl" style="min-height:100vh; background:#faf6f0; color:#2b2013; font-family:var(--font-body); display:flex;">
+
+  <!-- ===== Sidebar ===== -->
+  <aside style="width:240px; flex-shrink:0; background:#2b2013; color:#f3ece0; display:flex; flex-direction:column; min-height:100vh; position:sticky; top:0;">
+    <div style="display:flex; align-items:center; gap:10px; padding:var(--space-6) var(--space-6); font-weight:700; font-size:17px;">
+      <span style="width:30px; height:30px; border-radius:var(--radius-md); background:#a9622f; display:inline-flex; align-items:center; justify-content:center; color:#fff; font-size:15px; font-weight:700;">ق</span>
+      قوالب<span style="color:#c98a52;">لاين</span>
+      <span style="margin-inline-start:auto; font-size:10.5px; font-weight:700; background:#463a29; color:#d8cbb5; padding:2px 8px; border-radius:999px;">أدمن</span>
+    </div>
+
+    <nav style="display:flex; flex-direction:column; gap:2px; padding:var(--space-4) var(--space-3); flex:1;">
+      <sc-for list="{{ navItems }}" as="item" hint-placeholder-count="5">
+        <button type="button" onclick="{{ item.onSelect }}" class="side-link" style="{{ item.style }}">
+          <i class="{{ item.icon }}" style="font-size:17px;"></i> {{ item.label }}
+        </button>
+      </sc-for>
+    </nav>
+
+    <div style="padding:var(--space-4) var(--space-6); border-top:1px solid #463a29; display:flex; align-items:center; gap:10px;">
+      <div style="width:34px; height:34px; border-radius:50%; background:#a9622f; color:#fff; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:14px; flex-shrink:0;">
+        {{ userInitial }}
+      </div>
+      <div style="min-width:0;">
+        <div style="font-size:13px; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ userName }}</div>
+        <div style="font-size:11.5px; color:#a89c88;">مدير النظام</div>
+      </div>
+      <a href="تسجيل دخول-أدمن.dc.html" style="margin-inline-start:auto; color:#a89c88; font-size:15px;">
+        <i class="ph ph-sign-out"></i>
+      </a>
+    </div>
+  </aside>
+
+  <!-- ===== Main ===== -->
+  <div style="flex:1; min-width:0;">
+    <header style="display:flex; align-items:center; gap:var(--space-4); border-bottom:1px solid #e8ded0; padding:var(--space-4) var(--space-8); background:#faf6f0; position:sticky; top:0; z-index:20;">
+      <h1 style="font-size:19px; margin:0;">{{ pageTitle }}</h1>
+      <div style="margin-inline-start:auto; display:flex; align-items:center; gap:var(--space-3);">
+        <div style="position:relative; display:flex; align-items:center;">
+          <i class="ph ph-magnifying-glass" style="position:absolute; inset-inline-start:12px; font-size:15px; color:#9c8f7c;"></i>
+          <input placeholder="بحث..." style="border:1px solid #e6dccb; border-radius:999px; padding:9px 14px 9px 14px; padding-inline-start:34px; font-size:13.5px; background:#fff; width:220px; outline:none;">
+        </div>
+        <a href="مكتبة القوالب.dc.html" style="display:flex; align-items:center; gap:6px; border:1px solid #e6dccb; color:#5a4c3c; font-weight:600; font-size:13px; padding:9px 14px; border-radius:999px;">
+          <i class="ph ph-arrow-square-out"></i> عرض الموقع
+        </a>
+      </div>
+    </header>
+
+    <div style="padding:var(--space-8); max-width:1180px;">
+
+      <!-- Overview -->
+      <sc-if value="{{ isOverview }}" hint-placeholder-val="{{ true }}">
+        <!-- Stats -->
+        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:var(--space-4); margin-bottom:var(--space-8);">
+          <sc-for list="{{ stats }}" as="s" hint-placeholder-count="4">
+            <div class="hover-lift" style="background:#fff; border:1px solid #e6dccb; border-radius:var(--radius-lg); padding:var(--space-6);">
+              <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:var(--space-3);">
+                <div style="width:36px; height:36px; border-radius:var(--radius-md); background:{{ s.iconBg }}; display:flex; align-items:center; justify-content:center;">
+                  <i class="{{ s.icon }}" style="font-size:17px; color:{{ s.iconColor }};"></i>
+                </div>
+                <span style="font-size:12px; font-weight:700; color:{{ s.trendColor }};">{{ s.trend }}</span>
+              </div>
+              <div style="font-size:24px; font-weight:700; margin-bottom:2px;">{{ s.value }}</div>
+              <div style="font-size:13px; color:#9c8f7c;">{{ s.label }}</div>
+            </div>
+          </sc-for>
+        </div>
+
+        <div style="display:grid; grid-template-columns:1.6fr 1fr; gap:var(--space-6); align-items:start;">
+          <!-- Recent orders -->
+          <div style="background:#fff; border:1px solid #e6dccb; border-radius:var(--radius-lg); overflow:hidden;">
+            <div style="display:flex; align-items:center; justify-content:space-between; padding:var(--space-4) var(--space-6); border-bottom:1px solid #eee2cf;">
+              <h2 style="margin:0; font-size:15.5px;">أحدث الطلبات</h2>
+              <button type="button" onclick="{{ goOrders }}" style="border:none; background:transparent; font-size:13px; font-weight:700; color:#a9622f; cursor:pointer;">عرض الكل</button>
+            </div>
+            <sc-for list="{{ recentOrders }}" as="o" hint-placeholder-count="5">
+              <div class="row-hover" style="display:flex; align-items:center; gap:var(--space-3); padding:var(--space-4) var(--space-6); border-bottom:1px solid #f2e9d9;">
+                <div style="width:40px; height:40px; border-radius:var(--radius-md); background:#f4ede1; flex-shrink:0; overflow:hidden;">
+                  <img src="{{ o.svg }}" style="width:100%; height:100%; object-fit:contain;">
+                </div>
+                <div style="min-width:0; flex:1;">
+                  <div style="font-size:13.5px; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ o.title }}</div>
+                  <div style="font-size:12px; color:#9c8f7c;">{{ o.customer }} · {{ o.date }}</div>
+                </div>
+                <span style="font-size:11.5px; font-weight:700; padding:4px 10px; border-radius:999px; background:{{ o.statusBg }}; color:{{ o.statusColor }}; flex-shrink:0;">{{ o.status }}</span>
+              </div>
+            </sc-for>
+          </div>
+
+          <!-- New users -->
+          <div style="background:#fff; border:1px solid #e6dccb; border-radius:var(--radius-lg); overflow:hidden;">
+            <div style="padding:var(--space-4) var(--space-6); border-bottom:1px solid #eee2cf;">
+              <h2 style="margin:0; font-size:15.5px;">مستخدمون جدد</h2>
+            </div>
+            <sc-for list="{{ newUsers }}" as="u" hint-placeholder-count="4">
+              <div style="display:flex; align-items:center; gap:10px; padding:var(--space-3) var(--space-6);">
+                <div style="width:32px; height:32px; border-radius:50%; background:#a9622f22; color:#a9622f; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:12.5px; flex-shrink:0;">{{ u.initial }}</div>
+                <div style="min-width:0; flex:1;">
+                  <div style="font-size:13px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ u.name }}</div>
+                  <div style="font-size:11.5px; color:#9c8f7c;">{{ u.joined }}</div>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </sc-if>
+
+      <!-- Templates management -->
+      <sc-if value="{{ isTemplates }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:var(--space-6);">
+          <h2 style="margin:0; font-size:17px;">إدارة القوالب</h2>
+          <a href="مكتبة القوالب.dc.html" style="display:flex; align-items:center; gap:6px; background:#2b2013; color:#fff; font-weight:700; font-size:13.5px; padding:10px 16px; border-radius:999px;">
+            <i class="ph ph-plus"></i> قالب جديد
+          </a>
+        </div>
+        <div style="background:#fff; border:1px solid #e6dccb; border-radius:var(--radius-lg); overflow:hidden;">
+          <div style="display:grid; grid-template-columns:2fr 1fr 1fr 1fr 90px; padding:var(--space-3) var(--space-6); font-size:12px; font-weight:700; color:#9c8f7c; border-bottom:1px solid #eee2cf;">
+            <span>القالب</span><span>التصنيف</span><span>التنزيلات</span><span>الحالة</span><span></span>
+          </div>
+          <sc-for list="{{ templatesList }}" as="t" hint-placeholder-count="6">
+            <div class="row-hover" style="display:grid; grid-template-columns:2fr 1fr 1fr 1fr 90px; align-items:center; padding:var(--space-3) var(--space-6); border-bottom:1px solid #f2e9d9; cursor:pointer;" onclick="{{ t.onOpen }}">
+              <div style="display:flex; align-items:center; gap:10px; min-width:0;">
+                <div style="width:34px; height:34px; border-radius:var(--radius-sm); background:#f4ede1; flex-shrink:0;">
+                  <img src="{{ t.svg }}" style="width:100%; height:100%; object-fit:contain;">
+                </div>
+                <span style="font-size:13.5px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ t.title }}</span>
+              </div>
+              <span style="font-size:13px; color:#5a4c3c;">{{ t.category }}</span>
+              <span style="font-size:13px; color:#5a4c3c;">{{ t.downloads }}</span>
+              <span style="font-size:11.5px; font-weight:700; padding:4px 10px; border-radius:999px; width:fit-content; background:{{ t.statusBg }}; color:{{ t.statusColor }};">{{ t.status }}</span>
+              <div style="display:flex; gap:8px; color:#9c8f7c;">
+                <i class="ph ph-pencil-simple" style="cursor:pointer;" onclick="{{ t.onOpenStop }}"></i>
+                <i class="ph ph-trash" style="cursor:pointer;" onclick="{{ t.onStop }}"></i>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+      </sc-if>
+
+      <!-- Template detail (admin) -->
+      <sc-if value="{{ isTemplateDetail }}" hint-placeholder-val="{{ false }}">
+        <button type="button" onclick="{{ backToTemplates }}" style="display:flex; align-items:center; gap:6px; border:none; background:transparent; cursor:pointer; font-size:13.5px; font-weight:700; color:#5a4c3c; margin-bottom:var(--space-6); padding:0;">
+          <i class="ph ph-arrow-right"></i> رجوع إلى القوالب
+        </button>
+        <div style="display:grid; grid-template-columns:1fr 1.3fr; gap:var(--space-6); align-items:start;">
+          <!-- Preview -->
+          <div style="background:#fff; border:1px solid #e6dccb; border-radius:var(--radius-lg); padding:var(--space-6);">
+            <div style="aspect-ratio:4/3; background:#f4ede1; border-radius:var(--radius-md); display:flex; align-items:center; justify-content:center; padding:var(--space-6); margin-bottom:var(--space-6);">
+              <img src="{{ selectedTemplate.svg }}" alt="{{ selectedTemplate.title }}" style="width:100%; height:100%; object-fit:contain;">
+            </div>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:var(--space-4);">
+              <div>
+                <div style="font-size:12px; color:#9c8f7c; margin-bottom:4px;">رقم القالب</div>
+                <div style="font-size:14px; font-weight:700;">{{ selectedTemplate.code }}</div>
+              </div>
+              <div>
+                <div style="font-size:12px; color:#9c8f7c; margin-bottom:4px;">التنزيلات</div>
+                <div style="font-size:14px; font-weight:700;">{{ selectedTemplate.downloads }}</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Editable info -->
+          <div style="background:#fff; border:1px solid #e6dccb; border-radius:var(--radius-lg); padding:var(--space-6); display:flex; flex-direction:column; gap:var(--space-5);">
+            <div>
+              <label style="font-size:12px; color:#9c8f7c; display:block; margin-bottom:6px;">اسم القالب</label>
+              <input value="{{ selectedTemplate.title }}" style="width:100%; border:1px solid #e6dccb; border-radius:var(--radius-md); padding:10px 14px; font-size:14px; font-family:'Cairo',sans-serif; background:#faf6f0;">
+            </div>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:var(--space-4);">
+              <div>
+                <label style="font-size:12px; color:#9c8f7c; display:block; margin-bottom:6px;">التصنيف</label>
+                <input value="{{ selectedTemplate.category }}" style="width:100%; border:1px solid #e6dccb; border-radius:var(--radius-md); padding:10px 14px; font-size:14px; font-family:'Cairo',sans-serif; background:#faf6f0;">
+              </div>
+              <div>
+                <label style="font-size:12px; color:#9c8f7c; display:block; margin-bottom:6px;">الحالة</label>
+                <span style="display:inline-flex; font-size:12px; font-weight:700; padding:8px 14px; border-radius:999px; background:{{ selectedTemplate.statusBg }}; color:{{ selectedTemplate.statusColor }};">{{ selectedTemplate.status }}</span>
+              </div>
+            </div>
+            <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:var(--space-4);">
+              <div>
+                <label style="font-size:12px; color:#9c8f7c; display:block; margin-bottom:6px;">الطول (مم)</label>
+                <input value="{{ selectedTemplate.length }}" style="width:100%; border:1px solid #e6dccb; border-radius:var(--radius-md); padding:10px 14px; font-size:14px; font-family:'Cairo',sans-serif; background:#faf6f0;">
+              </div>
+              <div>
+                <label style="font-size:12px; color:#9c8f7c; display:block; margin-bottom:6px;">العرض (مم)</label>
+                <input value="{{ selectedTemplate.width }}" style="width:100%; border:1px solid #e6dccb; border-radius:var(--radius-md); padding:10px 14px; font-size:14px; font-family:'Cairo',sans-serif; background:#faf6f0;">
+              </div>
+              <div>
+                <label style="font-size:12px; color:#9c8f7c; display:block; margin-bottom:6px;">الارتفاع (مم)</label>
+                <input value="{{ selectedTemplate.height }}" style="width:100%; border:1px solid #e6dccb; border-radius:var(--radius-md); padding:10px 14px; font-size:14px; font-family:'Cairo',sans-serif; background:#faf6f0;">
+              </div>
+            </div>
+            <div style="display:flex; gap:var(--space-3); margin-top:var(--space-3);">
+              <button type="button" style="background:#2b2013; color:#fff; font-weight:700; font-size:13.5px; padding:11px 20px; border:none; border-radius:999px; cursor:pointer;">حفظ التغييرات</button>
+              <button type="button" style="background:transparent; color:#c0392b; font-weight:700; font-size:13.5px; padding:11px 20px; border:1px solid #f0d5cf; border-radius:999px; cursor:pointer;">حذف القالب</button>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+
+      <!-- Orders management -->
+      <sc-if value="{{ isOrdersPage }}" hint-placeholder-val="{{ false }}">
+        <h2 style="margin:0 0 var(--space-6); font-size:17px;">جميع الطلبات</h2>
+        <div style="background:#fff; border:1px solid #e6dccb; border-radius:var(--radius-lg); overflow:hidden;">
+          <div style="display:grid; grid-template-columns:2fr 1.4fr 1fr 1fr; padding:var(--space-3) var(--space-6); font-size:12px; font-weight:700; color:#9c8f7c; border-bottom:1px solid #eee2cf;">
+            <span>القالب</span><span>العميل</span><span>التاريخ</span><span>الحالة</span>
+          </div>
+          <sc-for list="{{ allOrders }}" as="o" hint-placeholder-count="6">
+            <div class="row-hover" style="display:grid; grid-template-columns:2fr 1.4fr 1fr 1fr; align-items:center; padding:var(--space-3) var(--space-6); border-bottom:1px solid #f2e9d9;">
+              <span style="font-size:13.5px; font-weight:600;">{{ o.title }}</span>
+              <span style="font-size:13px; color:#5a4c3c;">{{ o.customer }}</span>
+              <span style="font-size:13px; color:#5a4c3c;">{{ o.date }}</span>
+              <span style="font-size:11.5px; font-weight:700; padding:4px 10px; border-radius:999px; width:fit-content; background:{{ o.statusBg }}; color:{{ o.statusColor }};">{{ o.status }}</span>
+            </div>
+          </sc-for>
+        </div>
+      </sc-if>
+
+      <!-- Users management -->
+      <sc-if value="{{ isUsers }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:var(--space-6);">
+          <h2 style="margin:0; font-size:17px;">المستخدمون</h2>
+          <div style="display:flex; gap:6px; border:1px solid #e6dccb; border-radius:999px; padding:4px;">
+            <button type="button" onclick="{{ setUsersTab.list }}" style="{{ usersTabStyle.list }}">المستخدمون</button>
+            <button type="button" onclick="{{ setUsersTab.roles }}" style="{{ usersTabStyle.roles }}">الأدوار والصلاحيات</button>
+          </div>
+        </div>
+
+        <sc-if value="{{ isUsersList }}" hint-placeholder-val="{{ true }}">
+          <div style="background:#fff; border:1px solid #e6dccb; border-radius:var(--radius-lg); overflow:hidden;">
+            <div style="display:grid; grid-template-columns:1.8fr 1.6fr 1fr 1fr 1fr; padding:var(--space-3) var(--space-6); font-size:12px; font-weight:700; color:#9c8f7c; border-bottom:1px solid #eee2cf;">
+              <span>المستخدم</span><span>البريد الإلكتروني</span><span>الخطة</span><span>الدور</span><span>الحالة</span>
+            </div>
+            <sc-for list="{{ allUsers }}" as="u" hint-placeholder-count="6">
+              <div class="row-hover" style="display:grid; grid-template-columns:1.8fr 1.6fr 1fr 1fr 1fr; align-items:center; padding:var(--space-3) var(--space-6); border-bottom:1px solid #f2e9d9;">
+                <div style="display:flex; align-items:center; gap:10px;">
+                  <div style="width:30px; height:30px; border-radius:50%; background:#a9622f22; color:#a9622f; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:12px; flex-shrink:0;">{{ u.initial }}</div>
+                  <span style="font-size:13.5px; font-weight:600;">{{ u.name }}</span>
+                </div>
+                <span style="font-size:13px; color:#5a4c3c;">{{ u.email }}</span>
+                <span style="font-size:13px; color:#5a4c3c;">{{ u.plan }}</span>
+                <span style="font-size:11.5px; font-weight:700; padding:4px 10px; border-radius:999px; width:fit-content; background:{{ u.roleBg }}; color:{{ u.roleColor }};">{{ u.role }}</span>
+                <span style="font-size:11.5px; font-weight:700; padding:4px 10px; border-radius:999px; width:fit-content; background:{{ u.statusBg }}; color:{{ u.statusColor }};">{{ u.status }}</span>
+              </div>
+            </sc-for>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ isUsersRoles }}" hint-placeholder-val="{{ false }}">
+          <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:var(--space-5);">
+            <sc-for list="{{ roles }}" as="r" hint-placeholder-count="3">
+              <div style="background:#fff; border:1px solid #e6dccb; border-radius:var(--radius-lg); padding:var(--space-6);">
+                <div style="display:flex; align-items:center; gap:10px; margin-bottom:var(--space-4);">
+                  <span style="font-size:11.5px; font-weight:700; padding:4px 10px; border-radius:999px; background:{{ r.badgeBg }}; color:{{ r.badgeColor }};">{{ r.name }}</span>
+                  <span style="font-size:12px; color:#9c8f7c;">{{ r.count }} مستخدم</span>
+                </div>
+                <div style="display:flex; flex-direction:column; gap:var(--space-3);">
+                  <sc-for list="{{ r.permissions }}" as="p" hint-placeholder-count="5">
+                    <label style="display:flex; align-items:center; justify-content:space-between; gap:10px;">
+                      <span style="font-size:13.5px; color:#5a4c3c;">{{ p.label }}</span>
+                      <input type="checkbox" checked="{{ p.enabled }}" style="width:17px; height:17px; accent-color:#a9622f;">
+                    </label>
+                  </sc-for>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+          <button type="button" style="display:flex; align-items:center; gap:6px; border:1px dashed #d8cbb5; background:transparent; color:#5a4c3c; font-weight:600; font-size:13px; padding:11px 18px; border-radius:var(--radius-md); cursor:pointer; margin-top:var(--space-5);">
+            <i class="ph ph-plus"></i> إضافة دور جديد
+          </button>
+        </sc-if>
+      </sc-if>
+
+      <!-- Billing overview -->
+      <sc-if value="{{ isBilling }}" hint-placeholder-val="{{ false }}">
+        <h2 style="margin:0 0 var(--space-6); font-size:17px;">الفوترة والإيرادات</h2>
+        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:var(--space-4); margin-bottom:var(--space-6);">
+          <sc-for list="{{ billingStats }}" as="b" hint-placeholder-count="3">
+            <div style="background:#fff; border:1px solid #e6dccb; border-radius:var(--radius-lg); padding:var(--space-6);">
+              <div style="font-size:22px; font-weight:700; margin-bottom:2px;">{{ b.value }}</div>
+              <div style="font-size:13px; color:#9c8f7c;">{{ b.label }}</div>
+            </div>
+          </sc-for>
+        </div>
+        <div style="background:#fff; border:1px solid #e6dccb; border-radius:var(--radius-lg); overflow:hidden;">
+          <div style="display:grid; grid-template-columns:2fr 1fr 1fr 1fr; padding:var(--space-3) var(--space-6); font-size:12px; font-weight:700; color:#9c8f7c; border-bottom:1px solid #eee2cf;">
+            <span>العميل</span><span>الخطة</span><span>المبلغ</span><span>التاريخ</span>
+          </div>
+          <sc-for list="{{ invoices }}" as="i" hint-placeholder-count="5">
+            <div class="row-hover" style="display:grid; grid-template-columns:2fr 1fr 1fr 1fr; align-items:center; padding:var(--space-3) var(--space-6); border-bottom:1px solid #f2e9d9;">
+              <span style="font-size:13.5px; font-weight:600;">{{ i.customer }}</span>
+              <span style="font-size:13px; color:#5a4c3c;">{{ i.plan }}</span>
+              <span style="font-size:13px; font-weight:700; color:#2b2013;">{{ i.amount }}</span>
+              <span style="font-size:13px; color:#9c8f7c;">{{ i.date }}</span>
+            </div>
+          </sc-for>
+        </div>
+      </sc-if>
+
+      <!-- Settings -->
+      <sc-if value="{{ isSettings }}" hint-placeholder-val="{{ false }}">
+        <h2 style="margin:0 0 var(--space-6); font-size:17px;">إعدادات النظام</h2>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:var(--space-6); align-items:start;">
+
+          <!-- General -->
+          <div style="background:#fff; border:1px solid #e6dccb; border-radius:var(--radius-lg); padding:var(--space-6); display:flex; flex-direction:column; gap:var(--space-5);">
+            <h3 style="margin:0; font-size:14.5px;">عام</h3>
+            <div>
+              <label style="font-size:12px; color:#9c8f7c; display:block; margin-bottom:6px;">اسم المنصة</label>
+              <input value="{{ settings.siteName }}" style="width:100%; border:1px solid #e6dccb; border-radius:var(--radius-md); padding:10px 14px; font-size:14px; font-family:'Cairo',sans-serif; background:#faf6f0;">
+            </div>
+            <div>
+              <label style="font-size:12px; color:#9c8f7c; display:block; margin-bottom:6px;">بريد الدعم</label>
+              <input value="{{ settings.supportEmail }}" style="width:100%; border:1px solid #e6dccb; border-radius:var(--radius-md); padding:10px 14px; font-size:14px; font-family:'Cairo',sans-serif; background:#faf6f0;">
+            </div>
+            <div>
+              <label style="font-size:12px; color:#9c8f7c; display:block; margin-bottom:6px;">العملة الافتراضية</label>
+              <input value="{{ settings.currency }}" style="width:100%; border:1px solid #e6dccb; border-radius:var(--radius-md); padding:10px 14px; font-size:14px; font-family:'Cairo',sans-serif; background:#faf6f0;">
+            </div>
+          </div>
+
+          <!-- Categories -->
+          <div style="background:#fff; border:1px solid #e6dccb; border-radius:var(--radius-lg); padding:var(--space-6);">
+            <h3 style="margin:0 0 var(--space-4); font-size:14.5px;">تصنيفات القوالب</h3>
+            <div style="display:flex; flex-direction:column; gap:var(--space-3); margin-bottom:var(--space-4);">
+              <sc-for list="{{ settings.categories }}" as="c" hint-placeholder-count="5">
+                <div style="display:flex; align-items:center; justify-content:space-between; padding:10px 14px; background:#faf6f0; border:1px solid #eee2cf; border-radius:var(--radius-md);">
+                  <span style="font-size:13.5px; font-weight:600;">{{ c.name }}</span>
+                  <span style="font-size:12px; color:#9c8f7c;">{{ c.count }} قالب</span>
+                </div>
+              </sc-for>
+            </div>
+            <button type="button" style="display:flex; align-items:center; gap:6px; border:1px dashed #d8cbb5; background:transparent; color:#5a4c3c; font-weight:600; font-size:13px; padding:10px 14px; border-radius:var(--radius-md); cursor:pointer; width:100%; justify-content:center;">
+              <i class="ph ph-plus"></i> إضافة تصنيف
+            </button>
+          </div>
+
+          <!-- Notifications -->
+          <div style="background:#fff; border:1px solid #e6dccb; border-radius:var(--radius-lg); padding:var(--space-6);">
+            <h3 style="margin:0 0 var(--space-4); font-size:14.5px;">الإشعارات</h3>
+            <div style="display:flex; flex-direction:column; gap:var(--space-4);">
+              <sc-for list="{{ settings.notifications }}" as="n" hint-placeholder-count="3">
+                <label style="display:flex; align-items:center; justify-content:space-between; cursor:pointer;">
+                  <span style="font-size:13.5px;">{{ n.label }}</span>
+                  <input type="checkbox" checked="{{ n.enabled }}" style="width:18px; height:18px; accent-color:#a9622f;">
+                </label>
+              </sc-for>
+            </div>
+          </div>
+
+          <!-- Danger zone -->
+          <div style="background:#fff; border:1px solid #f0d5cf; border-radius:var(--radius-lg); padding:var(--space-6);">
+            <h3 style="margin:0 0 var(--space-2); font-size:14.5px; color:#c0392b;">منطقة الخطر</h3>
+            <p style="font-size:13px; color:#9c8f7c; margin:0 0 var(--space-4);">تعطيل المنصة مؤقتًا يمنع المستخدمين من الدخول لحين إعادة التفعيل.</p>
+            <button type="button" style="background:transparent; color:#c0392b; font-weight:700; font-size:13.5px; padding:10px 18px; border:1px solid #f0d5cf; border-radius:999px; cursor:pointer;">تعطيل المنصة مؤقتًا</button>
+          </div>
+        </div>
+
+        <div style="display:flex; gap:var(--space-3); margin-top:var(--space-6);">
+          <button type="button" style="background:#2b2013; color:#fff; font-weight:700; font-size:13.5px; padding:11px 22px; border:none; border-radius:999px; cursor:pointer;">حفظ الإعدادات</button>
+        </div>
+      </sc-if>
+
+    </div>
+  </div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { activeSection: 'overview', selectedTemplateId: null, usersTab: 'list' };
+
+  stats = [
+    { label: 'إجمالي القوالب', value: '312', icon: 'ph ph-cube', iconBg: '#f3e7d8', iconColor: '#a9622f', trend: '+8', trendColor: '#3f8f5c' },
+    { label: 'الطلبات هذا الشهر', value: '1,204', icon: 'ph ph-shopping-cart', iconBg: '#e8f0fb', iconColor: '#3b6bc9', trend: '+14%', trendColor: '#3f8f5c' },
+    { label: 'المستخدمون النشطون', value: '4,890', icon: 'ph ph-users', iconBg: '#f0e9f7', iconColor: '#7a5ea8', trend: '+3%', trendColor: '#3f8f5c' },
+    { label: 'الإيرادات الشهرية', value: '38,420 ر.س', icon: 'ph ph-currency-circle-dollar', iconBg: '#fdece3', iconColor: '#c25a2e', trend: '-2%', trendColor: '#c0392b' },
+  ];
+
+  recentOrders = [
+    { title: 'صندوق غطاء مفتوح بقفل — T0005', customer: 'محمد العتيبي', date: 'اليوم', svg: 'public/templates/preview/A10_20_02_02.svg', status: 'مكتمل', statusBg: '#e6f4ea', statusColor: '#3f8f5c' },
+    { title: 'علبة مستقيمة الإغلاق — T0002', customer: 'سارة الحربي', date: 'اليوم', svg: 'public/templates/preview/A10_10_03_03.svg', status: 'قيد المعالجة', statusBg: '#fdf3d9', statusColor: '#b98a17' },
+    { title: 'علبة قفل مزدوج الجدار — T0006', customer: 'خالد المطيري', date: 'أمس', svg: 'public/templates/preview/A10_75_03_03.svg', status: 'مكتمل', statusBg: '#e6f4ea', statusColor: '#3f8f5c' },
+    { title: 'علبة كيك بمقبض حمل', customer: 'نورة القحطاني', date: 'أمس', svg: 'public/templates/preview/A10_10_02_02_11.svg', status: 'ملغي', statusBg: '#fbe7e5', statusColor: '#c0392b' },
+    { title: 'صندوق غطاء مفتوح بقفل — T0005', customer: 'عبدالله الزهراني', date: 'منذ يومين', svg: 'public/templates/preview/A10_20_02_02.svg', status: 'مكتمل', statusBg: '#e6f4ea', statusColor: '#3f8f5c' },
+  ];
+
+  newUsers = [
+    { initial: 'ن', name: 'نورة القحطاني', joined: 'انضمت اليوم' },
+    { initial: 'خ', name: 'خالد المطيري', joined: 'انضم أمس' },
+    { initial: 'س', name: 'سارة الحربي', joined: 'منذ 3 أيام' },
+    { initial: 'ع', name: 'عبدالله الزهراني', joined: 'منذ 4 أيام' },
+  ];
+
+  templatesList = [
+    { id: 't0005', code: 'T0005', title: 'صندوق غطاء مفتوح بقفل — T0005', category: 'صناديق', downloads: '842', svg: 'public/templates/preview/A10_20_02_02.svg', status: 'منشور', statusBg: '#e6f4ea', statusColor: '#3f8f5c', length: '200', width: '120', height: '80' },
+    { id: 't0002', code: 'T0002', title: 'علبة مستقيمة الإغلاق — T0002', category: 'علب', downloads: '611', svg: 'public/templates/preview/A10_10_03_03.svg', status: 'منشور', statusBg: '#e6f4ea', statusColor: '#3f8f5c', length: '180', width: '100', height: '60' },
+    { id: 't0006', code: 'T0006', title: 'علبة قفل مزدوج الجدار — T0006', category: 'علب', downloads: '390', svg: 'public/templates/preview/A10_75_03_03.svg', status: 'مسودة', statusBg: '#fdf3d9', statusColor: '#b98a17', length: '220', width: '150', height: '90' },
+    { id: 't0011', code: 'D001', title: 'علبة كيك بمقبض حمل', category: 'مناسبات', downloads: '205', svg: 'public/templates/preview/A10_10_02_02_11.svg', status: 'منشور', statusBg: '#e6f4ea', statusColor: '#3f8f5c', length: '260', width: '260', height: '140' },
+    { id: 't0020', code: 'T0020', title: 'صندوق نقل بمقابض', category: 'شحن', downloads: '178', svg: 'public/templates/preview/A10_20_02_02.svg', status: 'منشور', statusBg: '#e6f4ea', statusColor: '#3f8f5c', length: '300', width: '200', height: '150' },
+    { id: 't0010', code: 'T0010', title: 'علبة عرض بواجهة مفتوحة', category: 'عرض', downloads: '96', svg: 'public/templates/preview/A10_10_03_03.svg', status: 'موقّف', statusBg: '#fbe7e5', statusColor: '#c0392b', length: '160', width: '120', height: '70' },
+  ];
+
+  allOrders = [
+    { title: 'صندوق غطاء مفتوح بقفل — T0005', customer: 'محمد العتيبي', date: '16 يوليو', status: 'مكتمل', statusBg: '#e6f4ea', statusColor: '#3f8f5c' },
+    { title: 'علبة مستقيمة الإغلاق — T0002', customer: 'سارة الحربي', date: '16 يوليو', status: 'قيد المعالجة', statusBg: '#fdf3d9', statusColor: '#b98a17' },
+    { title: 'علبة قفل مزدوج الجدار — T0006', customer: 'خالد المطيري', date: '15 يوليو', status: 'مكتمل', statusBg: '#e6f4ea', statusColor: '#3f8f5c' },
+    { title: 'علبة كيك بمقبض حمل', customer: 'نورة القحطاني', date: '15 يوليو', status: 'ملغي', statusBg: '#fbe7e5', statusColor: '#c0392b' },
+    { title: 'صندوق نقل بمقابض', customer: 'عبدالله الزهراني', date: '14 يوليو', status: 'مكتمل', statusBg: '#e6f4ea', statusColor: '#3f8f5c' },
+    { title: 'علبة عرض بواجهة مفتوحة', customer: 'فهد الدوسري', date: '13 يوليو', status: 'مكتمل', statusBg: '#e6f4ea', statusColor: '#3f8f5c' },
+  ];
+
+  allUsers = [
+    { initial: 'م', name: 'محمد العتيبي', email: 'mohammed@company.com', plan: 'برو', status: 'نشط', statusBg: '#e6f4ea', statusColor: '#3f8f5c', role: 'أدمن', roleBg: '#f0e9f7', roleColor: '#7a5ea8' },
+    { initial: 'س', name: 'سارة الحربي', email: 'sarah@studio.com', plan: 'مجاني', status: 'نشط', statusBg: '#e6f4ea', statusColor: '#3f8f5c', role: 'مستخدم', roleBg: '#eee7da', roleColor: '#5a4c3c' },
+    { initial: 'خ', name: 'خالد المطيري', email: 'khaled@boxworks.sa', plan: 'أعمال', status: 'نشط', statusBg: '#e6f4ea', statusColor: '#3f8f5c', role: 'محرر', roleBg: '#e8f0fb', roleColor: '#3b6bc9' },
+    { initial: 'ن', name: 'نورة القحطاني', email: 'noura@gmail.com', plan: 'مجاني', status: 'معلّق', statusBg: '#fbe7e5', statusColor: '#c0392b', role: 'مستخدم', roleBg: '#eee7da', roleColor: '#5a4c3c' },
+    { initial: 'ع', name: 'عبدالله الزهراني', email: 'abdullah@packco.sa', plan: 'برو', status: 'نشط', statusBg: '#e6f4ea', statusColor: '#3f8f5c', role: 'محرر', roleBg: '#e8f0fb', roleColor: '#3b6bc9' },
+    { initial: 'ف', name: 'فهد الدوسري', email: 'fahad@retail.sa', plan: 'أعمال', status: 'نشط', statusBg: '#e6f4ea', statusColor: '#3f8f5c', role: 'مستخدم', roleBg: '#eee7da', roleColor: '#5a4c3c' },
+  ];
+
+  roles = [
+    { name: 'أدمن', badgeBg: '#f0e9f7', badgeColor: '#7a5ea8', count: 1, permissions: [
+      { label: 'إدارة القوالب', enabled: true },
+      { label: 'إدارة الطلبات', enabled: true },
+      { label: 'إدارة المستخدمين', enabled: true },
+      { label: 'إدارة الفوترة', enabled: true },
+      { label: 'إعدادات النظام', enabled: true },
+    ] },
+    { name: 'محرر', badgeBg: '#e8f0fb', badgeColor: '#3b6bc9', count: 2, permissions: [
+      { label: 'إدارة القوالب', enabled: true },
+      { label: 'إدارة الطلبات', enabled: true },
+      { label: 'إدارة المستخدمين', enabled: false },
+      { label: 'إدارة الفوترة', enabled: false },
+      { label: 'إعدادات النظام', enabled: false },
+    ] },
+    { name: 'مستخدم', badgeBg: '#eee7da', badgeColor: '#5a4c3c', count: 3, permissions: [
+      { label: 'إدارة القوالب', enabled: false },
+      { label: 'إدارة الطلبات', enabled: false },
+      { label: 'إدارة المستخدمين', enabled: false },
+      { label: 'إدارة الفوترة', enabled: false },
+      { label: 'إعدادات النظام', enabled: false },
+    ] },
+  ];
+
+  billingStats = [
+    { label: 'الإيرادات هذا الشهر', value: '38,420 ر.س' },
+    { label: 'الاشتراكات النشطة', value: '312' },
+    { label: 'معدل التجديد', value: '94%' },
+  ];
+
+  invoices = [
+    { customer: 'محمد العتيبي', plan: 'خطة برو', amount: '299 ر.س', date: '12 يوليو 2026' },
+    { customer: 'خالد المطيري', plan: 'خطة أعمال', amount: '899 ر.س', date: '10 يوليو 2026' },
+    { customer: 'عبدالله الزهراني', plan: 'خطة برو', amount: '299 ر.س', date: '5 يوليو 2026' },
+    { customer: 'فهد الدوسري', plan: 'خطة أعمال', amount: '899 ر.س', date: '1 يوليو 2026' },
+    { customer: 'سارة الحربي', plan: 'خطة مجانية', amount: '0 ر.س', date: '28 يونيو 2026' },
+  ];
+
+  settings = {
+    siteName: 'قوالبلاين',
+    supportEmail: 'support@qawalibline.sa',
+    currency: 'ر.س (ريال سعودي)',
+    categories: [
+      { name: 'صناديق', count: 118 },
+      { name: 'علب', count: 96 },
+      { name: 'مناسبات', count: 42 },
+      { name: 'شحن', count: 34 },
+      { name: 'عرض', count: 22 },
+    ],
+    notifications: [
+      { label: 'إشعار عند طلب جديد', enabled: true },
+      { label: 'إشعار عند تسجيل مستخدم جديد', enabled: true },
+      { label: 'ملخص أسبوعي عبر البريد', enabled: false },
+    ],
+  };
+
+  onSelect = (id) => this.setState({ activeSection: id, selectedTemplateId: null });
+  onOpenTemplate = (id, e) => { if (e) e.stopPropagation(); this.setState({ selectedTemplateId: id }); };
+  onBackToTemplates = () => this.setState({ selectedTemplateId: null });
+  stop = (e) => { if (e) e.stopPropagation(); };
+  onSetUsersTab = (tab) => this.setState({ usersTab: tab });
+
+  renderVals() {
+    const active = this.state.activeSection;
+    const items = [
+      { id: 'overview', label: 'لوحة القيادة', icon: 'ph ph-squares-four' },
+      { id: 'templates', label: 'القوالب', icon: 'ph ph-cube' },
+      { id: 'orders', label: 'الطلبات', icon: 'ph ph-shopping-cart' },
+      { id: 'users', label: 'المستخدمون', icon: 'ph ph-users' },
+      { id: 'billing', label: 'الفوترة', icon: 'ph ph-receipt' },
+      { id: 'settings', label: 'الإعدادات', icon: 'ph ph-gear' },
+    ];
+    const titles = {
+      overview: 'لوحة القيادة', templates: 'إدارة القوالب', orders: 'إدارة الطلبات',
+      users: 'المستخدمون', billing: 'الفوترة والإيرادات', settings: 'إعدادات النظام',
+    };
+
+    const isTemplateDetail = active === 'templates' && !!this.state.selectedTemplateId;
+    const selectedTemplate = isTemplateDetail
+      ? this.templatesList.find((t) => t.id === this.state.selectedTemplateId)
+      : null;
+    const templatesListWithHandlers = this.templatesList.map((t) => ({
+      ...t,
+      onOpen: () => this.onOpenTemplate(t.id),
+      onOpenStop: (e) => this.onOpenTemplate(t.id, e),
+      onStop: (e) => this.stop(e),
+    }));
+
+    const navItems = items.map((it) => {
+      const isActive = it.id === active;
+      return {
+        ...it,
+        onSelect: () => this.onSelect(it.id),
+        style: `display:flex; align-items:center; gap:10px; border:none; cursor:pointer; text-align:right;
+          font-family:'Cairo',sans-serif; font-size:14px; font-weight:${isActive ? 700 : 500};
+          padding:11px 14px; border-radius:var(--radius-md);
+          background:${isActive ? '#463a29' : 'transparent'};
+          color:${isActive ? '#fff' : '#c9bfae'};`,
+      };
+    });
+
+    return {
+      navItems,
+      pageTitle: titles[active],
+      isOverview: active === 'overview',
+      isTemplates: active === 'templates' && !isTemplateDetail,
+      isTemplateDetail,
+      selectedTemplate,
+      backToTemplates: this.onBackToTemplates,
+      isOrdersPage: active === 'orders',
+      isUsers: active === 'users',
+      isBilling: active === 'billing',
+      isSettings: active === 'settings',
+      settings: this.settings,
+      roles: this.roles,
+      isUsersList: this.state.usersTab === 'list',
+      isUsersRoles: this.state.usersTab === 'roles',
+      setUsersTab: {
+        list: () => this.onSetUsersTab('list'),
+        roles: () => this.onSetUsersTab('roles'),
+      },
+      usersTabStyle: {
+        list: `border:none; cursor:pointer; font-family:'Cairo',sans-serif; font-size:13px; font-weight:700; padding:8px 16px; border-radius:999px; background:${this.state.usersTab === 'list' ? '#2b2013' : 'transparent'}; color:${this.state.usersTab === 'list' ? '#fff' : '#5a4c3c'};`,
+        roles: `border:none; cursor:pointer; font-family:'Cairo',sans-serif; font-size:13px; font-weight:700; padding:8px 16px; border-radius:999px; background:${this.state.usersTab === 'roles' ? '#2b2013' : 'transparent'}; color:${this.state.usersTab === 'roles' ? '#fff' : '#5a4c3c'};`,
+      },
+      goOrders: () => this.onSelect('orders'),
+      stats: this.stats,
+      recentOrders: this.recentOrders,
+      newUsers: this.newUsers,
+      templatesList: templatesListWithHandlers,
+      allOrders: this.allOrders,
+      allUsers: this.allUsers,
+      billingStats: this.billingStats,
+      invoices: this.invoices,
+      userName: 'إدارة النظام',
+      userInitial: 'أ',
+    };
+  }
+}
+
+</script>
+</body>
+</html>

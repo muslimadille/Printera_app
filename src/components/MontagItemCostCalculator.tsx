@@ -33,6 +33,7 @@ import {
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AlertTriangle } from 'lucide-react';
 import { saveQuote, updateQuote } from '@/lib/userApi';
+import { usePreviewSettings } from '@/hooks/usePreviewSettings';
 
 
 /* ── Paper resolution helpers (Excel → system) ──
@@ -504,6 +505,8 @@ const WorkspaceScaler = ({ children }: { children: React.ReactNode }) => {
 };
 
 const MontagItemCostCalculator = ({ onNavigateToQuote, sessionToken }: { onNavigateToQuote?: () => void; sessionToken?: string }) => {
+  const { showNestingPreview, show3DPreview } = usePreviewSettings();
+
   const { paperTypes, priceSettings, setInputs, editingQuoteData, setEditingQuoteData } = usePrintingStore();
   const calc = useCalculations();
 

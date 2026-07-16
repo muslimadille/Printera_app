@@ -32,6 +32,7 @@ import { usePrintingStore, type ExtraColorConfig, type CalculatorInputs, type Fi
 import { calculateQuote } from '@/lib/calcEngine';
 import { calcTypeLabels } from '@/lib/calcTypeLabels';
 import { DollarSign } from 'lucide-react';
+import { usePreviewSettings } from '@/hooks/usePreviewSettings';
 
 /* ── Types ── */
 interface DieTemplate {
@@ -249,6 +250,8 @@ const SheetPreview = ({
 /*  Main calculator                                            */
 /* ──────────────────────────────────────────────────────────── */
 const DieCutCalculator = ({ isAdmin = true }: { isAdmin?: boolean } = {}) => {
+  const { showNestingPreview, show3DPreview } = usePreviewSettings();
+
   const [pieceSvg, setPieceSvg] = useState<string>('');
   const [templates, setTemplates] = useState<DieTemplate[]>([]);
   const [activeTemplateId, setActiveTemplateId] = useState<string>('');
@@ -1015,14 +1018,14 @@ const DieCutCalculator = ({ isAdmin = true }: { isAdmin?: boolean } = {}) => {
           <Card>
             <CardContent className="p-3 sm:p-4">
               <div className="flex items-center justify-between gap-2">
-                <SectionHeader title="معاينة التوزيع داخل الشيت" icon={Layers} />
+                {showNestingPreview && <SectionHeader title="معاينة التوزيع داخل الشيت" icon={Layers} />}
                 <Button size="sm" variant="outline"
                   onClick={runExport} className="gap-1.5 -mt-4">
                   <Download className="w-3.5 h-3.5" />
                   تصدير التوزيع
                 </Button>
               </div>
-              <SheetPreview result={result} svg={pieceSvg} zones={zones} />
+              {showNestingPreview && <SheetPreview result={result} svg={pieceSvg} zones={zones} />}
 
             </CardContent>
           </Card>

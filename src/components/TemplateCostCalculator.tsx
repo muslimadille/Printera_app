@@ -52,6 +52,7 @@ import {
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AlertTriangle } from 'lucide-react';
 import { saveQuote, updateQuote } from '@/lib/userApi';
+import { usePreviewSettings } from '@/hooks/usePreviewSettings';
 
 
 /* ── Section Header ── */
@@ -560,6 +561,8 @@ const WorkspaceScaler = ({ children }: { children: React.ReactNode }) => {
 };
 
 const TemplateCostCalculator = ({ onNavigateToQuote, sessionToken, engineVariant = 'basic' }: { onNavigateToQuote?: () => void; sessionToken?: string; engineVariant?: 'basic' | 'advanced' }) => {
+  const { showNestingPreview, show3DPreview } = usePreviewSettings();
+
   const { paperTypes, priceSettings, setInputs, editingQuoteData, setEditingQuoteData } = usePrintingStore();
   const calc = useCalculations();
 

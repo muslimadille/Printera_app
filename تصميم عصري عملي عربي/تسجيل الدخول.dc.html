@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+
+<helmet>
+  <link rel="stylesheet" href="_ds/nocturne-d3cbf094-b35e-408c-8a1b-816eee968494/styles.css">
+  <script src="_ds/nocturne-d3cbf094-b35e-408c-8a1b-816eee968494/_ds_bundle.js"></script>
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&display=swap">
+  <style>
+    body { background: #faf6f0; }
+    body, .btn, .input, p, a, span, div, h1, h2, h3, h4, h5, h6, button, label { font-family: 'Cairo', var(--font-body), sans-serif; }
+    a { text-decoration: none; }
+    input:focus { outline: 2px solid #a9622f; outline-offset: 1px; }
+    .btn-anim { transition: transform .18s ease, box-shadow .18s ease; }
+    .btn-anim:hover { transform: translateY(-2px); box-shadow: 0 10px 20px rgba(43,32,19,0.12); }
+  </style>
+</helmet>
+
+<div dir="rtl" style="min-height:100vh; background:#faf6f0; color:#2b2013; display:grid; grid-template-columns:1fr 1fr;">
+
+  <!-- ===== Form side ===== -->
+  <div style="display:flex; flex-direction:column; padding:var(--space-8);">
+    <a href="مكتبة القوالب.dc.html" style="display:flex; align-items:center; gap:10px; font-weight:700; font-size:18px;">
+      <span style="width:30px; height:30px; border-radius:var(--radius-md); background:#2b2013; display:inline-flex; align-items:center; justify-content:center; color:#fff; font-size:15px; font-weight:700;">ق</span>
+      قوالب<span style="color:#a9622f;">لاين</span>
+    </a>
+
+    <div style="flex:1; display:flex; align-items:center; justify-content:center;">
+      <div style="width:100%; max-width:380px;">
+        <h1 style="font-size:28px; margin-bottom:6px;">تسجيل الدخول</h1>
+        <p style="color:#8a7d6d; font-size:14px; margin-bottom:var(--space-6);">
+          ادخل إلى حسابك لمتابعة تصميم قوالب التغليف الخاصة بك.
+        </p>
+
+        <form style="display:flex; flex-direction:column; gap:var(--space-4);" onsubmit="{{ onSubmit }}">
+          <div>
+            <label style="display:block; font-size:13px; font-weight:600; margin-bottom:6px; color:#5a4c3c;">البريد الإلكتروني</label>
+            <input type="email" required placeholder="name@company.com" value="{{ email }}" oninput="{{ onEmailChange }}"
+              style="width:100%; box-sizing:border-box; height:46px; border-radius:10px; border:1px solid #e6dccb; background:#fff; padding:0 14px; font-size:14px; font-family:'Cairo',sans-serif; color:#2b2013;">
+          </div>
+          <div>
+            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:6px;">
+              <label style="font-size:13px; font-weight:600; color:#5a4c3c;">كلمة المرور</label>
+              <a href="#" style="font-size:12.5px; color:#a9622f;">نسيت كلمة المرور؟</a>
+            </div>
+            <input type="password" required placeholder="••••••••" value="{{ password }}" oninput="{{ onPasswordChange }}"
+              style="width:100%; box-sizing:border-box; height:46px; border-radius:10px; border:1px solid #e6dccb; background:#fff; padding:0 14px; font-size:14px; font-family:'Cairo',sans-serif; color:#2b2013;">
+          </div>
+
+          <label style="display:flex; align-items:center; gap:8px; font-size:13px; color:#5a4c3c; cursor:pointer;">
+            <input type="checkbox" checked="{{ remember }}" onchange="{{ onRememberChange }}">
+            تذكرني على هذا الجهاز
+          </label>
+
+          <button type="submit" class="btn-anim" style="height:48px; border-radius:999px; border:none; background:#2b2013; color:#fff; font-weight:700; font-size:15px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px;">
+            دخول <i class="ph ph-arrow-left"></i>
+          </button>
+        </form>
+
+        <div style="display:flex; align-items:center; gap:10px; margin:var(--space-6) 0;">
+          <div style="flex:1; height:1px; background:#e6dccb;"></div>
+          <span style="font-size:12px; color:#9c8f7c;">أو</span>
+          <div style="flex:1; height:1px; background:#e6dccb;"></div>
+        </div>
+
+        <button type="button" class="btn-anim" style="width:100%; height:48px; border-radius:999px; border:1px solid #e6dccb; background:#fff; color:#2b2013; font-weight:600; font-size:14px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px;">
+          <i class="ph ph-google-logo"></i> الدخول عبر جوجل
+        </button>
+
+        <p style="text-align:center; font-size:13.5px; color:#8a7d6d; margin-top:var(--space-6);">
+          ليس لديك حساب؟ <a href="إنشاء حساب.dc.html" style="color:#a9622f; font-weight:600;">أنشئ حسابًا جديدًا</a>
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== Visual side ===== -->
+  <div style="position:relative; background:#2b2013; overflow:hidden; display:flex; align-items:center; justify-content:center; padding:var(--space-8);">
+    <div style="position:absolute; inset:0; background-image:radial-gradient(circle at 1px 1px, rgba(255,255,255,0.05) 1px, transparent 0); background-size:26px 26px;"></div>
+    <div style="position:absolute; inset-inline-end:-15%; top:-10%; width:420px; height:420px; border-radius:50%; background:radial-gradient(circle, rgba(169,98,47,0.35), transparent 70%);"></div>
+
+    <div style="position:relative; max-width:400px; color:#fff; text-align:center;">
+      <img src="public/templates/preview/A10_20_02_02.svg" alt="معاينة قالب" style="width:220px; height:auto; margin:0 auto var(--space-6); filter:brightness(0) invert(1) opacity(0.9);">
+      <h2 style="font-size:22px; margin-bottom:10px;">دقة هندسية في كل قصة كرتون</h2>
+      <p style="font-size:14px; opacity:0.75; line-height:1.7;">
+        قوالب بارامترية جاهزة للقص والطباعة، مبنية على معايير التغليف الصناعية.
+      </p>
+    </div>
+  </div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+
+class Component extends DCLogic {
+  state = { email: '', password: '', remember: true };
+
+  onEmailChange = (e) => this.setState({ email: e.target.value });
+  onPasswordChange = (e) => this.setState({ password: e.target.value });
+  onRememberChange = (e) => this.setState({ remember: e.target.checked });
+  onSubmit = (e) => {
+    e.preventDefault();
+    window.location.href = 'لوحة التحكم.dc.html';
+  };
+
+  renderVals() {
+    return {
+      email: this.state.email,
+      password: this.state.password,
+      remember: this.state.remember,
+      onEmailChange: this.onEmailChange,
+      onPasswordChange: this.onPasswordChange,
+      onRememberChange: this.onRememberChange,
+      onSubmit: this.onSubmit,
+    };
+  }
+}
+
+</script>
+</body>
+</html>

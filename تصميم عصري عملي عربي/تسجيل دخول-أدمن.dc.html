@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="_ds/nocturne-d3cbf094-b35e-408c-8a1b-816eee968494/styles.css">
+  <script src="_ds/nocturne-d3cbf094-b35e-408c-8a1b-816eee968494/_ds_bundle.js"></script>
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&display=swap">
+  <style>
+    body { background: #2b2013; }
+    body, .btn, .input, p, a, span, div, h1, h2, h3, h4, h5, h6, button, label { font-family: 'Cairo', var(--font-body), sans-serif; }
+    a { text-decoration: none; }
+    input:focus { outline: 2px solid #a9622f; outline-offset: 1px; }
+    .btn-anim { transition: transform .18s ease, box-shadow .18s ease; }
+    .btn-anim:hover { transform: translateY(-2px); box-shadow: 0 10px 20px rgba(0,0,0,0.3); }
+  </style>
+</helmet>
+
+<div dir="rtl" style="min-height:100vh; background:#2b2013; color:#f3ece0; display:flex; align-items:center; justify-content:center; padding:var(--space-6); position:relative; overflow:hidden;">
+  <div style="position:absolute; inset:0; background-image:radial-gradient(circle at 1px 1px, rgba(255,255,255,0.05) 1px, transparent 0); background-size:26px 26px;"></div>
+  <div style="position:absolute; inset-inline-start:-15%; top:-10%; width:420px; height:420px; border-radius:50%; background:radial-gradient(circle, rgba(169,98,47,0.3), transparent 70%);"></div>
+
+  <div style="position:relative; width:100%; max-width:400px; background:#332616; border:1px solid #463a29; border-radius:var(--radius-lg); padding:var(--space-8);">
+    <div style="display:flex; align-items:center; gap:10px; margin-bottom:var(--space-6);">
+      <span style="width:34px; height:34px; border-radius:var(--radius-md); background:#a9622f; display:inline-flex; align-items:center; justify-content:center; color:#fff; font-size:16px; font-weight:700;">ق</span>
+      <div>
+        <div style="font-weight:700; font-size:16px;">قوالب<span style="color:#c98a52;">لاين</span></div>
+        <div style="font-size:11.5px; color:#a89c88;">لوحة تحكم الإدارة</div>
+      </div>
+    </div>
+
+    <h1 style="font-size:22px; margin:0 0 6px;">تسجيل دخول المسؤول</h1>
+    <p style="color:#a89c88; font-size:13.5px; margin:0 0 var(--space-6);">هذه اللوحة مخصصة لفريق الإدارة فقط.</p>
+
+    <form style="display:flex; flex-direction:column; gap:var(--space-4);" onsubmit="{{ onSubmit }}">
+      <div>
+        <label style="display:block; font-size:13px; font-weight:600; margin-bottom:6px; color:#c9bfae;">البريد الإلكتروني الإداري</label>
+        <input type="email" required placeholder="admin@qawalibline.sa" value="{{ email }}" oninput="{{ onEmailChange }}"
+          style="width:100%; box-sizing:border-box; height:46px; border-radius:10px; border:1px solid #463a29; background:#2b2013; padding:0 14px; font-size:14px; font-family:'Cairo',sans-serif; color:#f3ece0;">
+      </div>
+      <div>
+        <label style="display:block; font-size:13px; font-weight:600; margin-bottom:6px; color:#c9bfae;">كلمة المرور</label>
+        <input type="password" required placeholder="••••••••" value="{{ password }}" oninput="{{ onPasswordChange }}"
+          style="width:100%; box-sizing:border-box; height:46px; border-radius:10px; border:1px solid #463a29; background:#2b2013; padding:0 14px; font-size:14px; font-family:'Cairo',sans-serif; color:#f3ece0;">
+      </div>
+      <div>
+        <label style="display:block; font-size:13px; font-weight:600; margin-bottom:6px; color:#c9bfae;">رمز التحقق (2FA)</label>
+        <input type="text" inputmode="numeric" maxlength="6" placeholder="000000" value="{{ otp }}" oninput="{{ onOtpChange }}"
+          style="width:100%; box-sizing:border-box; height:46px; border-radius:10px; border:1px solid #463a29; background:#2b2013; padding:0 14px; font-size:14px; letter-spacing:4px; font-family:'Cairo',sans-serif; color:#f3ece0;">
+      </div>
+
+      <button type="submit" class="btn-anim" style="height:48px; border-radius:999px; border:none; background:#a9622f; color:#fff; font-weight:700; font-size:15px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; margin-top:var(--space-2);">
+        دخول إلى لوحة الإدارة <i class="ph ph-shield-check"></i>
+      </button>
+    </form>
+
+    <p style="text-align:center; font-size:12.5px; color:#a89c88; margin-top:var(--space-6);">
+      <i class="ph ph-lock-simple"></i> جميع محاولات الدخول مسجّلة لأغراض أمنية.
+    </p>
+  </div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { email: '', password: '', otp: '' };
+
+  onEmailChange = (e) => this.setState({ email: e.target.value });
+  onPasswordChange = (e) => this.setState({ password: e.target.value });
+  onOtpChange = (e) => this.setState({ otp: e.target.value });
+  onSubmit = (e) => {
+    e.preventDefault();
+    window.location.href = 'لوحة تحكم-أدمن.dc.html';
+  };
+
+  renderVals() {
+    return {
+      email: this.state.email,
+      password: this.state.password,
+      otp: this.state.otp,
+      onEmailChange: this.onEmailChange,
+      onPasswordChange: this.onPasswordChange,
+      onOtpChange: this.onOtpChange,
+      onSubmit: this.onSubmit,
+    };
+  }
+}
+
+</script>
+</body>
+</html>

@@ -11,10 +11,13 @@ import {
   LID_TUCK_BOX_RANGES,
 } from '@/lib/lidTuckBoxEngine';
 import { downloadLidTuckBoxSvg } from '@/lib/lidTuckBoxExport';
+import { usePreviewSettings } from '@/hooks/usePreviewSettings';
 
 const round3 = (n: number) => Math.round(n * 1000) / 1000;
 
 const LidTuckBoxCalculator = () => {
+  const { showNestingPreview, show3DPreview } = usePreviewSettings();
+
   const [L, setL] = useState<number>(LID_TUCK_BOX_DEFAULTS.L);
   const [D, setD] = useState<number>(LID_TUCK_BOX_DEFAULTS.D);
   const [H, setH] = useState<number>(LID_TUCK_BOX_DEFAULTS.H);

@@ -7,6 +7,7 @@ import { Plus, Trash2, Copy, Upload, Download, Combine, RotateCcw } from 'lucide
 import { downloadMontageTemplate, parseMontageExcel } from '@/lib/montageExcel';
 import SmartSheetLayoutPreview from '@/components/SmartSheetLayoutPreview';
 import { toast } from 'sonner';
+import { usePreviewSettings } from '@/hooks/usePreviewSettings';
 
 /* ──────────────────────────────────────────────
  * Montage — internal production tab.
@@ -63,6 +64,8 @@ function suggestPress(baseW: number, baseH: number, itemW: number, itemH: number
 }
 
 const MontageCalculator = () => {
+  const { showNestingPreview, show3DPreview } = usePreviewSettings();
+
   const [items, setItems] = useState<MontageItem[]>(() => {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);

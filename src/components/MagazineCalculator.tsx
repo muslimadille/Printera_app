@@ -20,8 +20,11 @@ const emptyBorder = 'border-destructive/50 ring-1 ring-destructive/30';
 import ItemInfoCard, { ItemInfo, validateItemInfo } from '@/components/ItemInfoCard';
 import VoiceInput from '@/components/VoiceInput';
 import { useState, useEffect } from 'react';
+import { usePreviewSettings } from '@/hooks/usePreviewSettings';
 
 const MagazineCalculator = ({ onNavigateToQuote }: { onNavigateToQuote?: () => void }) => {
+  const { showNestingPreview, show3DPreview } = usePreviewSettings();
+
   const { magazineInputs: mag, setMagazineInputs, setMagazineSection, paperTypes, updateMagazineFinishingItem, addMagazineFinishingItem, removeMagazineFinishingItem, setUnifiedQuote, setQuoteInfo, editingQuoteData, setEditingQuoteData } = usePrintingStore();
   const calc = useMagazineCalculations();
   const [itemInfo, setItemInfo] = useState<ItemInfo>(() => {

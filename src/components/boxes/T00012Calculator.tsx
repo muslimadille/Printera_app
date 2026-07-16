@@ -28,6 +28,7 @@ import MailerBox3DPreview from './MailerBox3DPreview';
 import { InteractiveSvgCanvas, type Segment } from '@/components/InteractiveSvgCanvas';
 import { downloadT00012SingleTemplate, downloadT00012SingleTemplatePdf, buildT00012SingleTemplateSvg } from '@/lib/t00012/exportSingle';
 import { downloadT00012SheetLayout, downloadT00012SheetLayoutPdf } from '@/lib/t00012/exportSheet';
+import { usePreviewSettings } from '@/hooks/usePreviewSettings';
 
 const DEFAULT_NESTING: T00012NestingParams = {
   horizontalGap: 3,
@@ -64,6 +65,8 @@ const NumField = ({
 );
 
 const T00012Calculator = ({ isAdmin = false, onSaveBox }: { isAdmin?: boolean; onSaveBox?: (box: any) => void }) => {
+  const { showNestingPreview, show3DPreview } = usePreviewSettings();
+
   const hiddenCls = isAdmin ? '' : 'hidden';
 
   const [params, setParams] = useState<T00012Params>(T00012_DEFAULTS);
@@ -235,14 +238,14 @@ const T00012Calculator = ({ isAdmin = false, onSaveBox }: { isAdmin?: boolean; o
               className={`px-3 py-1.5 rounded-md text-sm font-medium border transition-colors ${previewMode === 'template' ? 'bg-primary text-primary-foreground border-primary' : 'bg-background text-foreground border-input hover:bg-muted'}`}>
               معاينة القالب
             </button>
-            <button type="button" onClick={() => setPreviewMode('sheet')}
+            {showNestingPreview && (<button type="button" onClick={() => setPreviewMode('sheet')}
               className={`px-3 py-1.5 rounded-md text-sm font-medium border transition-colors ${previewMode === 'sheet' ? 'bg-primary text-primary-foreground border-primary' : 'bg-background text-foreground border-input hover:bg-muted'}`}>
               معاينة التوزيع على الشيت
-            </button>
-            <button type="button" onClick={() => setPreviewMode('three')}
+            </button>)}
+            {show3DPreview && (<button type="button" onClick={() => setPreviewMode('three')}
               className={`px-3 py-1.5 rounded-md text-sm font-medium border transition-colors ${previewMode === 'three' ? 'bg-primary text-primary-foreground border-primary' : 'bg-background text-foreground border-input hover:bg-muted'}`}>
               معاينة ثلاثية الأبعاد 3D
-            </button>
+            </button>)}
             <div className="flex items-center gap-2 pl-3 ml-1 border-l border-input">
               {previewMode === 'template' && (
                 <>

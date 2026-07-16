@@ -35,6 +35,7 @@ import {
 } from 'lucide-react';
 import MergeSmartLayoutPreview from '@/components/MergeSmartLayoutPreview';
 import { toast } from 'sonner';
+import { usePreviewSettings } from '@/hooks/usePreviewSettings';
 
 /* ── Types ────────────────────────────────────────────────────────────── */
 
@@ -182,6 +183,8 @@ const PaperCombobox = ({
 
 /* ── Main component ───────────────────────────────────────────────────── */
 const MergeItemsCalculator = (_props: { onNavigateToQuote?: () => void; sessionToken?: string }) => {
+  const { showNestingPreview, show3DPreview } = usePreviewSettings();
+
   const paperTypes = usePrintingStore(s => s.paperTypes);
   const priceSettings = usePrintingStore(s => s.priceSettings);
 

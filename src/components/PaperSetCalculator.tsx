@@ -25,6 +25,7 @@ import ProfitMargins from '@/components/ProfitMargins';
 import { toast } from 'sonner';
 import { calcTypeLabels } from '@/lib/calcTypeLabels';
 import { saveQuote, updateQuote } from '@/lib/userApi';
+import { usePreviewSettings } from '@/hooks/usePreviewSettings';
 
 /* ── helpers ── */
 function migrateSizePricing(s: any): SizePricing {
@@ -392,6 +393,8 @@ const FinishingRow = ({
 
 /* ── Main Component ── */
 const PaperSetCalculator = ({ onNavigateToQuote, sessionToken }: { onNavigateToQuote?: () => void; sessionToken?: string }) => {
+  const { showNestingPreview, show3DPreview } = usePreviewSettings();
+
   const { priceSettings, paperTypes, editingQuoteData, setEditingQuoteData } = usePrintingStore();
   const sizes = priceSettings.sizes;
 

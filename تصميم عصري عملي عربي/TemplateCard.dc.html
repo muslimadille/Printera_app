@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+
+<helmet>
+  <link rel="stylesheet" href="_ds/nocturne-d3cbf094-b35e-408c-8a1b-816eee968494/styles.css">
+  <script src="_ds/nocturne-d3cbf094-b35e-408c-8a1b-816eee968494/_ds_bundle.js"></script>
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&display=swap">
+  <style>
+    .tc-card, .tc-card * { font-family: 'Cairo', var(--font-body), sans-serif; }
+    .tc-card { transition: transform .25s ease, box-shadow .25s ease; }
+    .tc-card:hover { transform: translateY(-6px); box-shadow: 0 18px 34px rgba(43,32,19,0.12); }
+    .tc-card:hover img { transform: scale(1.04); }
+    .tc-card img { transition: transform .35s ease; }
+    .tc-design-link i { display: inline-block; transition: transform .2s ease; }
+    .tc-design-link:hover i { transform: translateX(-4px); }
+  </style>
+</helmet>
+
+<div class="tc-card" style="background:#ffffff; border:1px solid #e6dccb; border-radius:var(--radius-lg); overflow:hidden; height:100%; display:flex; flex-direction:column;">
+  <div style="position:relative; aspect-ratio:4/3; background:#f4ede1; display:flex; align-items:center; justify-content:center; padding:var(--space-4);">
+    <sc-if value="{{ t.pro }}" hint-placeholder-val="{{ false }}">
+      <span style="position:absolute; top:12px; left:12px; background:#c1461f; color:#fff; font-size:11px; font-weight:700; padding:3px 10px; border-radius:6px; letter-spacing:0.02em;">PRO</span>
+    </sc-if>
+    <img src="{{ t.svg }}" alt="{{ t.title }}" style="width:100%; height:100%; object-fit:contain;">
+  </div>
+  <div style="padding:var(--space-4); display:flex; flex-direction:column; gap:6px; flex:1;">
+    <span style="font-size:11px; font-weight:700; letter-spacing:0.04em; color:#a9622f; text-transform:uppercase;">{{ t.categoryLabel }}</span>
+    <h4 style="margin:0; min-height:1.2em; font-size:17px; font-weight:700; color:#2b2013;">{{ t.title }}</h4>
+    <p style="margin:0; min-height:2.6em; font-size:13.5px; color:#8a7d6d; line-height:1.5; flex:1;">{{ t.desc }}</p>
+    <div style="height:1px; background:#e8ded0; margin:6px 0;"></div>
+    <div style="display:flex; align-items:center; justify-content:space-between; gap:var(--space-2);">
+      <div style="display:flex; gap:6px; flex-wrap:wrap;">
+        <sc-for list="{{ t.tags }}" as="tg" hint-placeholder-count="2">
+          <span style="display:flex; align-items:center; gap:4px; background:#efe4d3; color:#6b5d4a; font-size:11px; padding:3px 9px; border-radius:6px;">
+            <i class="ph ph-tag" style="font-size:10px;"></i>{{ tg }}
+          </span>
+        </sc-for>
+      </div>
+      <a href="تفاصيل القالب.dc.html" class="tc-design-link" style="display:flex; align-items:center; gap:4px; font-size:13px; font-weight:700; color:#2b2013; text-decoration:none;">
+        تصميم <i class="ph ph-arrow-left"></i>
+      </a>
+    </div>
+  </div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:280,&quot;height&quot;:340},&quot;t&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;{title:string,desc:string,tags:string[],pro:boolean,svg:string,categoryLabel:string}&quot;}}"></script>
+</body>
+</html>
