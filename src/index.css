@@ -48,14 +48,14 @@
 
     /* Printera brand tokens */
     --brand-navy: #0F1D2D;
-    --brand-gold: #C89D63;
+    --brand-gold: #2563EB; /* Replaced gold with a modern royal blue */
     --brand-bg: #F5F6F8;
     --brand-border: #E3E6EA;
     --brand-muted: #4A5A6D;
     --brand-muted-2: #7C8AA0;
     --brand-tag-bg: #EEF0F3;
-    --brand-pro: #C1461F;
-    --brand-tile-bg: #F8F2E6;
+    --brand-pro: #ef4444;
+    --brand-tile-bg: #EFF6FF; /* Replaced warm cream with soft light blue */
 
     /* Spacing Scale (8px system) */
     --space-1: 0.25rem;

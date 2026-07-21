@@ -328,7 +328,7 @@ export function TemplateEditorLayout({
           color: var(--brand-navy, #0F1D2D);
           margin: 0 0 12px 0;
           padding-bottom: 8px;
-          border-bottom: 2px solid var(--brand-gold, #C89D63);
+          border-bottom: 2px solid var(--brand-gold, #2563EB);
           letter-spacing: 0.01em;
         }
 
