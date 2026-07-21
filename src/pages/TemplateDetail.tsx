@@ -1,6 +1,8 @@
+import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+import { supabase } from '@/integrations/supabase/client';
 
 // Import all calculators
 import T00012Calculator from '@/components/boxes/T00012Calculator';
@@ -16,7 +18,8 @@ import BoxDieCutCalculator5 from '@/components/boxes/BoxDieCutCalculator5';
 import BoxCarryingHandleBoxCalculator from '@/components/boxes/BoxCarryingHandleBoxCalculator';
 import BoxDieCutCalculator2 from '@/components/boxes/BoxDieCutCalculator2';
 
-const TEMPLATE_META: Record<string, { title: string; categoryLabel: string; desc: string }> = {
+// Fallback metadata just in case DB fetch fails or doesn't have it
+const TEMPLATE_META_FALLBACK: Record<string, { title: string; categoryLabel: string; desc: string; pro?: boolean }> = {
   'T00012': { title: 'علبة بريدية بغطاء ملتف', categoryLabel: 'تغليف تجزئة', desc: 'علبة بريدية مغلقة بالكامل مع غطاء ملتف، مناسبة للشحن المباشر للعميل.' },
   'T0002': { title: 'علبة مستقيمة الإغلاق', categoryLabel: 'طي وصواني', desc: 'التصميم الأساسي لعلب الطي الكرتونية، إغلاق علوي وسفلي بسيط بدون لصق.' },
   'T0005': { title: 'صندوق غطاء مفتوح بقفل', categoryLabel: 'طي وصواني', desc: 'غطاء علوي مفتوح مع لسان قفل ولسان غبار جانبي لثبات إضافي.' },
@@ -33,67 +36,89 @@ const TEMPLATE_META: Record<string, { title: string; categoryLabel: string; desc
 
 export default function TemplateDetail() {
   const { id } = useParams<{ id: string }>();
+  const [template, setTemplate] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchTemplate() {
+      if (!id) return;
+      try {
+        const { data } = await supabase.from('app_templates').select('*').eq('id', id).single();
+        if (data) {
+          setTemplate(data);
+        } else {
+          // Fallback if not found in db
+          setTemplate(TEMPLATE_META_FALLBACK[id] || null);
+        }
+      } catch (err) {
+        console.error("Failed to fetch template", err);
+        setTemplate(TEMPLATE_META_FALLBACK[id] || null);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchTemplate();
+  }, [id]);
 
   // Helper to render the calculator component
   const renderCalculator = () => {
     switch (id) {
-      case 'T00012':
-        return <T00012Calculator />;
-      case 'T0002':
-        return <T0002Calculator />;
-      case 'T0005':
-        return <T0005Calculator />;
-      case 'T0006':
-        return <T0006Calculator />;
-      case 'D001-H':
-        return <D001Calculator />;
-      case 'MED1':
-        return <BoxDieCutCalculatorMedicine1 />;
-      case 'SELFLOCK':
-        return <BoxDieCutCalculator />;
-      case 'LIDBASE':
-        return <BoxDieCutCalculator3 />;
-      case 'TUBE1':
-        return <BoxDieCutCalculator4 />;
-      case 'SLIDE1':
-        return <BoxDieCutCalculator5 />;
-      case 'HEX1':
-        return <BoxCarryingHandleBoxCalculator />;
-      case 'HD1':
-        return <BoxDieCutCalculator2 />;
+      case 'T00012': return <T00012Calculator />;
+      case 'T0002': return <T0002Calculator />;
+      case 'T0005': return <T0005Calculator />;
+      case 'T0006': return <T0006Calculator />;
+      case 'D001-H': return <D001Calculator />;
+      case 'MED1': return <BoxDieCutCalculatorMedicine1 />;
+      case 'SELFLOCK': return <BoxDieCutCalculator />;
+      case 'LIDBASE': return <BoxDieCutCalculator3 />;
+      case 'TUBE1': return <BoxDieCutCalculator4 />;
+      case 'SLIDE1': return <BoxDieCutCalculator5 />;
+      case 'HEX1': return <BoxCarryingHandleBoxCalculator />;
+      case 'HD1': return <BoxDieCutCalculator2 />;
       default:
         return (
-          <div style={{ textAlign: 'center', padding: 'var(--space-8) var(--space-4)', color: '#9c8f7c' }}>
-            <i className="ph ph-warning" style={{ fontSize: '48px', color: '#c1461f', display: 'block', marginBottom: 'var(--space-2)' }}></i>
+          <div style={{ textAlign: 'center', padding: 'var(--space-8) var(--space-4)', color: 'var(--brand-muted-2)' }}>
+            <i className="ph ph-warning" style={{ fontSize: '48px', color: 'var(--brand-pro)', display: 'block', marginBottom: 'var(--space-2)' }}></i>
             القالب المطلوب غير متوفر حالياً.
           </div>
         );
     }
   };
 
-  const meta = id ? TEMPLATE_META[id] : null;
+  if (loading) {
+    return (
+      <div dir="rtl" style={{ minHeight: '100vh', background: 'var(--brand-bg)', color: 'var(--brand-navy)' }}>
+        <Header />
+        <div style={{ textAlign: 'center', padding: 'var(--space-8)', color: 'var(--brand-muted-2)' }}>جاري تحميل بيانات القالب...</div>
+      </div>
+    );
+  }
+
+  const isPro = template?.pro ?? false;
 
   return (
-    <div dir="rtl" style={{ minHeight: '100vh', background: '#faf6f0', color: '#2b2013', fontFamily: 'Cairo, sans-serif' }}>
+    <div dir="rtl" style={{ minHeight: '100vh', background: 'var(--brand-bg)', color: 'var(--brand-navy)' }}>
       <Header />
 
       {/* ===== Breadcrumb + title ===== */}
       <div style={{ padding: 'var(--space-6) var(--space-8) 0' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: '#9c8f7c', marginBottom: 'var(--space-3)' }}>
-          <Link to="/" style={{ color: '#9c8f7c' }}>مكتبة القوالب</Link>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: 'var(--brand-muted-2)', marginBottom: 'var(--space-3)' }}>
+          <Link to="/templates" style={{ color: 'var(--brand-muted-2)', textDecoration: 'none' }} className="hover:text-brand-navy transition-colors">مكتبة القوالب</Link>
           <i className="ph ph-caret-left" style={{ fontSize: '11px' }}></i>
-          {meta && <span style={{ color: '#5a4c3c' }}>{meta.categoryLabel}</span>}
-          {meta && <i className="ph ph-caret-left" style={{ fontSize: '11px' }}></i>}
-          <span style={{ color: '#2b2013', fontWeight: 600 }}>{id}</span>
+          {template && <span style={{ color: 'var(--brand-gold)' }}>{template.category_label || template.categoryLabel}</span>}
+          {template && <i className="ph ph-caret-left" style={{ fontSize: '11px' }}></i>}
+          <span style={{ color: 'var(--brand-navy)', fontWeight: 600 }}>{id}</span>
         </div>
 
-        {meta && (
+        {template && (
           <div style={{ marginBottom: 'var(--space-4)' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '6px' }}>
-              <h1 style={{ margin: 0, fontSize: '30px', fontWeight: 700 }}>{meta.title}</h1>
-              <span style={{ background: '#c1461f', color: '#fff', fontSize: '11px', fontWeight: 700, padding: '3px 10px', borderRadius: '6px' }}>PRO</span>
+              <h1 style={{ margin: 0, fontSize: '30px', fontWeight: 700, color: 'var(--brand-navy)' }}>{template.title}</h1>
+              {isPro && (
+                <span style={{ background: 'var(--brand-pro)', color: '#fff', fontSize: '11px', fontWeight: 700, padding: '3px 10px', borderRadius: '6px' }}>PRO</span>
+              )}
             </div>
-            <p style={{ margin: 0, color: '#8a7d6d', maxWidth: '56ch', fontSize: '14px', lineHeight: 1.5 }}>{meta.desc}</p>
+            <p style={{ margin: 0, color: 'var(--brand-muted)', maxWidth: '56ch', fontSize: '14px', lineHeight: 1.5 }}>{template.description || template.desc}</p>
           </div>
         )}
       </div>

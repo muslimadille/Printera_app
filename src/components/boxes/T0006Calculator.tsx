@@ -1,3 +1,4 @@
+import { TemplateEditorLayout, PreviewMode } from '@/components/layouts/TemplateEditorLayout';
 import { useMemo, useRef, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -326,97 +327,30 @@ const T0006Calculator = ({ isAdmin = false }: { isAdmin?: boolean }) => {
   );
 
   return (
-    <div dir="rtl" className="space-y-4">
-      {/* Header / Reference mode toggle */}
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="text-lg">T0006 — قفل مزدوج العلب (Double Wall Box)</CardTitle>
-          <div className="flex items-center gap-3">
-            <Label htmlFor="t0006-ref" className="text-sm font-normal cursor-pointer">
-              وضع المرجعية Reference Mode {refOn && <span className="text-emerald-600">(مفعّل)</span>}
-            </Label>
-            <Switch id="t0006-ref" checked={refOn}
-              onCheckedChange={v => set('referenceMode', v)} />
-          </div>
-        </CardHeader>
-        {refOn && (
-          <CardContent>
-            <div className="rounded-md bg-amber-50 border border-amber-200 p-3 text-sm text-amber-900">
-              وضع المرجعية مفعّل: الأبعاد الافتراضية مقفلة للمعايرة (W={T0006_REFERENCE.width}، H={T0006_REFERENCE.height}،
-              D={T0006_REFERENCE.depth}، Glue_Flap={T0006_REFERENCE.glueFlap}،
-              Lid_Tongue={T0006_REFERENCE.lidTongue}، Dust_Flap={T0006_REFERENCE.dustFlap} مم).
-            </div>
-          </CardContent>
-        )}
-      </Card>
-
-      {/* Sheet preview + side input panel */}
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between gap-3">
-          <div className="flex gap-2">
-            <button type="button" onClick={() => setPreviewMode('template')}
-              className={`px-3 py-1.5 rounded-md text-sm font-medium border transition-colors ${previewMode === 'template' ? 'bg-primary text-primary-foreground border-primary' : 'bg-background text-foreground border-input hover:bg-muted'}`}>
-              معاينة القالب
-            </button>
-            {showNestingPreview && (<button type="button" onClick={() => setPreviewMode('sheet')}
-              className={`px-3 py-1.5 rounded-md text-sm font-medium border transition-colors ${previewMode === 'sheet' ? 'bg-primary text-primary-foreground border-primary' : 'bg-background text-foreground border-input hover:bg-muted'}`}>
-              معاينة التوزيع على الشيت
-            </button>)}
-            {show3DPreview && (<button type="button" onClick={() => setPreviewMode('three')}
-              className={`px-3 py-1.5 rounded-md text-sm font-medium border transition-colors ${previewMode === 'three' ? 'bg-primary text-primary-foreground border-primary' : 'bg-background text-foreground border-input hover:bg-muted'}`}>
-              معاينة ثلاثية الأبعاد 3D
-            </button>)}
-            <div className="flex items-center gap-2 pl-3 ml-1 border-l border-input">
-              {previewMode === 'template' && (
-                <>
-                  <Switch id="t0006-show-dims" checked={showDimensions} onCheckedChange={setShowDimensions} />
-                  <Label htmlFor="t0006-show-dims" className="text-sm font-normal cursor-pointer">إظهار القياسات</Label>
-                </>
-              )}
-              <select className="h-8 rounded-md border border-input bg-background px-2 text-sm"
-                value={dimUnit} onChange={e => setDimUnit(e.target.value as 'mm' | 'cm' | 'in')}>
-                <option value="mm">mm</option>
-                <option value="cm">cm</option>
-                <option value="in">in</option>
-              </select>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
+    <>
+      <TemplateEditorLayout
+        title="T0006 — قفل مزدوج العلب (Double Wall Box)"
+        hasReferenceMode={true}
+        referenceModeOn={refOn}
+        onReferenceModeChange={v => set('referenceMode', v)}
+        previewMode={previewMode}
+        onPreviewModeChange={setPreviewMode}
+        hasSheetPreview={showNestingPreview}
+        has3DPreview={show3DPreview}
+        showDimensions={showDimensions}
+        onShowDimensionsChange={setShowDimensions}
+        dimUnit={dimUnit}
+        onDimUnitChange={setDimUnit}
+        actionButtons={
+          <>
             <Button variant="outline" size="sm" onClick={() => setPrintOpen(true)}>
               ملخص الطباعة
             </Button>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="default" size="sm">
-                  <Download className="w-4 h-4 ml-1.5" />
-                  تصدير القالب
-                  <ChevronDown className="w-3 h-3 mr-1.5" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onSelect={downloadDielineSvg}>تصدير SVG</DropdownMenuItem>
-                <DropdownMenuItem onSelect={downloadSinglePdf}>تصدير PDF</DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="default" size="sm" disabled={nestingResult.total <= 0}>
-                  <Download className="w-4 h-4 ml-1.5" />
-                  تصدير التوزيع
-                  <ChevronDown className="w-3 h-3 mr-1.5" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onSelect={downloadSheetPdf}>تصدير PDF للتوزيع</DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 lg:grid-cols-[1fr_440px] gap-4 items-start">
-            <div className="min-w-0">
-              {previewMode === 'template' ? (
+          </>
+        }
+        previewArea={
+          <>
+            {previewMode === 'template' ? (
                 <div className="space-y-2">
                   <div className="text-xs text-muted-foreground">
                     القطع والخطوط الخارجية: <b>{geo.segments.length}</b>
@@ -449,10 +383,11 @@ const T0006Calculator = ({ isAdmin = false }: { isAdmin?: boolean }) => {
                   faceCoords={faceCoords}
                 />
               )}
-            </div>
-
-            <aside className="space-y-5 rounded-lg border bg-muted/30 p-4">
-              <section>
+          </>
+        }
+        sidebarArea={
+          <>
+            <section>
                 <h3 className="text-sm font-bold mb-2">أبعاد العلبة</h3>
                 <div className="grid grid-cols-3 gap-2">
                   <NumField label="العرض" value={params.width} disabled={refOn} unit={dimUnit} onChange={v => set('width', v)} />
@@ -500,10 +435,9 @@ const T0006Calculator = ({ isAdmin = false }: { isAdmin?: boolean }) => {
                   إعادة تعيين
                 </Button>
               </div>
-            </aside>
-          </div>
-        </CardContent>
-      </Card>
+          </>
+        }
+      />
 
       <T0006PrintSummary
         open={printOpen}
@@ -521,8 +455,7 @@ const T0006Calculator = ({ isAdmin = false }: { isAdmin?: boolean }) => {
           d2: params.depth - 0.5,
         }}
       />
-    </div>
-  );
+    </>  );
 };
 
 export default T0006Calculator;

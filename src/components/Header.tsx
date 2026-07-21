@@ -1,11 +1,21 @@
 import { Link, useLocation } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 
+type SimpleActive = 'home' | 'contact' | 'about' | null;
+type AppActive = 'library' | 'categories' | 'pricing' | 'template' | null;
+
 interface HeaderProps {
-  transparent?: boolean;
+  /** "simple" = text-nav header (الرئيسية/مكتبة القوالب/الأسعار/تواصل معنا/عننا).
+   *  "app" = icon-nav header (العلب/التصنيفات/الأسعار) used on library/pricing/template pages. */
+  variant?: 'simple' | 'app';
+  active?: SimpleActive | AppActive;
+  /** app variant only: page background the header sits on. */
+  bg?: string;
+  /** app variant only: guest right-side CTAs. "full" = login + signup, "simple" = login only. */
+  guestCta?: 'full' | 'simple';
 }
 
-export default function Header({ transparent = false }: HeaderProps) {
+export default function Header({ variant = 'app', active = null, bg, guestCta = 'full' }: HeaderProps) {
   const location = useLocation();
   const [user, setUser] = useState<{ username: string; is_admin: boolean } | null>(null);
 
@@ -23,75 +33,38 @@ export default function Header({ transparent = false }: HeaderProps) {
 
   const userInitial = user ? user.username.trim().charAt(0) : 'م';
 
-  const isHome = location.pathname === '/';
+  const navLink = (key: string | null, to: string, label: string) => (
+    <Link to={to} style={{ color: active === key ? 'var(--brand-navy)' : 'var(--brand-muted)', fontWeight: active === key ? 700 : 400, fontSize: '14px' }}>
+      {label}
+    </Link>
+  );
 
   return (
-    <header 
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: 'var(--space-6)',
-        borderBottom: transparent ? 'none' : '1px solid #e8ded0',
-        padding: 'var(--space-4) var(--space-8)',
-        background: transparent ? 'transparent' : '#ffffff',
-        position: 'sticky',
-        top: 0,
-        zIndex: 20,
-      }}
-    >
-      <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: '10px', fontWeight: 700, fontSize: '18px', letterSpacing: '-0.01em', color: '#2b2013' }}>
-        <span style={{ width: '30px', height: '30px', borderRadius: 'var(--radius-md)', background: '#2b2013', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: '15px', fontWeight: 700 }}>ق</span>
-        قوالب<span style={{ color: '#a9622f' }}>لاين</span>
+    <header style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-6)', borderBottom: '1px solid var(--brand-border)', padding: 'var(--space-4) var(--space-8)', background: bg || '#ffffff', position: 'sticky', top: 0, zIndex: 20 }}>
+      <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: '10px', fontWeight: 700, fontSize: '18px' }}>
+        <img src="/brand/printera-logo-trans.png" alt="Printera" className="anim-logo" style={{ width: '32px', height: '32px', objectFit: 'contain' }} />
+        <span className="anim-slide-down" style={{ whiteSpace: 'nowrap' }}>برين<span style={{ color: 'var(--brand-gold)' }}>تيرا</span></span>
       </Link>
-      
       <nav style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-6)', marginInlineEnd: 'auto' }}>
-        {isHome ? (
-          <>
-            <a href="#library" style={{ display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 700, color: '#a9622f' }}>
-              <i className="ph ph-cube" style={{ fontSize: '16px' }}></i> العلب
-            </a>
-            <a href="#categories" style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#5a4c3c' }}>
-              <i className="ph ph-squares-four" style={{ fontSize: '16px' }}></i> التصنيفات
-            </a>
-          </>
-        ) : (
-          <>
-            <Link to="/#library" style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#5a4c3c' }}>
-              <i className="ph ph-cube" style={{ fontSize: '16px' }}></i> العلب
-            </Link>
-            <Link to="/#categories" style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#5a4c3c' }}>
-              <i className="ph ph-squares-four" style={{ fontSize: '16px' }}></i> التصنيفات
-            </Link>
-          </>
-        )}
-        <Link to="/pricing" style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#5a4c3c' }}>
-          <i className="ph ph-tag" style={{ fontSize: '16px' }}></i> الأسعار
-        </Link>
+        {navLink('home', '/', 'الرئيسية')}
+        {navLink('library', '/templates', 'مكتبة القوالب')}
+        {navLink('pricing', '/pricing', 'الأسعار')}
+        {navLink('contact', '/contact', 'تواصل معنا')}
+        {navLink('about', '/about', 'عننا')}
       </nav>
-
       {user ? (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-4)' }}>
-          {user.is_admin && (
-            <Link to="/admin" className="btn-anim" style={{ fontSize: '13.5px', fontWeight: 600, color: '#a9622f', border: '1px solid #a9622f', borderRadius: '999px', padding: '6px 14px' }}>
-              لوحة الإدارة
-            </Link>
-          )}
-          <Link to="/dashboard" style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 700, color: '#2b2013' }}>
-            <div style={{ width: '30px', height: '30px', borderRadius: '50%', background: '#a9622f', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: '13px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)' }}>
+          <span style={{ fontSize: '13.5px', color: 'var(--brand-muted)' }}>مرحبًا، {user.username}</span>
+          <Link to="/dashboard" style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 700, color: 'var(--brand-navy)' }}>
+            <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'var(--brand-gold)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: '13px' }}>
               {userInitial}
             </div>
-            حسابي
           </Link>
         </div>
       ) : (
-        <>
-          <Link to="/login" className="btn-anim" style={{ color: '#5a4c3c', fontSize: '14px', fontWeight: 600, borderRadius: '999px', padding: '8px 10px' }}>
-            تسجيل الدخول
-          </Link>
-          <Link to="/signup" className="btn-anim" style={{ background: '#2b2013', color: '#fff', fontWeight: 700, fontSize: '14px', padding: '10px 20px', borderRadius: '999px' }}>
-            ابدأ مجانًا
-          </Link>
-        </>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <Link to="/signup" className="btn-anim" style={{ background: 'var(--brand-navy)', color: '#fff', fontWeight: 700, fontSize: '14px', padding: '10px 20px', borderRadius: '999px' }}>ابدأ مجانًا</Link>
+        </div>
       )}
     </header>
   );

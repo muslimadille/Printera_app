@@ -56,21 +56,21 @@ export default function AdminLogin() {
   };
 
   return (
-    <div dir="rtl" style={{ minHeight: '100vh', background: '#2b2013', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Cairo, sans-serif', padding: '20px', position: 'relative', overflow: 'hidden' }}>
+    <div dir="rtl" style={{ minHeight: '100vh', background: '#1e293b', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Cairo, sans-serif', padding: '20px', position: 'relative', overflow: 'hidden' }}>
       
       {/* Background decorations */}
       <div style={{ position: 'absolute', inset: 0, backgroundImage: 'radial-gradient(circle at 1px 1px, rgba(255,255,255,0.05) 1px, transparent 0)', backgroundSize: '26px 26px', pointerEvents: 'none' }}></div>
-      <div style={{ position: 'absolute', right: '-10%', top: '-10%', width: '420px', height: '420px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(169,98,47,0.25), transparent 70%)', pointerEvents: 'none' }}></div>
+      <div style={{ position: 'absolute', right: '-10%', top: '-10%', width: '420px', height: '420px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(59,130,246,0.25), transparent 70%)', pointerEvents: 'none' }}></div>
 
-      <div className="hover-lift" style={{ width: '100%', maxWidth: '400px', background: '#332616', border: '1px solid #463a29', borderRadius: 'var(--radius-lg)', padding: 'var(--space-8)', zIndex: 10 }}>
+      <div className="hover-lift" style={{ width: '100%', maxWidth: '400px', background: '#332616', border: '1px solid #334155', borderRadius: 'var(--radius-lg)', padding: 'var(--space-8)', zIndex: 10 }}>
         
         {/* Logo block */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContext: 'space-between', justifyContent: 'space-between', marginBottom: 'var(--space-6)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span style={{ width: '32px', height: '32px', borderRadius: '8px', background: '#a9622f', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: '15px', fontWeight: 700 }}>ق</span>
+            <span style={{ width: '32px', height: '32px', borderRadius: '8px', background: '#3b82f6', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: '15px', fontWeight: 700 }}>ق</span>
             <span style={{ fontWeight: 700, fontSize: '17px', color: '#fff' }}>قوالب<span style={{ color: '#c98a52' }}>لاين</span></span>
           </div>
-          <span style={{ fontSize: '11px', color: '#a89c88', background: '#463a29', padding: '3px 8px', borderRadius: '4px' }}>لوحة تحكم الإدارة</span>
+          <span style={{ fontSize: '11px', color: '#a89c88', background: '#334155', padding: '3px 8px', borderRadius: '4px' }}>لوحة تحكم الإدارة</span>
         </div>
 
         <h1 style={{ fontSize: '22px', color: '#fff', fontWeight: 700, margin: '0 0 6px' }}>تسجيل دخول المسؤول</h1>
@@ -86,7 +86,7 @@ export default function AdminLogin() {
               placeholder="admin@qawalibline.sa"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              style={{ width: '100%', boxSizing: 'border-box', height: '46px', borderRadius: '10px', border: '1px solid #463a29', background: '#2b2013', padding: '0 14px', fontSize: '14px', fontFamily: 'Cairo,sans-serif', color: '#f3ece0' }}
+              style={{ width: '100%', boxSizing: 'border-box', height: '46px', borderRadius: '10px', border: '1px solid #334155', background: '#1e293b', padding: '0 14px', fontSize: '14px', fontFamily: 'Cairo,sans-serif', color: '#f1f5f9' }}
             />
           </div>
 
@@ -98,7 +98,7 @@ export default function AdminLogin() {
               placeholder="••••••••"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              style={{ width: '100%', boxSizing: 'border-box', height: '46px', borderRadius: '10px', border: '1px solid #463a29', background: '#2b2013', padding: '0 14px', fontSize: '14px', fontFamily: 'Cairo,sans-serif', color: '#f3ece0' }}
+              style={{ width: '100%', boxSizing: 'border-box', height: '46px', borderRadius: '10px', border: '1px solid #334155', background: '#1e293b', padding: '0 14px', fontSize: '14px', fontFamily: 'Cairo,sans-serif', color: '#f1f5f9' }}
             />
           </div>
 
@@ -111,7 +111,7 @@ export default function AdminLogin() {
               placeholder="000000"
               value={otp}
               onChange={(e) => setOtp(e.target.value)}
-              style={{ width: '100%', boxSizing: 'border-box', height: '46px', borderRadius: '10px', border: '1px solid #463a29', background: '#2b2013', padding: '0 14px', fontSize: '16px', fontWeight: 700, letterSpacing: '6px', textAlign: 'center', fontFamily: 'Cairo,sans-serif', color: '#f3ece0' }}
+              style={{ width: '100%', boxSizing: 'border-box', height: '46px', borderRadius: '10px', border: '1px solid #334155', background: '#1e293b', padding: '0 14px', fontSize: '16px', fontWeight: 700, letterSpacing: '6px', textAlign: 'center', fontFamily: 'Cairo,sans-serif', color: '#f1f5f9' }}
             />
           </div>
 
@@ -119,7 +119,7 @@ export default function AdminLogin() {
             type="submit"
             className="btn-anim"
             disabled={loading}
-            style={{ width: '100%', height: '48px', borderRadius: '999px', border: 'none', background: '#a9622f', color: '#fff', fontWeight: 700, fontSize: '15px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', cursor: 'pointer', marginTop: '10px' }}
+            style={{ width: '100%', height: '48px', borderRadius: '999px', border: 'none', background: '#3b82f6', color: '#fff', fontWeight: 700, fontSize: '15px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', cursor: 'pointer', marginTop: '10px' }}
           >
             {loading ? 'جاري التحقق...' : (
               <>

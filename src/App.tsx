@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import Index from "./pages/Index.tsx";
 import InternalErrors from "./pages/InternalErrors.tsx";
+import Home from "./pages/Home.tsx";
 import TemplatesLibrary from "./pages/TemplatesLibrary.tsx";
 import Pricing from "./pages/Pricing.tsx";
 import Login from "./pages/Login.tsx";
@@ -15,6 +16,8 @@ import TemplateDetail from "./pages/TemplateDetail.tsx";
 import PrintTemplate from "./pages/PrintTemplate.tsx";
 import AdminLogin from "./pages/AdminLogin.tsx";
 import AdminDashboard from "./pages/AdminDashboard.tsx";
+import Contact from "./pages/Contact.tsx";
+import About from "./pages/About.tsx";
 
 const queryClient = new QueryClient();
 
@@ -25,9 +28,12 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <Routes>
-          {/* QawalibLine Core Routes */}
-          <Route path="/" element={<TemplatesLibrary />} />
+          {/* Printera Core Routes */}
+          <Route path="/" element={<Home />} />
+          <Route path="/templates" element={<TemplatesLibrary />} />
           <Route path="/pricing" element={<Pricing />} />
+          <Route path="/contact" element={<Contact />} />
+          <Route path="/about" element={<About />} />
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
           <Route path="/dashboard" element={<Dashboard />} />

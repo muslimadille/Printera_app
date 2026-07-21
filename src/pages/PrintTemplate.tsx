@@ -88,53 +88,53 @@ export default function PrintTemplate() {
 
   const styleTh: React.CSSProperties = {
     ...styleTdTh,
-    background: '#f4ede1',
+    background: '#f1f5f9',
     color: '#5a4c3c',
     fontWeight: 700,
-    borderBottom: '1px solid #e6dccb',
+    borderBottom: '1px solid #e2e8f0',
   };
 
   const styleTd: React.CSSProperties = {
     ...styleTdTh,
-    borderBottom: '1px solid #eee2cf',
-    color: '#2b2013',
+    borderBottom: '1px solid #e2e8f0',
+    color: '#1e293b',
   };
 
   return (
-    <div dir="rtl" style={{ background: '#ffffff', color: '#2b2013', fontFamily: 'Cairo, sans-serif', padding: '0.5in', maxWidth: '8.5in', margin: '0 auto' }}>
+    <div dir="rtl" style={{ background: '#ffffff', color: '#1e293b', fontFamily: 'Cairo, sans-serif', padding: '0.5in', maxWidth: '8.5in', margin: '0 auto' }}>
       
       {/* ===== Breadcrumbs ===== */}
-      <div className="print:hidden" style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: '#9c8f7c', marginBottom: '14px' }}>
-        <Link to="/" style={{ color: '#9c8f7c', textDecoration: 'none' }}>مكتبة القوالب</Link>
+      <div className="print:hidden" style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: '#94a3b8', marginBottom: '14px' }}>
+        <Link to="/templates" style={{ color: '#94a3b8', textDecoration: 'none' }}>مكتبة القوالب</Link>
         <i className="ph ph-caret-left" style={{ fontSize: '10px' }}></i>
         <span style={{ color: '#5a4c3c' }}>{meta.categoryLabel}</span>
         <i className="ph ph-caret-left" style={{ fontSize: '10px' }}></i>
-        <span style={{ color: '#2b2013', fontWeight: 600 }}>{id}</span>
+        <span style={{ color: '#1e293b', fontWeight: 600 }}>{id}</span>
       </div>
 
       {/* ===== Header Row ===== */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px', borderBottom: '1px solid #eee2cf', paddingBottom: '10px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px', borderBottom: '1px solid #e2e8f0', paddingBottom: '10px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <span style={{ width: '30px', height: '30px', borderRadius: '8px', background: '#2b2013', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: '15px', fontWeight: 700 }}>ق</span>
-          <div style={{ fontWeight: 700, fontSize: '16px' }}>قوالب<span style={{ color: '#a9622f' }}>لاين</span></div>
+          <span style={{ width: '30px', height: '30px', borderRadius: '8px', background: '#1e293b', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: '15px', fontWeight: 700 }}>ق</span>
+          <div style={{ fontWeight: 700, fontSize: '16px' }}>قوالب<span style={{ color: '#3b82f6' }}>لاين</span></div>
         </div>
-        <div style={{ fontSize: '11px', color: '#9c8f7c' }}>ملخص طباعة القالب</div>
+        <div style={{ fontSize: '11px', color: '#94a3b8' }}>ملخص طباعة القالب</div>
       </div>
 
       {/* ===== Title ===== */}
       <h1 style={{ fontSize: '26px', margin: '14px 0 4px', fontWeight: 700 }}>{meta.title} — {id}</h1>
-      <p style={{ margin: '0 0 20px', color: '#8a7d6d', fontSize: '13px', maxWidth: '64ch', lineHeight: 1.5 }}>{meta.desc}</p>
+      <p style={{ margin: '0 0 20px', color: '#64748b', fontSize: '13px', maxWidth: '64ch', lineHeight: 1.5 }}>{meta.desc}</p>
 
       {/* ===== Preview Image ===== */}
       <div style={{ display: 'flex', justifyContent: 'center', margin: '0 0 24px' }}>
-        <div style={{ width: '70%', maxWidth: '300px', background: '#faf6f0', border: '1px solid #e6dccb', borderRadius: '12px', padding: '20px' }}>
+        <div style={{ width: '70%', maxWidth: '300px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '20px' }}>
           <img src={meta.svg} alt={meta.title} style={{ width: '100%', height: 'auto', display: 'block' }} />
         </div>
       </div>
 
       {/* ===== Specs Table ===== */}
       <div style={{ marginBottom: '18px' }}>
-        <h2 style={{ fontSize: '16px', margin: '0 0 10px', borderBottom: '2px solid #2b2013', paddingBottom: '6px', fontWeight: 700 }}>أبعاد العلبة ({unit})</h2>
+        <h2 style={{ fontSize: '16px', margin: '0 0 10px', borderBottom: '2px solid #1e293b', paddingBottom: '6px', fontWeight: 700 }}>أبعاد العلبة ({unit})</h2>
         <table style={styleTable}>
           <thead>
             <tr>
@@ -155,7 +155,7 @@ export default function PrintTemplate() {
 
       {/* ===== Advanced Customisation Table ===== */}
       <div style={{ marginBottom: '18px' }}>
-        <h2 style={{ fontSize: '16px', margin: '0 0 10px', borderBottom: '2px solid #2b2013', paddingBottom: '6px', fontWeight: 700 }}>تخصيص متقدم ({unit})</h2>
+        <h2 style={{ fontSize: '16px', margin: '0 0 10px', borderBottom: '2px solid #1e293b', paddingBottom: '6px', fontWeight: 700 }}>تخصيص متقدم ({unit})</h2>
         <table style={styleTable}>
           <thead>
             <tr>
@@ -176,7 +176,7 @@ export default function PrintTemplate() {
 
       {/* ===== Sheet Settings Table ===== */}
       <div style={{ marginBottom: '18px' }}>
-        <h2 style={{ fontSize: '16px', margin: '0 0 10px', borderBottom: '2px solid #2b2013', paddingBottom: '6px', fontWeight: 700 }}>إعدادات الشيت ({unit})</h2>
+        <h2 style={{ fontSize: '16px', margin: '0 0 10px', borderBottom: '2px solid #1e293b', paddingBottom: '6px', fontWeight: 700 }}>إعدادات الشيت ({unit})</h2>
         <table style={styleTable}>
           <thead>
             <tr>
@@ -195,14 +195,14 @@ export default function PrintTemplate() {
             </tr>
           </tbody>
         </table>
-        <p style={{ fontSize: '11.5px', color: '#9c8f7c', margin: '8px 0 0' }}>
+        <p style={{ fontSize: '11.5px', color: '#94a3b8', margin: '8px 0 0' }}>
           الصافي: {toDisplay(usableW, unit)} × {toDisplay(usableH, unit)} {unit}
         </p>
       </div>
 
       {/* ===== Rotation & Repetition ===== */}
       <div style={{ marginBottom: '18px' }}>
-        <h2 style={{ fontSize: '16px', margin: '0 0 10px', borderBottom: '2px solid #2b2013', paddingBottom: '6px', fontWeight: 700 }}>خيارات التدوير</h2>
+        <h2 style={{ fontSize: '16px', margin: '0 0 10px', borderBottom: '2px solid #1e293b', paddingBottom: '6px', fontWeight: 700 }}>خيارات التدوير</h2>
         <table style={styleTable}>
           <tbody>
             <tr>
@@ -219,7 +219,7 @@ export default function PrintTemplate() {
 
       {/* ===== Nesting Summary ===== */}
       <div style={{ marginBottom: '18px' }}>
-        <h2 style={{ fontSize: '16px', margin: '0 0 10px', borderBottom: '2px solid #2b2013', paddingBottom: '6px', fontWeight: 700 }}>ملخص التوزيع</h2>
+        <h2 style={{ fontSize: '16px', margin: '0 0 10px', borderBottom: '2px solid #1e293b', paddingBottom: '6px', fontWeight: 700 }}>ملخص التوزيع</h2>
         <table style={styleTable}>
           <tbody>
             <tr>
@@ -237,7 +237,7 @@ export default function PrintTemplate() {
       <div className="print:hidden" style={{ textAlign: 'center', marginTop: '30px' }}>
         <button 
           onClick={() => window.print()} 
-          style={{ background: '#2b2013', color: '#fff', border: 'none', padding: '10px 24px', borderRadius: '999px', fontWeight: 700, fontSize: '14px', cursor: 'pointer' }}
+          style={{ background: '#1e293b', color: '#fff', border: 'none', padding: '10px 24px', borderRadius: '999px', fontWeight: 700, fontSize: '14px', cursor: 'pointer' }}
         >
           طباعة الآن
         </button>

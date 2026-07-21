@@ -66,17 +66,17 @@ export default function Signup() {
   const mismatch = confirmPassword.length > 0 && password !== confirmPassword;
 
   return (
-    <div dir="rtl" style={{ minHeight: '100vh', background: '#faf6f0', color: '#2b2013', display: 'grid', gridTemplateColumns: '1fr 1fr', fontFamily: 'Cairo, sans-serif' }}>
+    <div dir="rtl" style={{ minHeight: '100vh', background: 'var(--brand-bg)', color: 'var(--brand-navy)', display: 'grid', gridTemplateColumns: '1fr 1fr', fontFamily: 'Cairo, sans-serif' }}>
       
       {/* ===== Visual side ===== */}
-      <div style={{ position: 'relative', background: '#2b2013', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 'var(--space-8)' }}>
+      <div style={{ position: 'relative', background: 'var(--brand-navy)', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 'var(--space-8)' }}>
         <div style={{ position: 'absolute', inset: 0, backgroundImage: 'radial-gradient(circle at 1px 1px, rgba(255,255,255,0.05) 1px, transparent 0)', backgroundSize: '26px 26px' }}></div>
-        <div style={{ position: 'absolute', right: '-15%', bottom: '-10%', width: '420px', height: '420px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(169,98,47,0.35), transparent 70%)' }}></div>
+        <div style={{ position: 'absolute', right: '-15%', bottom: '-10%', width: '420px', height: '420px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(224, 172, 105, 0.2), transparent 70%)' }}></div>
 
         <div style={{ position: 'relative', maxWidth: '400px', color: '#fff', textAlign: 'center' }}>
-          <img src="/templates/preview/A10_75_03_03.svg" alt="معاينة قالب" style={{ width: '220px', height: 'auto', margin: '0 auto var(--space-6)', filter: 'brightness(0) invert(1) opacity(0.9)' }} />
-          <h2 style={{ fontSize: '22px', marginBottom: '10px', fontWeight: 700 }}>انضم لمصممي التغليف</h2>
-          <p style={{ fontSize: '14px', opacity: 0.75, lineHeight: 1.7 }}>
+          <img src="/templates/preview/A10_75_03_03.svg" alt="معاينة قالب" style={{ width: '220px', height: 'auto', margin: '0 auto var(--space-6)', filter: 'brightness(0) invert(75%) sepia(21%) saturate(795%) hue-rotate(348deg) brightness(93%) contrast(91%) opacity(0.9)' }} />
+          <h2 style={{ fontSize: '22px', marginBottom: '10px', fontWeight: 700, color: 'var(--brand-gold)' }}>انضم لمصممي التغليف</h2>
+          <p style={{ fontSize: '14px', opacity: 0.9, lineHeight: 1.7 }}>
             احفظ قوالبك، خصص الأبعاد، وصدّر ملفات القص في دقائق.
           </p>
         </div>
@@ -84,82 +84,82 @@ export default function Signup() {
 
       {/* ===== Form side ===== */}
       <div style={{ display: 'flex', flexDirection: 'column', padding: 'var(--space-8)' }}>
-        <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: '10px', fontWeight: 700, fontSize: '18px', color: '#2b2013' }}>
-          <span style={{ width: '30px', height: '30px', borderRadius: 'var(--radius-md)', background: '#2b2013', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: '15px', fontWeight: 700 }}>ق</span>
-          قوالب<span style={{ color: '#a9622f' }}>لاين</span>
+        <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: '10px', fontWeight: 700, fontSize: '18px', color: 'var(--brand-navy)', textDecoration: 'none' }}>
+          <img src="/brand/printera-logo-trans.png" alt="Printera" style={{ width: '32px', height: '32px', objectFit: 'contain' }} />
+          <span>برين<span style={{ color: 'var(--brand-gold)' }}>تيرا</span></span>
         </Link>
 
         <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <div style={{ width: '100%', maxWidth: '380px' }}>
             <h1 style={{ fontSize: '28px', marginBottom: '6px', fontWeight: 700 }}>إنشاء حساب جديد</h1>
-            <p style={{ color: '#8a7d6d', fontSize: '14px', marginBottom: 'var(--space-6)' }}>
+            <p style={{ color: 'var(--brand-muted)', fontSize: '14px', marginBottom: 'var(--space-6)' }}>
               ابدأ تصميم قوالب التغليف الخاصة بك مجانًا.
             </p>
 
             <form style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }} onSubmit={handleSubmit}>
               <div>
-                <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '6px', color: '#5a4c3c' }}>الاسم الكامل</label>
+                <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '6px', color: 'var(--brand-navy)' }}>الاسم الكامل</label>
                 <input 
                   type="text" 
                   required 
                   placeholder="مثال: أحمد محمد" 
                   value={name} 
                   onChange={(e) => setName(e.target.value)}
-                  style={{ width: '100%', boxSizing: 'border-box', height: '46px', borderRadius: '10px', border: '1px solid #e6dccb', background: '#fff', padding: '0 14px', fontSize: '14px', fontFamily: 'Cairo,sans-serif', color: '#2b2013' }} 
+                  style={{ width: '100%', boxSizing: 'border-box', height: '46px', borderRadius: '10px', border: '1px solid var(--brand-border)', background: '#fff', padding: '0 14px', fontSize: '14px', fontFamily: 'Cairo,sans-serif', color: 'var(--brand-navy)', outlineColor: 'var(--brand-gold)' }} 
                 />
               </div>
               <div>
-                <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '6px', color: '#5a4c3c' }}>البريد الإلكتروني</label>
+                <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '6px', color: 'var(--brand-navy)' }}>البريد الإلكتروني</label>
                 <input 
                   type="email" 
                   required 
                   placeholder="name@company.com" 
                   value={email} 
                   onChange={(e) => setEmail(e.target.value)}
-                  style={{ width: '100%', boxSizing: 'border-box', height: '46px', borderRadius: '10px', border: '1px solid #e6dccb', background: '#fff', padding: '0 14px', fontSize: '14px', fontFamily: 'Cairo,sans-serif', color: '#2b2013' }} 
+                  style={{ width: '100%', boxSizing: 'border-box', height: '46px', borderRadius: '10px', border: '1px solid var(--brand-border)', background: '#fff', padding: '0 14px', fontSize: '14px', fontFamily: 'Cairo,sans-serif', color: 'var(--brand-navy)', outlineColor: 'var(--brand-gold)' }} 
                 />
               </div>
               <div>
-                <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '6px', color: '#5a4c3c' }}>كلمة المرور</label>
+                <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '6px', color: 'var(--brand-navy)' }}>كلمة المرور</label>
                 <input 
                   type="password" 
                   required 
                   placeholder="8 أحرف على الأقل" 
                   value={password} 
                   onChange={(e) => setPassword(e.target.value)}
-                  style={{ width: '100%', boxSizing: 'border-box', height: '46px', borderRadius: '10px', border: '1px solid #e6dccb', background: '#fff', padding: '0 14px', fontSize: '14px', fontFamily: 'Cairo,sans-serif', color: '#2b2013' }} 
+                  style={{ width: '100%', boxSizing: 'border-box', height: '46px', borderRadius: '10px', border: '1px solid var(--brand-border)', background: '#fff', padding: '0 14px', fontSize: '14px', fontFamily: 'Cairo,sans-serif', color: 'var(--brand-navy)', outlineColor: 'var(--brand-gold)' }} 
                 />
               </div>
               <div>
-                <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '6px', color: '#5a4c3c' }}>تأكيد كلمة المرور</label>
+                <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '6px', color: 'var(--brand-navy)' }}>تأكيد كلمة المرور</label>
                 <input 
                   type="password" 
                   required 
                   placeholder="أعد كتابة كلمة المرور" 
                   value={confirmPassword} 
                   onChange={(e) => setConfirmPassword(e.target.value)}
-                  style={{ width: '100%', boxSizing: 'border-box', height: '46px', borderRadius: '10px', border: `1px solid ${mismatch ? '#c1461f' : '#e6dccb'}`, background: '#fff', padding: '0 14px', fontSize: '14px', fontFamily: 'Cairo,sans-serif', color: '#2b2013' }} 
+                  style={{ width: '100%', boxSizing: 'border-box', height: '46px', borderRadius: '10px', border: `1px solid ${mismatch ? '#ef4444' : 'var(--brand-border)'}`, background: '#fff', padding: '0 14px', fontSize: '14px', fontFamily: 'Cairo,sans-serif', color: 'var(--brand-navy)', outlineColor: 'var(--brand-gold)' }} 
                 />
                 {mismatch && (
-                  <div style={{ fontSize: '12px', color: '#c1461f', marginTop: '5px' }}>كلمتا المرور غير متطابقتين</div>
+                  <div style={{ fontSize: '12px', color: '#ef4444', marginTop: '5px' }}>كلمتا المرور غير متطابقتين</div>
                 )}
               </div>
 
-              <label style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', fontSize: '12.5px', color: '#5a4c3c', cursor: 'pointer', lineHeight: '1.6' }}>
+              <label style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', fontSize: '12.5px', color: 'var(--brand-navy)', cursor: 'pointer', lineHeight: '1.6' }}>
                 <input 
                   type="checkbox" 
                   checked={agree} 
                   onChange={(e) => setAgree(e.target.checked)} 
-                  style={{ marginTop: '3px', accentColor: '#a9622f' }}
+                  style={{ marginTop: '3px', accentColor: 'var(--brand-gold)' }}
                 />
-                <span>أوافق على <a href="#" onClick={(e) => e.preventDefault()} style={{ color: '#a9622f' }}>شروط الاستخدام</a> و<a href="#" onClick={(e) => e.preventDefault()} style={{ color: '#a9622f' }}>سياسة الخصوصية</a></span>
+                <span>أوافق على <a href="#" onClick={(e) => e.preventDefault()} style={{ color: 'var(--brand-gold)' }}>شروط الاستخدام</a> و<a href="#" onClick={(e) => e.preventDefault()} style={{ color: 'var(--brand-gold)' }}>سياسة الخصوصية</a></span>
               </label>
 
               <button 
                 type="submit" 
                 className="btn-anim" 
                 disabled={loading}
-                style={{ height: '48px', borderRadius: '999px', border: 'none', background: '#2b2013', color: '#fff', fontWeight: 700, fontSize: '15px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
+                style={{ height: '48px', borderRadius: '999px', border: 'none', background: 'var(--brand-navy)', color: '#fff', fontWeight: 700, fontSize: '15px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
               >
                 {loading ? 'جاري التسجيل...' : (
                   <>
@@ -170,22 +170,22 @@ export default function Signup() {
             </form>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px', margin: 'var(--space-6) 0' }}>
-              <div style={{ flex: 1, height: '1px', background: '#e6dccb' }}></div>
-              <span style={{ fontSize: '12px', color: '#9c8f7c' }}>أو</span>
-              <div style={{ flex: 1, height: '1px', background: '#e6dccb' }}></div>
+              <div style={{ flex: 1, height: '1px', background: 'var(--brand-border)' }}></div>
+              <span style={{ fontSize: '12px', color: 'var(--brand-muted)' }}>أو</span>
+              <div style={{ flex: 1, height: '1px', background: 'var(--brand-border)' }}></div>
             </div>
 
             <button 
               type="button" 
               className="btn-anim" 
               onClick={() => toast.info('التسجيل عبر جوجل متوفر لعملاء الاشتراكات المؤسسية فقط.')}
-              style={{ width: '100%', height: '48px', borderRadius: '999px', border: '1px solid #e6dccb', background: '#fff', color: '#2b2013', fontWeight: 600, fontSize: '14px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
+              style={{ width: '100%', height: '48px', borderRadius: '999px', border: '1px solid var(--brand-border)', background: '#fff', color: 'var(--brand-navy)', fontWeight: 600, fontSize: '14px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
             >
               <i className="ph ph-google-logo"></i> التسجيل عبر جوجل
             </button>
 
-            <p style={{ textAlign: 'center', fontSize: '13.5px', color: '#8a7d6d', marginTop: 'var(--space-6)' }}>
-              لديك حساب بالفعل؟ <Link to="/login" style={{ color: '#a9622f', fontWeight: 600 }}>سجّل الدخول</Link>
+            <p style={{ textAlign: 'center', fontSize: '13.5px', color: 'var(--brand-muted)', marginTop: 'var(--space-6)' }}>
+              لديك حساب بالفعل؟ <Link to="/login" style={{ color: 'var(--brand-gold)', fontWeight: 700, textDecoration: 'none' }}>سجّل الدخول</Link>
             </p>
           </div>
         </div>

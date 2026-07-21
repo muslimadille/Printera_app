@@ -6,33 +6,33 @@
 
 @layer base {
   :root {
-    --background: 34 33% 96%; /* #faf6f0 matches HSL roughly */
-    --foreground: 33 28% 11%; /* #2b2013 */
+    --background: 210 40% 98%; /* #f8fafc */
+    --foreground: 222 47% 11%; /* #1e293b */
 
     --card: 0 0% 100%;
-    --card-foreground: 33 28% 11%;
+    --card-foreground: 222 47% 11%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 33 28% 11%;
+    --popover-foreground: 222 47% 11%;
 
-    --primary: 24 57% 42%; /* #a9622f (Accent orange) */
+    --primary: 226 71% 40%; /* #1e40af */
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 34 30% 90%; /* #e6dccb */
-    --secondary-foreground: 33 28% 11%;
+    --secondary: 214 100% 91%; /* #dbeafe */
+    --secondary-foreground: 226 71% 40%;
 
-    --muted: 33 13% 55%; /* #8a7d6d */
-    --muted-foreground: 34 14% 55%; /* #9c8f7c */
+    --muted: 210 40% 96%; /* #f1f5f9 */
+    --muted-foreground: 215 14% 47%; /* #64748b */
 
-    --accent: 33 28% 11%; /* #2b2013 (Primary dark/brand color) */
-    --accent-foreground: 0 0% 100%;
+    --accent: 212 100% 97%; /* #f0f7ff */
+    --accent-foreground: 226 71% 40%;
 
-    --destructive: 8 71% 47%; /* #c1461f */
+    --destructive: 0 84% 60%; /* red-500 */
     --destructive-foreground: 0 0% 100%;
 
-    --border: 34 30% 85%; /* #e6dccb/e8ded0 */
-    --input: 34 30% 85%;
-    --ring: 24 57% 42%;
+    --border: 214 32% 91%; /* #e2e8f0 */
+    --input: 214 32% 91%;
+    --ring: 217 91% 60%;
 
     --radius: 0.75rem;
     --radius-sm: 0.375rem;
@@ -45,6 +45,17 @@
     --warning-foreground: 0 0% 100%;
     --info: 217 56% 51%; /* #3b6bc9 */
     --info-foreground: 0 0% 100%;
+
+    /* Printera brand tokens */
+    --brand-navy: #0F1D2D;
+    --brand-gold: #C89D63;
+    --brand-bg: #F5F6F8;
+    --brand-border: #E3E6EA;
+    --brand-muted: #4A5A6D;
+    --brand-muted-2: #7C8AA0;
+    --brand-tag-bg: #EEF0F3;
+    --brand-pro: #C1461F;
+    --brand-tile-bg: #F8F2E6;
 
     /* Spacing Scale (8px system) */
     --space-1: 0.25rem;
@@ -64,8 +75,8 @@
   }
 
   body {
-    background: #faf6f0;
-    color: #2b2013;
+    background: #f8fafc;
+    color: #1e293b;
     font-family: 'Cairo', sans-serif;
     -webkit-font-smoothing: antialiased;
     direction: rtl;
@@ -108,7 +119,7 @@
   }
   .hover-lift:hover {
     transform: translateY(-6px);
-    box-shadow: 0 16px 32px rgba(43,32,19,0.08);
+    box-shadow: 0 16px 32px rgba(15,29,45,0.08);
   }
 
   .btn-anim {
@@ -116,7 +127,7 @@
   }
   .btn-anim:hover {
     transform: translateY(-2px);
-    box-shadow: 0 10px 20px rgba(43,32,19,0.12);
+    box-shadow: 0 10px 20px rgba(15,29,45,0.12);
   }
   .btn-anim:active {
     transform: translateY(0);
@@ -136,6 +147,57 @@
   .link-arrow:hover i {
     transform: translateX(-4px);
   }
+
+  /* Home page category quick-access tiles */
+  .cat-tile {
+    transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+  }
+  .cat-tile:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 14px 28px rgba(15,29,45,0.10);
+    border-color: var(--brand-gold);
+  }
+  .cat-tile:hover .cat-icon {
+    background: var(--brand-navy);
+  }
+  .cat-tile:hover .cat-icon i {
+    color: #fff;
+  }
+
+  /* TemplateCard: lift + flat/3D preview crossfade + arrow-link slide */
+  .tc-card {
+    transition: transform .25s ease, box-shadow .25s ease;
+  }
+  .tc-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 18px 34px rgba(15,29,45,0.12);
+  }
+  .tc-thumb img {
+    transition: opacity .35s ease, transform .35s ease;
+  }
+  .tc-thumb .tc-flat {
+    opacity: 1;
+    transform: scale(1);
+  }
+  .tc-thumb .tc-3d {
+    opacity: 0;
+    transform: scale(0.94);
+  }
+  .tc-card:hover .tc-thumb .tc-flat {
+    opacity: 0;
+    transform: scale(1.04);
+  }
+  .tc-card:hover .tc-thumb .tc-3d {
+    opacity: 1;
+    transform: scale(1);
+  }
+  .tc-design-link i {
+    display: inline-block;
+    transition: transform .2s ease;
+  }
+  .tc-design-link:hover i {
+    transform: translateX(-4px);
+  }
 }
 
 /* Custom Scrollbar */
@@ -149,12 +211,12 @@
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #d8cbb5;
+  background: #cbd5e1;
   border-radius: 8px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #c8bba5;
+  background: #94a3b8;
 }
 
 /* Mobile tab improvements */
@@ -185,7 +247,7 @@
 
 .qawalib-editor > div > .rounded-lg > .flex {
   background: #ffffff !important;
-  border: 1px solid #e6dccb !important;
+  border: 1px solid var(--brand-border) !important;
   border-radius: 12px 12px 0 0 !important;
   padding: 12px 16px !important;
 }
@@ -204,7 +266,7 @@
 
 .qawalib-editor .grid-cols-1 > div:first-child {
   background: #ffffff !important;
-  border: 1px solid #e6dccb !important;
+  border: 1px solid var(--brand-border) !important;
   border-radius: 0 0 12px 12px !important;
   padding: 20px !important;
   margin-top: -1px !important;
@@ -232,7 +294,7 @@
 /* Sidebar Column */
 .qawalib-editor aside {
   background: #ffffff !important;
-  border: 1px solid #e6dccb !important;
+  border: 1px solid var(--brand-border) !important;
   border-radius: 12px !important;
   padding: 24px !important;
   width: 380px !important;
@@ -248,7 +310,7 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
-  border-bottom: 1px solid #eee2cf !important;
+  border-bottom: 1px solid var(--brand-border) !important;
   padding-bottom: 16px !important;
   margin-bottom: 16px !important;
   border-top: none !important;
@@ -262,7 +324,7 @@
 
 /* Custom styles for tab buttons in the toolbar */
 .qawalib-editor button.bg-primary {
-  background: #2b2013 !important;
+  background: var(--brand-navy) !important;
   color: #ffffff !important;
   border: none !important;
   border-radius: 999px !important;
@@ -270,7 +332,7 @@
 }
 .qawalib-editor button.bg-background {
   background: transparent !important;
-  color: #5a4c3c !important;
+  color: var(--brand-muted-2) !important;
   border: none !important;
   border-radius: 999px !important;
   font-weight: 600 !important;
@@ -280,18 +342,18 @@
 .qawalib-editor input[type="number"],
 .qawalib-editor input[type="text"],
 .qawalib-editor select {
-  background: #fdfaf5 !important;
-  border: 1px solid #e6dccb !important;
+  background: var(--brand-bg) !important;
+  border: 1px solid var(--brand-border) !important;
   border-radius: 8px !important;
   height: 38px !important;
-  color: #2b2013 !important;
+  color: var(--brand-navy) !important;
   font-family: 'Cairo', sans-serif !important;
   padding: 0 10px !important;
 }
 
 .qawalib-editor label {
   font-size: 11px !important;
-  color: #8a7d6d !important;
+  color: var(--brand-muted) !important;
   margin-bottom: 4px !important;
   font-weight: 600 !important;
   display: block !important;
@@ -301,3 +363,40 @@
 .qawalib-editor .hidden {
   display: none !important;
 }
+
+/* Dashboard & Logo Animations */
+@keyframes slideDownFade {
+  from { opacity: 0; transform: translateY(-20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideUpFade {
+  from { opacity: 0; transform: translateY(30px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes logoPop {
+  0% { transform: scale(0.8) rotate(-8deg); opacity: 0; }
+  70% { transform: scale(1.03) rotate(3deg); opacity: 1; }
+  100% { transform: scale(1) rotate(0); opacity: 1; }
+}
+
+.anim-slide-down {
+  animation: slideDownFade 1.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  opacity: 0;
+}
+
+.anim-slide-up {
+  animation: slideUpFade 1.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  opacity: 0; /* starts hidden */
+}
+
+.anim-logo {
+  animation: logoPop 1.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  opacity: 0;
+}
+
+.delay-100 { animation-delay: 300ms; }
+.delay-200 { animation-delay: 600ms; }
+.delay-300 { animation-delay: 900ms; }
+.delay-400 { animation-delay: 1200ms; }

@@ -1,3 +1,5 @@
+-- Enable pgcrypto for the digest function
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
 -- Create app_users table for login management
 CREATE TABLE public.app_users (
@@ -57,4 +59,4 @@ CREATE TRIGGER update_app_users_updated_at
 
 -- Insert default admin user (password: 1234, using simple hash)
 INSERT INTO public.app_users (username, password_hash, is_active, is_admin)
-VALUES ('admin', encode(digest('1234', 'sha256'), 'hex'), true, true);
+VALUES ('admin', encode(extensions.digest('1234', 'sha256'), 'hex'), true, true);

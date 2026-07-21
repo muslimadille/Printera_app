@@ -781,12 +781,12 @@ const Box3DPreview: React.FC<Box3DPreviewProps> = ({
     : 'قيد الطي';
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-3" style={{ width: '100%' }}>
       {/* ── Viewport ── */}
       <div
         ref={mountRef}
         className="relative w-full rounded-xl overflow-hidden border border-slate-800 select-none"
-        style={{ height: 480, background: '#0f172a' }}
+        style={{ height: 'clamp(400px, 60vh, 700px)', background: '#0f172a' }}
       >
         {/* شريط معلومات علوي يسار */}
         <div className="absolute top-3 left-3 z-10 pointer-events-none">

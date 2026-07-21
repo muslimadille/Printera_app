@@ -89,12 +89,12 @@ const T00012SheetNestingPreview = ({ params, nesting, result }: Props) => {
 
   return (
     <div className="space-y-2">
-      <div className="border rounded-lg p-3 bg-white overflow-auto flex justify-end">
+      <div className="border rounded-lg p-3 bg-white overflow-auto flex justify-center">
         <svg
           xmlns="http://www.w3.org/2000/svg"
           viewBox={`0 0 ${sheetW} ${sheetH}`}
           width="100%"
-          style={{ maxWidth: '900px', height: 'auto', background: '#fafafa' }}
+          style={{ width: '100%', height: 'auto', background: '#fafafa' }}
         >
           {/* Sheet outline */}
           <rect x={0} y={0} width={sheetW} height={sheetH}

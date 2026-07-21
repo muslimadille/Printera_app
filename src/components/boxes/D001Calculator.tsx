@@ -15,6 +15,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { ChevronDown, Download, RotateCcw } from 'lucide-react';
+import { TemplateEditorLayout, PreviewMode } from '@/components/layouts/TemplateEditorLayout';
 import { D001_DEFAULTS, D001_REFERENCE, D001_RULES, autoDepthTongueTotalHeight, type D001Params, usableSheet } from '@/lib/d001/types';
 import { buildD001Geometry } from '@/lib/d001/geometry';
 import { buildD001DimensionsSvg } from '@/lib/d001/dimensionsOverlay';
@@ -119,14 +120,14 @@ const NumField = ({
 );
 
 
-const D001Calculator = ({ isAdmin = false }: { isAdmin?: boolean }) => {
+const D001Calculator = () => {
   const { showNestingPreview, show3DPreview } = usePreviewSettings();
 
-  const hiddenCls = isAdmin ? '' : 'hidden';
+  
 
   const [params, setParams] = useState<D001Params>(D001_DEFAULTS);
   const [nesting, setNesting] = useState<D001NestingParams>(DEFAULT_NESTING);
-  const [previewMode, setPreviewMode] = useState<'template' | 'sheet' | 'three'>('template');
+  const [previewMode, setPreviewMode] = useState<PreviewMode>('template');
   const [showDimensions, setShowDimensions] = useState(true);
   const [dimUnit, setDimUnit] = useState<'mm' | 'cm' | 'in'>('mm');
   const [printOpen, setPrintOpen] = useState(false);
@@ -257,355 +258,246 @@ const D001Calculator = ({ isAdmin = false }: { isAdmin?: boolean }) => {
 
 
   return (
-    <div dir="rtl" className="space-y-4">
-      {/* Header / Reference mode toggle (inputs moved to side panel) — UI hidden, logic preserved */}
-      <Card className={hiddenCls}>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="text-lg">D001 — قالب ديناميكي</CardTitle>
-          <div className="flex items-center gap-3">
-            <Label htmlFor="d001-ref" className="text-sm font-normal">
-              Reference Clone Mode {refOn && <span className="text-emerald-600">(مفعّل)</span>}
-            </Label>
-            <Switch id="d001-ref" checked={refOn}
-              onCheckedChange={v => set('referenceMode', v)} />
-          </div>
-        </CardHeader>
-        {refOn && (
-          <CardContent>
-            <div className="rounded-md bg-amber-50 border border-amber-200 p-3 text-sm text-amber-900">
-              وضع المرجع مفعّل: المخرجات مطابقة 100٪ لـ <code>TEMPLATE.svg</code>
-              بقيم المرجع (W={D001_REFERENCE.width}، H={D001_REFERENCE.height}،
-              D={D001_REFERENCE.depth}، Glue_Flap={D001_REFERENCE.glueFlap}،
-              Lid_Tongue={D001_REFERENCE.lidTongue}،
-              Depth_Tongue={D001_REFERENCE.depthTongue} mm).
-            </div>
-          </CardContent>
-        )}
-      </Card>
-
-      {/* Derived dimensions (kept for reference) — UI hidden, logic preserved */}
-      <Card className={hiddenCls}>
-        <CardHeader>
-          <CardTitle className="text-lg">الأبعاد المشتقة (محفوظة كما هي)</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 text-sm">
-            <div>Face_Height = H + 0.5 = <b>{derived.faceHeight.toFixed(2)}</b></div>
-            <div>Depth_1 = D = <b>{derived.depth1.toFixed(2)}</b></div>
-            <div>Depth_2 = D − 0.5 = <b>{derived.depth2.toFixed(2)}</b></div>
-            <div>Cover_Vertical = D − 0.25 = <b>{derived.coverVertical.toFixed(2)}</b></div>
-            <div>Lid_Curve_Height = <b>{derived.lidCurveHeight}</b></div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Smart Auto Nesting controls (gaps moved to side panel) — UI hidden, logic preserved */}
-      <Card className={hiddenCls}>
-        <CardHeader>
-          <CardTitle className="text-lg">إعدادات التوزيع (Smart Auto Nesting)</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-            <div className="sm:col-span-2 flex flex-col gap-2">
-              <Label>التعشيق الذكي Smart Auto</Label>
-              <div className="flex items-center gap-2 h-10">
-                <Switch id="d001-smart" checked={!!nesting.smartAuto}
-                  onCheckedChange={v => setN('smartAuto', v)} />
-                <Label htmlFor="d001-smart" className="text-sm font-normal">
-                  {nesting.smartAuto ? 'يحسب Pitch و Interlock تلقائياً' : 'يدوي (Interlock من المستخدم)'}
-                </Label>
-              </div>
-            </div>
-            <div>
-              <Label>التداخل الأفقي Horizontal Interlock ({dimUnit})</Label>
-              <Input type="number" step="0.1" min="0" value={toDisplay(nesting.horizontalInterlock, dimUnit)}
-                disabled={!!nesting.smartAuto}
-                onChange={e => setN('horizontalInterlock', toMm(num(e.target.value, toDisplay(nesting.horizontalInterlock, dimUnit)), dimUnit))} />
-            </div>
-            <div>
-              <Label>التداخل العمودي Vertical Interlock ({dimUnit})</Label>
-              <Input type="number" step="0.1" min="0" value={toDisplay(nesting.verticalInterlock, dimUnit)}
-                disabled={!!nesting.smartAuto}
-                onChange={e => setN('verticalInterlock', toMm(num(e.target.value, toDisplay(nesting.verticalInterlock, dimUnit)), dimUnit))} />
-            </div>
-            <div className="flex flex-col gap-2">
-              <Label>السماح بالدوران Allow Rotation</Label>
-              <div className="flex items-center gap-2 h-10">
-                <Switch id="d001-allow-rot" checked={nesting.allowRotation}
-                  onCheckedChange={v => setN('allowRotation', v)} />
-                <Label htmlFor="d001-allow-rot" className="text-sm font-normal">
-                  {nesting.allowRotation ? 'مسموح' : 'غير مسموح'}
-                </Label>
-              </div>
-            </div>
-            <div>
-              <Label>وضع الدوران Rotation Mode</Label>
-              <select
-                className="w-full h-10 rounded-md border border-input bg-background px-3 text-sm"
-                disabled={!nesting.allowRotation}
-                value={nesting.rotationMode}
-                onChange={e => setN('rotationMode', e.target.value as RotationMode)}
-              >
-                <option value="normal">Normal</option>
-                <option value="rotated">Rotated 90°</option>
-                <option value="auto">Auto</option>
-              </select>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Results — UI hidden, logic preserved */}
-      <Card className={hiddenCls}>
-        <CardHeader>
-          <CardTitle className="text-lg">نتائج التوزيع</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 text-sm">
-            <div className="space-y-1">
-              <div className="font-semibold text-muted-foreground">المدخلات</div>
-              <div>مقاس القالب الحالي (BBox): <b>{toDisplay(nestingResult.templateBBox.width, dimUnit)} × {toDisplay(nestingResult.templateBBox.height, dimUnit)} {dimUnit}</b></div>
-              <div>مقاس الشيت الصافي: <b>{toDisplay(nestingResult.usableSheet.width, dimUnit)} × {toDisplay(nestingResult.usableSheet.height, dimUnit)} {dimUnit}</b></div>
-              <div>وضع الدوران الفعلي: <b>{nestingResult.effectiveRotationMode}</b></div>
-              <div>Pitch (X × Y): <b>{toDisplay(nestingResult.pitchX, dimUnit)} × {toDisplay(nestingResult.pitchY, dimUnit)} {dimUnit}</b></div>
-              <div>التداخل الفعلي (H × V): <b>{toDisplay(nestingResult.horizontalInterlock, dimUnit)} × {toDisplay(nestingResult.verticalInterlock, dimUnit)} {dimUnit}</b></div>
-              <div>Row brick Δx: <b>{toDisplay(nestingResult.rowBrickDx, dimUnit)} {dimUnit}</b></div>
-
-              <div>المصدر: <b>{nestingResult.smartAuto ? 'Smart Auto (silhouette)' : 'Manual'}</b></div>
-            </div>
-            <div className="space-y-1">
-              <div className="font-semibold text-muted-foreground">السيناريوهات</div>
-              <div>Normal: <b>{nestingResult.normal.columns} × {nestingResult.normal.rows} = {nestingResult.normal.total}</b></div>
-              <div>Rotated 90°: <b>{nestingResult.rotated.columns} × {nestingResult.rotated.rows} = {nestingResult.rotated.total}</b></div>
-              <div className={nestingResult.fitStatus === 'fits' ? 'text-emerald-700' : 'text-red-600'}>
-                {nestingResult.fitStatus === 'fits' ? (
-                  <>أفضل اتجاه: <b>{nestingResult.bestOrientation === 'normal' ? 'Normal' : 'Rotated 90°'}</b>{' · '}إجمالي: <b>{nestingResult.bestTotal}</b></>
-                ) : (<>القالب لا يدخل داخل الشيت بالقيم الحالية.</>)}
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Sheet preview + side input panel */}
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between gap-3">
-          <div className="flex gap-2">
-            <button
-              type="button"
-              onClick={() => setPreviewMode('template')}
-              className={`px-3 py-1.5 rounded-md text-sm font-medium border transition-colors ${
-                previewMode === 'template'
-                  ? 'bg-primary text-primary-foreground border-primary'
-                  : 'bg-background text-foreground border-input hover:bg-muted'
-              }`}
-            >
-              معاينة القالب
-            </button>
-            {showNestingPreview && (<button
-              type="button"
-              onClick={() => setPreviewMode('sheet')}
-              className={`px-3 py-1.5 rounded-md text-sm font-medium border transition-colors ${
-                previewMode === 'sheet'
-                  ? 'bg-primary text-primary-foreground border-primary'
-                  : 'bg-background text-foreground border-input hover:bg-muted'
-              }`}
-            >
-              معاينة التوزيع على الشيت
-            </button>)}
-            {show3DPreview && (<button
-              type="button"
-              onClick={() => setPreviewMode('three')}
-              className={`px-3 py-1.5 rounded-md text-sm font-medium border transition-colors ${
-                previewMode === 'three'
-                  ? 'bg-primary text-primary-foreground border-primary'
-                  : 'bg-background text-foreground border-input hover:bg-muted'
-              }`}
-            >
-              معاينة ثلاثية الأبعاد 3D
-            </button>)}
-            <div className="flex items-center gap-2 pl-3 ml-1 border-l border-input">
-              {previewMode === 'template' && (
-                <>
-                  <Switch id="d001-show-dims" checked={showDimensions}
-                    onCheckedChange={setShowDimensions} />
-                  <Label htmlFor="d001-show-dims" className="text-sm font-normal cursor-pointer">
-                    إظهار القياسات
-                  </Label>
-                </>
-              )}
-              <select
-                className="h-8 rounded-md border border-input bg-background px-2 text-sm"
-                value={dimUnit}
-                onChange={e => setDimUnit(e.target.value as 'mm' | 'cm' | 'in')}
-              >
-                <option value="mm">mm</option>
-                <option value="cm">cm</option>
-                <option value="in">in</option>
-              </select>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
+    <>
+      <TemplateEditorLayout
+        title="D001 — قالب ديناميكي"
+        hasReferenceMode={true}
+        referenceModeOn={refOn}
+        onReferenceModeChange={v => set('referenceMode', v)}
+        previewMode={previewMode}
+        onPreviewModeChange={setPreviewMode}
+        hasSheetPreview={showNestingPreview}
+        has3DPreview={show3DPreview}
+        showDimensions={showDimensions}
+        onShowDimensionsChange={setShowDimensions}
+        dimUnit={dimUnit}
+        onDimUnitChange={setDimUnit}
+        actionButtons={
+          <>
+            <Button variant="outline" size="sm" onClick={() => setPrintOpen(true)}>
+              ملخص الطباعة
+            </Button>
             <ExportSingleButton params={params} />
             <ExportSheetButton params={params} nesting={nesting} result={nestingResult} />
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 lg:grid-cols-[1fr_440px] gap-4 items-start">
-            <div className="min-w-0">
-              {previewMode === 'template' ? (
-                <D001Preview params={params} fitContainer showDebug={false} showDimensions={showDimensions} dimUnit={dimUnit} />
-              ) : previewMode === 'sheet' ? (
-                <D001SheetNestingPreview params={params} nesting={nesting} result={nestingResult} />
-              ) : (
-                <Box3DPreview
-                  boxType="D001"
-                  lidTongue={params.lidTongue}
-                  panelWidths={[params.width, params.depth, params.width, params.depth - 0.5]}
-                  panelHeights={params.height}
-                  glueFlapWidth={params.glueFlap}
-                  topFlapHeights={[
-                    faceCoords.topFlaps[0].h,
-                    faceCoords.topFlaps[1].h,
-                    faceCoords.topFlaps[2].h,
-                    faceCoords.topFlaps[3].h
-                  ]}
-                  bottomFlapHeights={[
-                    faceCoords.bottomFlaps[0].h,
-                    faceCoords.bottomFlaps[1].h,
-                    faceCoords.bottomFlaps[2].h,
-                    faceCoords.bottomFlaps[3].h
-                  ]}
-                  svgMarkup={geo.svg}
-                  svgWidth={geo.bbox.w}
-                  svgHeight={geo.bbox.h}
-                  faceCoords={faceCoords}
-                />
-              )}
+          </>
+        }
+        referenceModeMessage={
+          `وضع المرجعية مفعّل: الأبعاد الافتراضية مقفلة للمعايرة (W=${D001_REFERENCE.width}، H=${D001_REFERENCE.height}، D=${D001_REFERENCE.depth}، Glue_Flap=${D001_REFERENCE.glueFlap}، Lid_Tongue=${D001_REFERENCE.lidTongue}، Dust_Flap=${D001_REFERENCE.dustFlap} مم).`
+        }
+        topPanels={null}
+        previewArea={
+          previewMode === 'template' ? (
+            <div className="w-full h-full flex flex-col">
+              <D001Preview params={params} fitContainer showDebug={false} showDimensions={showDimensions} dimUnit={dimUnit} />
             </div>
-            <aside className="space-y-5 rounded-lg border bg-muted/30 p-4">
-              {/* أبعاد القالب */}
-              <section>
-                <h3 className="text-sm font-bold mb-2">أبعاد القالب</h3>
-                <div className="grid grid-cols-3 gap-2">
-                  <NumField label="العرض" value={params.width} disabled={refOn} unit={dimUnit}
-                    onChange={v => set('width', v)} />
-                  <NumField label="الارتفاع" value={params.height} disabled={refOn} unit={dimUnit}
-                    onChange={v => set('height', v)} />
-                  <NumField label="العمق" value={params.depth} disabled={refOn} unit={dimUnit}
-                    onChange={v => set('depth', v)} />
-                </div>
-              </section>
-
-              {/* تخصيص متقدم */}
-              <section>
-                <h3 className="text-sm font-bold mb-2">تخصيص متقدم</h3>
-                <div className="grid grid-cols-3 gap-2">
-                  <NumField label="لسان اللصق" value={params.glueFlap} disabled={refOn} unit={dimUnit}
-                    onChange={v => set('glueFlap', v)} />
-                  <NumField label="لسان الغطاء" value={params.lidTongue} disabled={refOn} unit={dimUnit}
-                    onChange={v => set('lidTongue', v)} />
-                  <div>
-                    <div className="flex items-center justify-between">
-                      <Label className="text-xs">ارتفاع لسان العمق</Label>
-                      <button type="button" disabled={refOn}
-                        className="text-muted-foreground hover:text-foreground disabled:opacity-40"
-                        title="إعادة ضبط"
-                        onClick={() => {
-                          tongueTotalTouched.current = false;
-                          set('depthTongueTotalHeight', autoDepthTongueTotalHeight(params.depthTongue, params.depth));
-                        }}>
-                        <RotateCcw className="w-3 h-3" />
-                      </button>
-                    </div>
-                    <Input type="number" step="0.01"
-                      value={toDisplay(params.depthTongueTotalHeight ?? autoDepthTongueTotalHeight(params.depthTongue, params.depth), dimUnit)}
-                      disabled={refOn}
-                      onChange={e => {
-                        tongueTotalTouched.current = true;
-                        set('depthTongueTotalHeight', toMm(num(e.target.value, toDisplay(params.depthTongueTotalHeight ?? autoDepthTongueTotalHeight(params.depthTongue, params.depth), dimUnit)), dimUnit));
-                      }} />
-                  </div>
-                </div>
-                <div className="grid grid-cols-3 gap-2 mt-2">
-                  <div>
-                    <Label className="text-xs">زاوية لسان اللصق</Label>
-                    <div className="grid grid-cols-2 gap-1">
-                      <Input type="number" step="0.1" min="0" max="89"
-                        placeholder="علوي"
-                        value={params.glueFlapTopAngle ?? 25} disabled={refOn}
-                        onChange={e => set('glueFlapTopAngle', num(e.target.value, 25))} />
-                      <Input type="number" step="0.1" min="0" max="89"
-                        placeholder="سفلي"
-                        value={params.glueFlapBottomAngle ?? 25} disabled={refOn}
-                        onChange={e => set('glueFlapBottomAngle', num(e.target.value, 25))} />
-                    </div>
-                    <div className="flex justify-between text-[10px] text-muted-foreground px-0.5">
-                      <span>علوي</span><span>سفلي</span>
-                    </div>
-                  </div>
-                  <NumField label="زاوية لسان العمق" value={params.depthTongueCornerRadius ?? 0}
-                    disabled={refOn} step="0.1" min="0" unit={dimUnit}
-                    onChange={v => set('depthTongueCornerRadius', v)} />
-                  <div>
-                    <div className="flex items-center justify-between">
-                      <Label className="text-xs">القفل</Label>
-                      <button type="button" disabled={refOn}
-                        className="text-muted-foreground hover:text-foreground disabled:opacity-40"
-                        title={`إعادة ضبط إلى ${toDisplay(defaultDepthTongueForWidth(params.width), dimUnit)}${dimUnit}`}
-                        onClick={() => {
-                          depthTongueTouched.current = false;
-                          set('depthTongue', defaultDepthTongueForWidth(params.width));
-                        }}>
-                        <RotateCcw className="w-3 h-3" />
-                      </button>
-                    </div>
-                    <Input type="number" step="0.01" value={toDisplay(params.depthTongue, dimUnit)}
-                      disabled={refOn}
-                      onChange={e => {
-                        depthTongueTouched.current = true;
-                        set('depthTongue', toMm(num(e.target.value, toDisplay(params.depthTongue, dimUnit)), dimUnit));
-                      }} />
-                  </div>
-                </div>
-              </section>
-
-              {/* إعدادات الشيت */}
-              <section>
-                <h3 className="text-sm font-bold mb-2">{"إعدادات\u00A0الشيت"}</h3>
-                <div className="grid grid-cols-3 gap-2">
-                  <NumField label="عرض الشيت" value={params.sheetWidth} unit={dimUnit}
-                    onChange={v => set('sheetWidth', v)} />
-                  <NumField label="ارتفاع الشيت" value={params.sheetHeight} unit={dimUnit}
-                    onChange={v => set('sheetHeight', v)} />
-                  <NumField label="القابض" value={params.gripper} unit={dimUnit}
-                    onChange={v => set('gripper', v)} />
-                </div>
-                <div className="grid grid-cols-3 gap-2 mt-2">
-                  <NumField label="الهامش" value={params.sheetMargin} unit={dimUnit}
-                    onChange={v => set('sheetMargin', v)} />
-                  <NumField label="التباعد الأفقي" value={nesting.horizontalGap} step="0.1" min="0" unit={dimUnit}
-                    onChange={v => setN('horizontalGap', v)} />
-                  <NumField label="التباعد العمودي" value={nesting.verticalGap} step="0.1" min="0" unit={dimUnit}
-                    onChange={v => setN('verticalGap', v)} />
-                </div>
-                <div className="mt-2 text-[11px] text-muted-foreground space-y-0.5">
-                  <div>الصافي: {usable.width.toFixed(2)} × {usable.height.toFixed(2)} mm</div>
-                </div>
-              </section>
-
-              {/* ملخص التوزيع */}
-              <section className="pt-3 border-t">
-                <h3 className="text-sm font-bold mb-2">ملخص التوزيع</h3>
-                <div className="grid grid-cols-1 gap-1 text-sm">
-                  <div>الإجمالي: <b>{nestingResult.bestTotal}</b></div>
-                  <div>مقاس التوزيع: <b>{toDisplay(distributionFootprint.w, dimUnit)} × {toDisplay(distributionFootprint.h, dimUnit)} {dimUnit}</b></div>
-                </div>
-              </section>
-            </aside>
+          ) : previewMode === 'sheet' ? (
+            <D001SheetNestingPreview params={params} nesting={nesting} result={nestingResult} />
+          ) : (
+            <Box3DPreview
+              boxType="D001"
+              lidTongue={params.lidTongue}
+              panelWidths={[params.width, params.depth, params.width, params.depth - 0.5]}
+              panelHeights={params.height}
+              glueFlapWidth={params.glueFlap}
+              topFlapHeights={[
+                faceCoords.topFlaps[0].h,
+                faceCoords.topFlaps[1].h,
+                faceCoords.topFlaps[2].h,
+                faceCoords.topFlaps[3].h
+              ]}
+              bottomFlapHeights={[
+                faceCoords.bottomFlaps[0].h,
+                faceCoords.bottomFlaps[1].h,
+                faceCoords.bottomFlaps[2].h,
+                faceCoords.bottomFlaps[3].h
+              ]}
+              svgMarkup={geo.svg}
+              svgWidth={geo.bbox.w}
+              svgHeight={geo.bbox.h}
+              faceCoords={faceCoords}
+            />
+          )
+        }
+        floatingSummary={
+          <div className="absolute bottom-4 left-4 right-4 bg-white/95 backdrop-blur-md border border-brand-border rounded-xl p-4 shadow-lg flex items-center justify-around z-10 print:hidden">
+            <div className="text-center">
+              <div className="text-[11px] text-brand-muted mb-1 font-bold uppercase tracking-wider">إجمالي القطع</div>
+              <div className="text-2xl font-bold text-brand-navy leading-none">
+                {nestingResult.bestTotal} <span className="text-sm font-normal text-brand-muted">قطعة</span>
+              </div>
+            </div>
+            <div className="w-px h-10 bg-brand-border hidden sm:block"></div>
+            <div className="text-center hidden sm:block">
+              <div className="text-[11px] text-brand-muted mb-1 font-bold uppercase tracking-wider">المستغل</div>
+              <div className="text-xl font-bold text-brand-navy leading-none" dir="ltr">
+                {toDisplay(distributionFootprint.w, dimUnit).toFixed(0)} × {toDisplay(distributionFootprint.h, dimUnit).toFixed(0)} <span className="text-sm font-normal text-brand-muted">{dimUnit}</span>
+              </div>
+            </div>
+            <div className="w-px h-10 bg-brand-border"></div>
+            <div className="text-center">
+              <div className="text-[11px] text-brand-muted mb-1 font-bold uppercase tracking-wider">اتجاه التوزيع الأفضل</div>
+              <div className="text-lg font-bold text-brand-navy leading-none mt-1">
+                {nestingResult.bestOrientation === 'normal' ? 'بدون تدوير' : 'مدوّر 90°'}
+              </div>
+            </div>
           </div>
-        </CardContent>
-      </Card>
+        }
+        sidebarArea={
+          <div className="space-y-6">
+            <section>
+              <h3 className="text-sm font-bold mb-3 text-brand-navy border-b border-brand-border pb-2">أبعاد القالب الأساسية</h3>
+              <div className="grid grid-cols-3 gap-2">
+                <NumField label="العرض" value={params.width} disabled={refOn} unit={dimUnit}
+                  onChange={v => set('width', v)} />
+                <NumField label="الارتفاع" value={params.height} disabled={refOn} unit={dimUnit}
+                  onChange={v => set('height', v)} />
+                <NumField label="العمق" value={params.depth} disabled={refOn} unit={dimUnit}
+                  onChange={v => set('depth', v)} />
+              </div>
+            </section>
+
+            <section>
+              <h3 className="text-sm font-bold mb-3 text-brand-navy border-b border-brand-border pb-2 mt-4">تخصيص متقدم</h3>
+              <div className="grid grid-cols-3 gap-2">
+                <NumField label="لسان اللصق" value={params.glueFlap} disabled={refOn} unit={dimUnit}
+                  onChange={v => set('glueFlap', v)} />
+                <NumField label="لسان الغطاء" value={params.lidTongue} disabled={refOn} unit={dimUnit}
+                  onChange={v => set('lidTongue', v)} />
+                <div>
+                  <div className="flex items-center justify-between">
+                    <Label className="text-xs">ارتفاع لسان العمق</Label>
+                    <button type="button" disabled={refOn}
+                      className="text-muted-foreground hover:text-foreground disabled:opacity-40"
+                      title="إعادة ضبط"
+                      onClick={() => {
+                        tongueTotalTouched.current = false;
+                        set('depthTongueTotalHeight', autoDepthTongueTotalHeight(params.depthTongue, params.depth));
+                      }}>
+                      <RotateCcw className="w-3 h-3" />
+                    </button>
+                  </div>
+                  <Input type="number" step="0.01"
+                    value={toDisplay(params.depthTongueTotalHeight ?? autoDepthTongueTotalHeight(params.depthTongue, params.depth), dimUnit)}
+                    disabled={refOn}
+                    onChange={e => {
+                      tongueTotalTouched.current = true;
+                      set('depthTongueTotalHeight', toMm(num(e.target.value, toDisplay(params.depthTongueTotalHeight ?? autoDepthTongueTotalHeight(params.depthTongue, params.depth), dimUnit)), dimUnit));
+                    }} />
+                </div>
+              </div>
+              <div className="grid grid-cols-3 gap-2 mt-2">
+                <div>
+                  <Label className="text-xs">زاوية لسان اللصق</Label>
+                  <div className="grid grid-cols-2 gap-1">
+                    <Input type="number" step="0.1" min="0" max="89"
+                      placeholder="علوي"
+                      value={params.glueFlapTopAngle ?? 25} disabled={refOn}
+                      onChange={e => set('glueFlapTopAngle', num(e.target.value, 25))} />
+                    <Input type="number" step="0.1" min="0" max="89"
+                      placeholder="سفلي"
+                      value={params.glueFlapBottomAngle ?? 25} disabled={refOn}
+                      onChange={e => set('glueFlapBottomAngle', num(e.target.value, 25))} />
+                  </div>
+                  <div className="flex justify-between text-[10px] text-muted-foreground px-0.5">
+                    <span>علوي</span><span>سفلي</span>
+                  </div>
+                </div>
+                <NumField label="زاوية لسان العمق" value={params.depthTongueCornerRadius ?? 0}
+                  disabled={refOn} step="0.1" min="0" unit={dimUnit}
+                  onChange={v => set('depthTongueCornerRadius', v)} />
+                <div>
+                  <div className="flex items-center justify-between">
+                    <Label className="text-xs">القفل</Label>
+                    <button type="button" disabled={refOn}
+                      className="text-muted-foreground hover:text-foreground disabled:opacity-40"
+                      title={`إعادة ضبط إلى ${toDisplay(defaultDepthTongueForWidth(params.width), dimUnit)}${dimUnit}`}
+                      onClick={() => {
+                        depthTongueTouched.current = false;
+                        set('depthTongue', defaultDepthTongueForWidth(params.width));
+                      }}>
+                      <RotateCcw className="w-3 h-3" />
+                    </button>
+                  </div>
+                  <Input type="number" step="0.01" value={toDisplay(params.depthTongue, dimUnit)}
+                    disabled={refOn}
+                    onChange={e => {
+                      depthTongueTouched.current = true;
+                      set('depthTongue', toMm(num(e.target.value, toDisplay(params.depthTongue, dimUnit)), dimUnit));
+                    }} />
+                </div>
+              </div>
+            </section>
+
+            <section>
+              <h3 className="text-sm font-bold mb-3 text-brand-navy border-b border-brand-border pb-2 mt-4">إعدادات التعشيق الذكي (Smart Auto)</h3>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="flex flex-col gap-2">
+                  <div className="flex items-center justify-between h-8">
+                    <Label className="text-xs">التعشيق التلقائي</Label>
+                    <Switch id="d001-smart" checked={!!nesting.smartAuto} onCheckedChange={v => setN('smartAuto', v)} />
+                  </div>
+                  <div className="text-[10px] text-muted-foreground leading-tight">
+                    {nesting.smartAuto ? 'يحسب Pitch و Interlock تلقائياً' : 'يدوي (Interlock من المستخدم)'}
+                  </div>
+                </div>
+                <div className="flex flex-col gap-2">
+                  <div className="flex items-center justify-between h-8">
+                    <Label className="text-xs">السماح بالدوران</Label>
+                    <Switch id="d001-allow-rot" checked={nesting.allowRotation} onCheckedChange={v => setN('allowRotation', v)} />
+                  </div>
+                  <div className="text-[10px] text-muted-foreground leading-tight">
+                    {nesting.allowRotation ? 'مسموح' : 'غير مسموح'}
+                  </div>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-2 mt-2">
+                <NumField label="التداخل الأفقي" value={nesting.horizontalInterlock} step="0.1" min="0" unit={dimUnit}
+                  disabled={!!nesting.smartAuto}
+                  onChange={v => setN('horizontalInterlock', v)} />
+                <NumField label="التداخل العمودي" value={nesting.verticalInterlock} step="0.1" min="0" unit={dimUnit}
+                  disabled={!!nesting.smartAuto}
+                  onChange={v => setN('verticalInterlock', v)} />
+              </div>
+              <div className="mt-2">
+                <Label className="text-xs mb-1 block">وضع الدوران (Rotation Mode)</Label>
+                <select
+                  className="w-full h-8 rounded-md border border-input bg-background px-2 text-sm"
+                  disabled={!nesting.allowRotation}
+                  value={nesting.rotationMode}
+                  onChange={e => setN('rotationMode', e.target.value as RotationMode)}
+                >
+                  <option value="normal">بدون تدوير (Normal)</option>
+                  <option value="rotated">مدوّر 90° (Rotated)</option>
+                  <option value="auto">تلقائي (Auto)</option>
+                </select>
+              </div>
+            </section>
+
+            <section>
+              <h3 className="text-sm font-bold mb-3 text-brand-navy border-b border-brand-border pb-2 mt-4">{"إعدادات الشيت"}</h3>
+              <div className="grid grid-cols-3 gap-2">
+                <NumField label="عرض الشيت" value={params.sheetWidth} unit={dimUnit}
+                  onChange={v => set('sheetWidth', v)} />
+                <NumField label="ارتفاع الشيت" value={params.sheetHeight} unit={dimUnit}
+                  onChange={v => set('sheetHeight', v)} />
+                <NumField label="القابض" value={params.gripper} unit={dimUnit}
+                  onChange={v => set('gripper', v)} />
+              </div>
+              <div className="grid grid-cols-3 gap-2 mt-2">
+                <NumField label="الهامش" value={params.sheetMargin} unit={dimUnit}
+                  onChange={v => set('sheetMargin', v)} />
+                <NumField label="التباعد الأفقي" value={nesting.horizontalGap} step="0.1" min="0" unit={dimUnit}
+                  onChange={v => setN('horizontalGap', v)} />
+                <NumField label="التباعد العمودي" value={nesting.verticalGap} step="0.1" min="0" unit={dimUnit}
+                  onChange={v => setN('verticalGap', v)} />
+              </div>
+              <div className="mt-3 text-[11px] text-muted-foreground bg-muted/20 p-2 rounded border border-brand-border/50 text-center">
+                الصافي: <span dir="ltr" className="font-mono">{usable.width.toFixed(2)} × {usable.height.toFixed(2)} mm</span>
+              </div>
+            </section>
+          </div>
+        }
+      />
 
       <D001PrintSummary
         open={printOpen}
@@ -617,8 +509,7 @@ const D001Calculator = ({ isAdmin = false }: { isAdmin?: boolean }) => {
         distributionFootprint={distributionFootprint}
         derived={derived}
       />
-    </div>
-  );
+    </>  );
 };
 
 const ExportSingleButton = ({ params }: { params: D001Params }) => {

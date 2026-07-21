@@ -46,7 +46,7 @@ async function callApi(body: Record<string, unknown>) {
     body: JSON.stringify(body),
   });
 
-  return parseApiResponse(res);
+  return await parseApiResponse(res);
 }
 
 export interface AppUser {
@@ -113,7 +113,7 @@ export async function loginUser(username: string, password: string, deviceInfo?:
     body: JSON.stringify({ action: 'login', username, password, device_info: deviceInfo, device_id: getDeviceId() }),
   });
 
-  return parseApiResponse(res);
+  return await parseApiResponse(res);
 }
 
 export async function forceLogin(username: string, password: string, terminateSessionIds: string[], deviceInfo?: string): Promise<LoginResult> {
@@ -125,8 +125,14 @@ export async function changePassword(username: string, oldPassword: string, newP
 }
 
 export async function verifySession(sessionToken: string) {
+  // Clear any old mock sessions from before the backend deployment
+  if (sessionToken.startsWith('mock-')) {
+    return { expired: true };
+  }
+
   // Silent verify — never throws. Returns { expired: true } when the session
   // is no longer valid so the UI can cleanly force-logout.
+
   try {
     const res = await fetch(FUNCTION_URL, {
       method: 'POST',
@@ -316,6 +322,7 @@ export async function saveUserSettings(sessionToken: string, userId: string, set
 }
 
 export async function loadUserSettings(sessionToken: string, userId: string): Promise<Record<string, any>> {
+  if (sessionToken.startsWith('mock-')) return {};
   const data = await callApi({ action: 'load_settings', session_token: sessionToken, user_id: userId });
   return data.settings;
 }
@@ -350,6 +357,7 @@ export async function deleteQuote(sessionToken: string, quoteId: string) {
 }
 
 export async function listQuotes(sessionToken: string): Promise<{ quotes: SavedQuote[]; related_quotes: SavedQuote[] }> {
+  if (sessionToken.startsWith('mock-')) return { quotes: [], related_quotes: [] };
   return callApi({ action: 'list_quotes', session_token: sessionToken });
 }
 
