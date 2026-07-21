@@ -101,9 +101,640 @@ function editLinkFor(t: SavedQuote) {
     allowRotation: data.allowRotation !== false ? 'true' : 'false',
     rotationMode: data.rotationMode || 'auto',
   }).toString();
-
   return `/template/${templateId}?${query}`;
 }
+
+const SLIDES = [
+  {
+    title: "مجموعة واسعة من القوالب",
+    subtitle: "قوالب بشكل فني واقعي جاهزة للتنفيذ المباشر بمقاييس دقيقة",
+    buttonText: "اكتشف القوالب",
+    link: "/templates",
+    graphic: "templates"
+  },
+  {
+    title: "تحكم كامل بالتفاصيل",
+    subtitle: "التحكم الكامل بألسنة الغطاء، ألسنة الغبار، وزوايا القفل بشكل بسيط ومرن واقعي",
+    buttonText: "ابدأ التصميم",
+    link: "/templates",
+    graphic: "controls"
+  },
+  {
+    title: "مونتاج ذكي للقوالب",
+    subtitle: "تعشيق تلقائي ذكي لتوزيع القالب على شيت الطباعة لتقليل الهدر وتحسين التكلفة",
+    buttonText: "جرّب التوزيع",
+    link: "/templates",
+    graphic: "nesting"
+  },
+  {
+    title: "عرض مرئي ثلاثي الأبعاد",
+    subtitle: "معاينة ثلاثية أبعاد فورية وتفاعلية لمنتجك قبل البدء بالإنتاج والتصنيع",
+    buttonText: "شاهد المعاينة",
+    link: "/templates",
+    graphic: "3d"
+  },
+  {
+    title: "باقات الاشتراك",
+    subtitle: "اشتراكات مرنة ومميزة تناسب المصممين المستقلين والمطابع برسوم رمزية تشغيلية",
+    buttonText: "عرض الباقات",
+    link: "/pricing",
+    graphic: "pricing"
+  }
+];
+
+const HeroSlider = () => {
+  const [current, setCurrent] = useState(0);
+  const [isHovered, setIsHovered] = useState(false);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
+
+  const nextSlide = () => {
+    setCurrent(prev => (prev + 1) % SLIDES.length);
+  };
+
+  const prevSlide = () => {
+    setCurrent(prev => (prev - 1 + SLIDES.length) % SLIDES.length);
+  };
+
+  useEffect(() => {
+    if (isHovered) {
+      if (timerRef.current) clearInterval(timerRef.current);
+      return;
+    }
+    timerRef.current = setInterval(nextSlide, 5000);
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
+  }, [isHovered]);
+
+  const renderGraphic = (type: string) => {
+    switch (type) {
+      case 'templates':
+        return (
+          <div className="slider-graphic-container templates-graphic">
+            <div className="card card-1">
+              <span className="card-tag">T0002</span>
+              <svg viewBox="0 0 100 100" className="mini-svg">
+                <path d="M20,10 L80,10 L80,90 L20,90 Z M20,30 L80,30 M20,70 L80,70" fill="none" stroke="var(--brand-gold)" strokeWidth="1.5" strokeDasharray="2,2"/>
+              </svg>
+            </div>
+            <div className="card card-2">
+              <span className="card-tag">T0005</span>
+              <svg viewBox="0 0 100 100" className="mini-svg">
+                <path d="M10,20 L90,20 L90,80 L10,80 Z M30,20 L30,80 M70,20 L70,80" fill="none" stroke="var(--brand-gold)" strokeWidth="1.5" />
+              </svg>
+            </div>
+            <div className="card card-3">
+              <span className="card-tag">D001</span>
+              <svg viewBox="0 0 100 100" className="mini-svg">
+                <circle cx="50" cy="50" r="30" fill="none" stroke="var(--brand-gold)" strokeWidth="1.5" />
+                <path d="M50,10 L50,90 M10,50 L90,50" fill="none" stroke="var(--brand-gold)" strokeWidth="1.5" strokeDasharray="1,1"/>
+              </svg>
+            </div>
+          </div>
+        );
+      case 'controls':
+        return (
+          <div className="slider-graphic-container controls-graphic">
+            <div className="controls-sidebar">
+              <div className="control-row"><span className="control-label">العرض</span><div className="control-bar"><div className="control-fill" style={{width: '70%'}}></div></div></div>
+              <div className="control-row"><span className="control-label">الارتفاع</span><div className="control-bar"><div className="control-fill" style={{width: '45%'}}></div></div></div>
+              <div className="control-row"><span className="control-label">العمق</span><div className="control-bar"><div className="control-fill" style={{width: '60%'}}></div></div></div>
+            </div>
+            <div className="controls-canvas">
+              <div className="canvas-box">
+                <svg viewBox="0 0 100 100" className="w-full h-full stroke-blue-500" fill="none" strokeWidth="1.5">
+                  <rect x="25" y="25" width="50" height="50" rx="4" />
+                  <line x1="25" y1="25" x2="15" y2="15" strokeDasharray="2,2" />
+                  <line x1="75" y1="25" x2="85" y2="15" strokeDasharray="2,2" />
+                  <line x1="25" y1="75" x2="15" y2="85" strokeDasharray="2,2" />
+                  <line x1="75" y1="75" x2="85" y2="85" strokeDasharray="2,2" />
+                </svg>
+              </div>
+            </div>
+          </div>
+        );
+      case 'nesting':
+        return (
+          <div className="slider-graphic-container nesting-graphic">
+            <div className="nesting-sheet">
+              {[...Array(12)].map((_, i) => (
+                <div key={i} className="nesting-cell">
+                  <span className="cell-num">{i + 1}</span>
+                  <div className="cell-border"></div>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      case '3d':
+        return (
+          <div className="slider-graphic-container threed-graphic">
+            <div className="scene3d">
+              <div className="cube">
+                <div className="face front">PRINTERA</div>
+                <div className="face back">3D</div>
+                <div className="face right"></div>
+                <div className="face left"></div>
+                <div className="face top"></div>
+                <div className="face bottom"></div>
+              </div>
+            </div>
+          </div>
+        );
+      case 'pricing':
+        return (
+          <div className="slider-graphic-container pricing-graphic">
+            <div className="pricing-badge">
+              <div className="badge-header">الاشتراك المميز</div>
+              <div className="badge-price">
+                <span className="price-num">9.99</span>
+                <span className="price-unit">$/أسبوع</span>
+              </div>
+              <ul className="badge-features">
+                <li><i className="ph ph-check-circle"></i> وصول غير محدود لجميع القوالب</li>
+                <li><i className="ph ph-check-circle"></i> تصدير بصيغ SVG و PDF</li>
+                <li><i className="ph ph-check-circle"></i> تعشيق وتوزيع ذكي للشيت</li>
+              </ul>
+            </div>
+          </div>
+        );
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <div 
+      className="hero-slider"
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
+      <div className="slider-bg-pattern"></div>
+      
+      <div className="slides-wrapper" style={{ transform: `translateX(-${current * 100}%)` }}>
+        {SLIDES.map((slide, idx) => (
+          <div key={idx} className={`slide-item ${current === idx ? 'active' : ''}`}>
+            <div className="slide-content">
+              <div className="slide-graphic-col">
+                {renderGraphic(slide.graphic)}
+              </div>
+              
+              <div className="slide-text-col">
+                <h2 className="slide-title">{slide.title}</h2>
+                <p className="slide-subtitle">{slide.subtitle}</p>
+                <Link to={slide.link} className="slide-btn">
+                  {slide.buttonText}
+                  <i className="ph ph-arrow-left"></i>
+                </Link>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <button className="slider-arrow prev" onClick={prevSlide} aria-label="السابق">
+        <i className="ph ph-caret-right"></i>
+      </button>
+      <button className="slider-arrow next" onClick={nextSlide} aria-label="التالي">
+        <i className="ph ph-caret-left"></i>
+      </button>
+
+      <div className="slider-dots">
+        {SLIDES.map((_, idx) => (
+          <button 
+            key={idx} 
+            className={`dot-item ${current === idx ? 'active' : ''}`}
+            onClick={() => setCurrent(idx)}
+            aria-label={`شريحة ${idx + 1}`}
+          />
+        ))}
+      </div>
+
+      <style>{`
+        .hero-slider {
+          position: relative;
+          width: 100%;
+          height: 480px;
+          background: #fff;
+          border-bottom: 1px solid var(--brand-border);
+          overflow: hidden;
+          direction: ltr;
+        }
+        .slider-bg-pattern {
+          position: absolute;
+          inset: 0;
+          background-image: radial-gradient(circle at 1px 1px, var(--brand-border) 1px, transparent 0);
+          background-size: 22px 22px;
+          opacity: 0.7;
+          pointer-events: none;
+        }
+        .slides-wrapper {
+          display: flex;
+          width: 100%;
+          height: 100%;
+          transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .slide-item {
+          flex: 0 0 100%;
+          width: 100%;
+          height: 100%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          direction: rtl;
+        }
+        .slide-content {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 40px;
+          max-width: 1100px;
+          width: 100%;
+          padding: 0 60px;
+          align-items: center;
+        }
+        @media (max-width: 768px) {
+          .slide-content {
+            grid-template-columns: 1fr;
+            text-align: center;
+            gap: 20px;
+            padding: 0 40px;
+          }
+          .hero-slider {
+            height: 600px;
+          }
+        }
+        .slide-text-col {
+          display: flex;
+          flex-direction: column;
+          align-items: flex-start;
+          gap: 16px;
+          opacity: 0;
+          transform: translateY(20px);
+          transition: all 0.6s ease;
+        }
+        @media (max-width: 768px) {
+          .slide-text-col {
+            align-items: center;
+          }
+        }
+        .active .slide-text-col {
+          opacity: 1;
+          transform: translateY(0);
+        }
+        .slide-title {
+          font-size: 34px;
+          font-weight: 800;
+          color: var(--brand-navy);
+          margin: 0;
+          line-height: 1.3;
+        }
+        .slide-subtitle {
+          font-size: 16px;
+          color: var(--brand-muted);
+          margin: 0;
+          line-height: 1.6;
+          max-width: 480px;
+        }
+        .slide-btn {
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+          background: var(--brand-gold);
+          color: #fff;
+          font-weight: 700;
+          font-size: 14.5px;
+          padding: 12px 28px;
+          border-radius: 99px;
+          text-decoration: none;
+          transition: all 0.3s ease;
+          box-shadow: 0 4px 14px rgba(37, 99, 235, 0.25);
+        }
+        .slide-btn:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 6px 20px rgba(37, 99, 235, 0.4);
+          background: var(--brand-navy);
+        }
+        .slide-btn i {
+          font-size: 16px;
+        }
+
+        .slide-graphic-col {
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          height: 320px;
+          opacity: 0;
+          transform: scale(0.95);
+          transition: all 0.6s ease;
+        }
+        .active .slide-graphic-col {
+          opacity: 1;
+          transform: scale(1);
+        }
+
+        .slider-graphic-container {
+          position: relative;
+          width: 320px;
+          height: 260px;
+          background: #f8fafc;
+          border-radius: 16px;
+          border: 1px solid var(--brand-border);
+          overflow: hidden;
+          box-shadow: 0 10px 30px rgba(15, 29, 45, 0.04);
+        }
+
+        .templates-graphic {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+        .templates-graphic .card {
+          position: absolute;
+          width: 130px;
+          height: 170px;
+          background: #fff;
+          border: 1px solid var(--brand-border);
+          border-radius: 12px;
+          box-shadow: 0 8px 24px rgba(15, 29, 45, 0.08);
+          padding: 12px;
+          display: flex;
+          flex-direction: column;
+          justify-content: space-between;
+          transition: transform 0.4s ease;
+        }
+        .templates-graphic .card-1 {
+          transform: translate(-35px, -10px) rotate(-8deg);
+          z-index: 1;
+        }
+        .templates-graphic .card-2 {
+          transform: translate(0, 0) rotate(0deg);
+          z-index: 2;
+          border-color: var(--brand-gold);
+        }
+        .templates-graphic .card-3 {
+          transform: translate(35px, 10px) rotate(8deg);
+          z-index: 1;
+        }
+        .templates-graphic .card-tag {
+          font-size: 10px;
+          font-weight: 700;
+          color: var(--brand-muted);
+          text-transform: uppercase;
+        }
+        .templates-graphic .mini-svg {
+          width: 100%;
+          height: 110px;
+        }
+
+        .controls-graphic {
+          display: grid;
+          grid-template-columns: 110px 1fr;
+          height: 100%;
+        }
+        .controls-sidebar {
+          background: #fff;
+          border-left: 1px solid var(--brand-border);
+          padding: 16px;
+          display: flex;
+          flex-direction: column;
+          gap: 16px;
+        }
+        .control-row {
+          display: flex;
+          flex-direction: column;
+          gap: 4px;
+        }
+        .control-label {
+          font-size: 10px;
+          font-weight: 600;
+          color: var(--brand-muted);
+        }
+        .control-bar {
+          width: 100%;
+          height: 6px;
+          background: var(--brand-tag-bg);
+          border-radius: 99px;
+          overflow: hidden;
+        }
+        .control-fill {
+          height: 100%;
+          background: var(--brand-gold);
+          border-radius: 99px;
+        }
+        .controls-canvas {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 20px;
+        }
+        .canvas-box {
+          width: 110px;
+          height: 110px;
+          background: #fff;
+          border: 1px dashed var(--brand-gold);
+          border-radius: 12px;
+          padding: 10px;
+        }
+
+        .nesting-graphic {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 16px;
+        }
+        .nesting-sheet {
+          display: grid;
+          grid-template-columns: repeat(5, 1fr);
+          gap: 6px;
+          width: 100%;
+          height: 100%;
+          background: #fff;
+          border: 1px solid var(--brand-navy);
+          border-radius: 8px;
+          padding: 10px;
+        }
+        .nesting-cell {
+          position: relative;
+          background: var(--brand-tag-bg);
+          border: 1px solid var(--brand-border);
+          border-radius: 4px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          aspect-ratio: 4/5;
+        }
+        .cell-num {
+          font-size: 9px;
+          font-weight: 700;
+          color: var(--brand-muted-2);
+        }
+        .cell-border {
+          position: absolute;
+          inset: 2px;
+          border: 1px dashed rgba(37, 99, 235, 0.3);
+          border-radius: 2px;
+        }
+
+        .threed-graphic {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background: #0f172a;
+        }
+        .scene3d {
+          width: 120px;
+          height: 120px;
+          perspective: 600px;
+        }
+        .cube {
+          width: 100%;
+          height: 100%;
+          position: relative;
+          transform-style: preserve-3d;
+          animation: rotateBox 12s infinite linear;
+        }
+        .face {
+          position: absolute;
+          width: 120px;
+          height: 120px;
+          background: rgba(37, 99, 235, 0.1);
+          border: 2px solid var(--brand-gold);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: #fff;
+          font-weight: 800;
+          font-size: 14px;
+          box-sizing: border-box;
+        }
+        .front  { transform: rotateY(  0deg) translateZ(60px); }
+        .back   { transform: rotateY(180deg) translateZ(60px); }
+        .right  { transform: rotateY( 90deg) translateZ(60px); }
+        .left   { transform: rotateY(-90deg) translateZ(60px); }
+        .top    { transform: rotateX( 90deg) translateZ(60px); }
+        .bottom { transform: rotateX(-90deg) translateZ(60px); }
+
+        @keyframes rotateBox {
+          from { transform: rotateX(-20deg) rotateY(0deg); }
+          to   { transform: rotateX(-20deg) rotateY(360deg); }
+        }
+
+        .pricing-graphic {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 20px;
+          background: linear-gradient(135deg, #0F1D2D 0%, #1e3a5f 100%);
+        }
+        .pricing-badge {
+          width: 100%;
+          background: rgba(255, 255, 255, 0.05);
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          border-radius: 12px;
+          padding: 16px;
+          color: #fff;
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
+        }
+        .badge-header {
+          font-size: 11px;
+          font-weight: 700;
+          text-transform: uppercase;
+          color: var(--brand-gold);
+        }
+        .badge-price {
+          display: flex;
+          align-items: baseline;
+          gap: 4px;
+        }
+        .price-num {
+          font-size: 28px;
+          font-weight: 800;
+        }
+        .price-unit {
+          font-size: 11px;
+          color: rgba(255, 255, 255, 0.6);
+        }
+        .badge-features {
+          list-style: none;
+          padding: 0;
+          margin: 0;
+          display: flex;
+          flex-direction: column;
+          gap: 6px;
+          font-size: 11px;
+        }
+        .badge-features li {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          color: rgba(255, 255, 255, 0.85);
+        }
+        .badge-features li i {
+          color: var(--brand-gold);
+        }
+
+        .slider-arrow {
+          position: absolute;
+          top: 50%;
+          transform: translateY(-50%);
+          width: 44px;
+          height: 44px;
+          border-radius: 50%;
+          background: #fff;
+          border: 1px solid var(--brand-border);
+          color: var(--brand-navy);
+          font-size: 20px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          transition: all 0.3s ease;
+          box-shadow: 0 4px 12px rgba(15, 29, 45, 0.05);
+          z-index: 10;
+        }
+        .slider-arrow:hover {
+          background: var(--brand-navy);
+          color: #fff;
+          border-color: var(--brand-navy);
+        }
+        .slider-arrow.prev {
+          right: 20px;
+        }
+        .slider-arrow.next {
+          left: 20px;
+        }
+
+        .slider-dots {
+          position: absolute;
+          bottom: 20px;
+          left: 50%;
+          transform: translateX(-50%);
+          display: flex;
+          gap: 8px;
+          z-index: 10;
+          direction: rtl;
+        }
+        .dot-item {
+          width: 8px;
+          height: 8px;
+          border-radius: 50%;
+          background: var(--brand-border);
+          border: none;
+          cursor: pointer;
+          padding: 0;
+          transition: all 0.3s ease;
+        }
+        .dot-item.active {
+          background: var(--brand-gold);
+          width: 24px;
+          border-radius: 99px;
+        }
+      `}</style>
+    </div>
+  );
+};
 
 export default function Home() {
   const navigate = useNavigate();
@@ -166,42 +797,8 @@ export default function Home() {
     <div dir="rtl" style={{ minHeight: '100vh', background: 'var(--brand-bg)', color: 'var(--brand-navy)' }}>
       <Header variant="simple" active="home" />
 
-      {/* Intro banner */}
-      <section
-        style={{
-          padding: 'calc(var(--space-8) * 2) var(--space-8)',
-          background: 'var(--brand-bg)',
-          backgroundImage: 'radial-gradient(circle at 1px 1px, var(--brand-border) 1px, transparent 0)',
-          backgroundSize: '22px 22px',
-        }}
-      >
-        <div style={{ maxWidth: '820px', margin: '0 auto', textAlign: 'center' }}>
-          <RevealAnim animationClass="anim-logo" delay={0}>
-            <img
-              src="/brand/printera-logo-trans.png"
-              alt="Printera"
-              style={{ width: '845px', maxWidth: '100%', height: 'auto', aspectRatio: '845 / 231', objectFit: 'contain', margin: '0 auto var(--space-5)', display: 'block' }}
-            />
-          </RevealAnim>
-          <RevealAnim animationClass="anim-slide-up" delay={300}>
-            <h1 style={{ fontSize: '38px', margin: '0 0 var(--space-4)', color: 'var(--brand-navy)', fontWeight: 700, lineHeight: 1.4 }}>
-              قوالب جاهزة للتنفيذ... كما يجب أن تكون بخبرة متخصصين بتصنيع القوالب للمطابع
-            </h1>
-          </RevealAnim>
-          <RevealAnim animationClass="anim-slide-up" delay={600}>
-            <p style={{ fontSize: '16px', color: 'var(--brand-gold)', fontWeight: 700, margin: '0 0 var(--space-6)' }}>
-              أول منصة عربية بُنيت بخبرة فريق مصممين وفنيين متخصصين في تشكيل القوالب
-            </p>
-          </RevealAnim>
-          <div style={{ display: 'flex', gap: 'var(--space-6)', flexWrap: 'wrap', justifyContent: 'center' }}>
-            {HERO_STATS.map((b, idx) => (
-              <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13.5px', color: 'var(--brand-muted)', fontWeight: 600, whiteSpace: 'nowrap' }}>
-                {b.label} <i className={b.icon} style={{ color: 'var(--brand-gold)', fontSize: '17px' }}></i>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+      {/* Animated Hero Slider */}
+      <HeroSlider />
 
       <div style={{ width: '100%', boxSizing: 'border-box', padding: 'calc(var(--space-8) * 1.6) var(--space-8)' }}>
 
