@@ -1,1 +1,74 @@
-<svg id="Layer_1" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 885.58 602.112"><defs><style>.cls-1,.cls-2{fill:none;stroke-miterlimit:10;stroke-width:4px;}.cls-1{stroke:#009640;}.cls-2{stroke:#e30613;}</style></defs><line class="cls-1" x1="34.6" y1="2" x2="34.6" y2="427.2"/><line class="cls-1" x1="318.07" y1="2" x2="318.07" y2="427.2"/><line class="cls-1" x1="459.8" y1="2" x2="459.8" y2="427.2"/><line class="cls-1" x1="743.26" y1="2" x2="743.26" y2="427.2"/><line class="cls-2" x1="883.58" y1="2" x2="883.58" y2="427.2"/><line class="cls-2" x1="34.6" y1="2" x2="885" y2="2"/><line class="cls-1" x1="36.02" y1="428.617" x2="128.15" y2="428.617"/><line class="cls-1" x1="224.52" y1="428.617" x2="316.65" y2="428.617"/><polyline class="cls-2" points="128.15 428.617 141.91 428.617 144.04 430.737 208.63 430.737 210.76 428.617 224.52 428.617"/><path class="cls-2" d="M158.74,437.24a26.1,26.1,0,0,1,48.19,0" transform="translate(-6.5 -6.503)"/><line class="cls-1" x1="318.07" y1="427.2" x2="883.58" y2="427.2"/><polyline class="cls-2" points="34.6 2 2 10.44 2 418.76 34.6 427.2"/><polyline class="cls-2" points="34.6 427.192 43.11 435.702 43.11 566.092 309.56 566.092 309.56 435.702 318.07 427.192"/><line class="cls-1" x1="567.11" y1="566.092" x2="635.95" y2="566.092"/><polyline class="cls-2" points="459.8 427.192 459.8 427.192 459.8 568.222 567.11 568.222 567.11 566.092"/><polyline class="cls-2" points="635.95 566.092 635.95 568.222 743.26 568.222 743.26 427.192"/><path class="cls-2" d="M559.84,574.725v4.96c0,13.7,6.2,22.79,12.4,26.93h71.58c6.2-4.14,12.4-13.23,12.4-26.93v-4.96" transform="translate(-6.5 -6.503)"/><polyline class="cls-2" points="743.26 427.192 751.77 435.702 757.44 517.902 867.83 517.902 883.58 435.702 883.58 427.192"/><polyline class="cls-2" points="459.798 427.192 451.298 435.702 445.628 517.902 335.238 517.902 319.488 435.702 319.488 427.192"/></svg>
+<svg xmlns="http://www.w3.org/2000/svg" width="191.5mm" height="238mm" viewBox="0 0 191.5 238">
+  <g id="CREASE" fill="none" stroke="#00A651" stroke-miterlimit="10">
+    <line x1="152" y1="54" x2="152" y2="184" data-id="CREASE_56"/>
+    <line x1="102" y1="54" x2="102" y2="184" data-id="CREASE_57"/>
+    <line x1="62" y1="184" x2="62" y2="54" data-id="CREASE_58"/>
+    <line x1="12" y1="184" x2="12" y2="54" data-id="CREASE_59"/>
+    <line x1="152.75" y1="184" x2="191.5" y2="184" data-id="CREASE_60"/>
+    <line x1="12" y1="184.5" x2="62" y2="184.5" data-id="CREASE_61"/>
+    <line x1="55" y1="223" x2="19" y2="223" data-id="CREASE_62"/>
+    <line x1="101.25" y1="184" x2="62" y2="184" data-id="CREASE_63"/>
+    <line x1="62.75" y1="54" x2="102" y2="54" data-id="CREASE_64"/>
+    <line x1="191.5" y1="54" x2="152" y2="54" data-id="CREASE_65"/>
+    <line x1="102" y1="53.5" x2="152" y2="53.5" data-id="CREASE_66"/>
+    <line x1="145" y1="15" x2="109" y2="15" data-id="CREASE_67"/>
+  </g>
+  <g id="OUTER" fill="none" stroke="#ED1C24" stroke-miterlimit="10">
+    <line x1="12" y1="54" x2="0" y2="59.59569" data-id="LINE_1"/>
+    <line x1="0" y1="59.59569" x2="0" y2="178.40431" data-id="LINE_47"/>
+    <line x1="0" y1="178.40431" x2="12" y2="184" data-id="LINE_46"/>
+    <line x1="12" y1="184" x2="12" y2="223.75" data-id="LINE_45"/>
+    <line x1="12" y1="223.75" x2="12.5" y2="223.75" data-id="LINE_44"/>
+    <path d="M12.5,223.75 C12.5,229.5018 15.4087,234.8635 20.2297,238" data-id="LINE_43" data-preserved="true"/>
+    <line x1="20.2297" y1="238" x2="53.7703" y2="238" data-id="LINE_42"/>
+    <path d="M53.7703,238 C58.5931,234.8615 61.5,229.4981 61.5,223.75" data-id="LINE_41" data-preserved="true"/>
+    <line x1="61.5" y1="223.75" x2="62" y2="223.75" data-id="LINE_40"/>
+    <line x1="62" y1="223.75" x2="62" y2="184" data-id="LINE_39"/>
+    <line x1="62" y1="184" x2="65" y2="187" data-id="LINE_38"/>
+    <line x1="65" y1="187" x2="67" y2="211" data-id="LINE_37"/>
+    <line x1="67" y1="211" x2="93.892" y2="211" data-id="LINE_36"/>
+    <line x1="93.892" y1="211" x2="99.25" y2="191" data-id="LINE_35"/>
+    <line x1="99.25" y1="191" x2="101.25" y2="189" data-id="LINE_34"/>
+    <line x1="101.25" y1="189" x2="101.25" y2="184" data-id="LINE_33"/>
+    <line x1="102" y1="184" x2="101.25" y2="184" data-id="LINE_32"/>
+    <line x1="152" y1="184" x2="102" y2="184" data-id="LINE_31"/>
+    <line x1="152.75" y1="184" x2="152" y2="184" data-id="LINE_30"/>
+    <line x1="152.75" y1="184" x2="152.75" y2="189" data-id="LINE_29"/>
+    <line x1="152.75" y1="189" x2="154.75" y2="191" data-id="LINE_28"/>
+    <line x1="154.75" y1="191" x2="160.108" y2="211" data-id="LINE_27"/>
+    <line x1="160.108" y1="211" x2="186.5" y2="211" data-id="LINE_26"/>
+    <line x1="186.5" y1="211" x2="188.5" y2="187" data-id="LINE_25"/>
+    <line x1="188.5" y1="187" x2="191.5" y2="184" data-id="LINE_24"/>
+    <line x1="191.5" y1="184" x2="191.5" y2="49" data-id="LINE_23"/>
+    <line x1="189.5" y1="47" x2="191.5" y2="49" data-id="LINE_22"/>
+    <line x1="184.142" y1="27" x2="189.5" y2="47" data-id="LINE_21"/>
+    <line x1="157" y1="27" x2="184.142" y2="27" data-id="LINE_20"/>
+    <line x1="157" y1="27" x2="155" y2="51" data-id="LINE_19"/>
+    <line x1="155" y1="51" x2="152" y2="54" data-id="LINE_18"/>
+    <line x1="152" y1="54" x2="152" y2="14.25" data-id="LINE_17"/>
+    <line x1="152" y1="14.25" x2="151.5" y2="14.25" data-id="LINE_16"/>
+    <path d="M151.5,14.25 C151.5,8.4982 148.5913,3.1365 143.7703,0" data-id="LINE_14" data-preserved="true"/>
+    <line x1="143.7703" y1="0" x2="110.2297" y2="0" data-id="LINE_13"/>
+    <path d="M110.2297,0 C105.4069,3.1385 102.5,8.5019 102.5,14.25" data-id="LINE_12" data-preserved="true"/>
+    <line x1="102.5" y1="14.25" x2="102" y2="14.25" data-id="LINE_11"/>
+    <line x1="102" y1="14.25" x2="102" y2="54" data-id="LINE_10"/>
+    <line x1="99" y1="51" x2="102" y2="54" data-id="LINE_9"/>
+    <line x1="97" y1="27" x2="99" y2="51" data-id="LINE_8"/>
+    <line x1="70.108" y1="27" x2="97" y2="27" data-id="LINE_7"/>
+    <line x1="64.75" y1="47" x2="70.108" y2="27" data-id="LINE_6"/>
+    <line x1="62.75" y1="49" x2="64.75" y2="47" data-id="LINE_5"/>
+    <line x1="62.75" y1="49" x2="62.75" y2="54" data-id="LINE_4"/>
+    <line x1="62.75" y1="54" x2="62" y2="54" data-id="LINE_3"/>
+    <line x1="62" y1="54" x2="12" y2="54" data-id="LINE_2"/>
+  </g>
+  <g id="CUT" fill="none" stroke="#ED1C24" stroke-linecap="round" stroke-linejoin="round" opacity="1">
+    <polyline points="152,15 152,14.25 145,14.25" data-id="CUT_48"/>
+    <line x1="145" y1="14.25" x2="145" y2="16.5" data-id="CUT_49"/>
+    <polyline points="102,15 102,14.25 109,14.25" data-id="CUT_50"/>
+    <line x1="109" y1="14.25" x2="109" y2="16.5" data-id="CUT_51"/>
+    <polyline points="12,223 12,223.75 19,223.75" data-id="CUT_52"/>
+    <line x1="19" y1="223.75" x2="19" y2="221.5" data-id="CUT_53"/>
+    <polyline points="62,223 62,223.75 55,223.75" data-id="CUT_54"/>
+    <line x1="55" y1="223.75" x2="55" y2="221.5" data-id="CUT_55"/>
+  </g>
+</svg>

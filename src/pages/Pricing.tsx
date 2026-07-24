@@ -23,7 +23,6 @@ export default function Pricing() {
     border: 'none',
     cursor: 'pointer',
     fontFamily: 'Cairo, sans-serif',
-    fontFamily: 'Cairo, sans-serif',
     background: active ? 'var(--brand-navy)' : 'transparent',
     color: active ? '#ffffff' : 'var(--brand-muted)',
     transition: 'background .2s ease, color .2s ease',

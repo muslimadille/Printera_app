@@ -68,7 +68,7 @@ export default function TemplatesLibrary() {
       <section style={{ padding: 'var(--space-8)' }}>
         <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 'var(--space-6)', flexWrap: 'wrap' }}>
           <div>
-            <h1 style={{ marginBottom: '6px', color: 'var(--brand-navy)', fontSize: '38px' }}>مكتبة القوالب</h1>
+            <h1 style={{ marginBottom: '6px', color: 'var(--brand-navy)', fontSize: '38px' }}>القوالب</h1>
             <div style={{ fontSize: '13px', letterSpacing: '0.06em', color: 'var(--brand-muted-2)', fontWeight: 700 }}>
               {filteredTemplates.length} قالب قياسي
             </div>
@@ -85,35 +85,7 @@ export default function TemplatesLibrary() {
           </div>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: 'var(--space-6)', flexWrap: 'wrap' }}>
-          <span style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: 'var(--brand-muted-2)', fontWeight: 700, paddingInlineEnd: 'var(--space-3)', borderInlineEnd: '1px solid var(--brand-border)', marginInlineEnd: '6px' }}>
-            <i className="ph ph-funnel"></i> تصفية
-          </span>
-          {categories.map((cat) => {
-            const active = cat.id === activeCat;
-            return (
-              <button
-                key={cat.id}
-                type="button"
-                onClick={() => setActiveCat(cat.id)}
-                className="cat-pill"
-                style={{
-                  padding: '8px 18px',
-                  borderRadius: '999px',
-                  fontSize: '14px',
-                  fontWeight: active ? 700 : 600,
-                  cursor: 'pointer',
-                  whiteSpace: 'nowrap',
-                  border: 'none',
-                  background: active ? 'var(--brand-navy)' : 'transparent',
-                  color: active ? '#ffffff' : 'var(--brand-muted)',
-                }}
-              >
-                {cat.label}
-              </button>
-            );
-          })}
-        </div>
+
 
         <div style={{ marginTop: 'var(--space-6)', display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 'var(--space-6)' }}>
           {filteredTemplates.map((t) => (
@@ -129,7 +101,7 @@ export default function TemplatesLibrary() {
         )}
       </section>
 
-      <Footer variant="rich" thirdColumn="categories" />
+      <Footer />
     </div>
   );
 }

@@ -197,12 +197,16 @@ export function TemplateEditorLayout({
           display: grid;
           grid-template-columns: 1fr 360px;
           gap: 0;
-          flex: 1;
-          min-height: 0;
+          height: calc(100vh - 220px);
+          max-height: calc(100vh - 220px);
+          min-height: 450px;
+          overflow: hidden;
         }
         @media (max-width: 1024px) {
           .editor-body {
             grid-template-columns: 1fr;
+            height: auto;
+            max-height: none;
           }
         }
 
@@ -210,7 +214,9 @@ export function TemplateEditorLayout({
         .editor-preview {
           display: flex;
           flex-direction: column;
+          height: 100%;
           min-height: 0;
+          overflow: hidden;
           border-left: 1px solid var(--brand-border, #E3E6EA);
         }
 
@@ -296,10 +302,33 @@ export function TemplateEditorLayout({
           padding: 24px;
           background: var(--brand-bg, #F5F6F8);
           position: relative;
-          overflow: auto;
-          min-height: 520px;
+          overflow: hidden;
+          height: 100%;
+          min-height: 0;
         }
         .editor-canvas > * {
+          width: 100%;
+          height: 100%;
+          display: flex;
+          flex-direction: column;
+          min-height: 0;
+        }
+        .editor-canvas svg {
+          width: 100% !important;
+          height: 100% !important;
+          max-width: 100% !important;
+          max-height: 100% !important;
+        }
+        .editor-canvas .space-y-2 {
+          height: 100%;
+          display: flex;
+          flex-direction: column;
+          min-height: 0;
+          gap: 8px;
+        }
+        .editor-canvas .space-y-2 > :last-child {
+          flex: 1;
+          min-height: 0;
           width: 100%;
         }
 
@@ -308,7 +337,8 @@ export function TemplateEditorLayout({
           background: #fff;
           border-right: none;
           overflow-y: auto;
-          max-height: calc(100vh - 80px);
+          height: 100%;
+          max-height: 100%;
         }
         .editor-sidebar__inner {
           padding: 20px;

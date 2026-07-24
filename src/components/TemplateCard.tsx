@@ -14,75 +14,134 @@ export interface Template {
 
 interface TemplateCardProps {
   template: Template;
+  variant?: 'minimal' | 'full';
 }
 
-export default function TemplateCard({ template }: TemplateCardProps) {
-  // Convert public/templates/preview/... to /templates/preview/... for Vite root serving
-  const svgPath = template.svg.startsWith('public/')
-    ? template.svg.replace('public/', '/')
-    : template.svg;
+// Fallback vector dieline SVG matching the screenshot (Red cut lines & Green crease lines)
+function FallbackDielineSvg() {
+  return (
+    <svg viewBox="0 0 160 170" style={{ width: '100%', height: '100%', maxHeight: '180px' }}>
+      <path
+        d="M 45 15 L 115 15 L 115 38 L 142 38 L 142 135 L 115 135 L 115 158 L 45 158 L 45 135 L 18 135 L 18 38 L 45 38 Z"
+        fill="#FFFFFF"
+        stroke="#EF4444"
+        strokeWidth="1.8"
+        strokeLinejoin="round"
+      />
+      <line x1="45" y1="38" x2="115" y2="38" stroke="#10B981" strokeWidth="1.5" strokeDasharray="3 3" />
+      <line x1="45" y1="135" x2="115" y2="135" stroke="#10B981" strokeWidth="1.5" strokeDasharray="3 3" />
+      <line x1="45" y1="38" x2="45" y2="135" stroke="#10B981" strokeWidth="1.5" strokeDasharray="3 3" />
+      <line x1="115" y1="38" x2="115" y2="135" stroke="#10B981" strokeWidth="1.5" strokeDasharray="3 3" />
+      <line x1="68" y1="38" x2="68" y2="135" stroke="#10B981" strokeWidth="1.5" strokeDasharray="3 3" />
+      <line x1="92" y1="38" x2="92" y2="135" stroke="#10B981" strokeWidth="1.5" strokeDasharray="3 3" />
+    </svg>
+  );
+}
+
+export default function TemplateCard({ template, variant = 'minimal' }: TemplateCardProps) {
+  const getSvgPath = (id: string, dbSvg: string) => {
+    const formattedId = id.toUpperCase();
+    if (formattedId === 'D001-H') return '/templates/preview/D001-H.svg';
+    if (formattedId === 'T00012') return '/templates/preview/T00012.svg';
+    if (formattedId === 'T0002') return '/templates/preview/T0002.svg';
+    if (formattedId === 'T0005') return '/templates/preview/T0005.svg';
+    if (formattedId === 'T0006') return '/templates/preview/T0006.svg';
+    return dbSvg && dbSvg.startsWith('public/') ? dbSvg.replace('public/', '/') : dbSvg;
+  };
+
+  const svgPath = getSvgPath(template.id, template.svg);
 
   const [isHovered, setIsHovered] = useState(false);
   const [imgRealSrc, setImgRealSrc] = useState(`/templates/real/${template.id}.png`);
   const [img3dSrc, setImg3dSrc] = useState(`/templates/3d/${template.id}.png`);
+  const [useFallbackSvg, setUseFallbackSvg] = useState(false);
 
   return (
-    <div 
-      className="tc-card hover:shadow-xl transition-shadow duration-300" 
-      style={{ background: '#ffffff', border: '1px solid var(--brand-border)', borderRadius: 'var(--radius-lg)', overflow: 'hidden', height: '100%', display: 'flex', flexDirection: 'column' }}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
+    <Link 
+      to={`/template/${template.id}`}
+      style={{ textDecoration: 'none', color: 'inherit', display: 'flex', flexDirection: 'column', alignItems: 'center', height: '100%' }}
     >
-      <div className="tc-thumb group cursor-pointer" style={{ position: 'relative', aspectRatio: '4/3', background: 'var(--brand-tile-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 'var(--space-4)' }}>
-        {template.pro && (
-          <span style={{ position: 'absolute', top: '12px', insetInlineStart: '12px', background: 'var(--brand-pro)', color: '#fff', fontSize: '11px', fontWeight: 700, padding: '3px 10px', borderRadius: '6px', letterSpacing: '0.02em', zIndex: 10 }}>PRO</span>
-        )}
-        
-        {/* Main Image - Shows when NOT hovered */}
-        <div style={{ opacity: isHovered ? 0 : 1, transition: 'opacity 0.3s ease', position: 'absolute', inset: 'var(--space-4)', width: 'calc(100% - var(--space-4) * 2)', height: 'calc(100% - var(--space-4) * 2)' }}>
-          <img
-            src={imgRealSrc}
-            onError={() => setImgRealSrc(svgPath)} // Fallback to SVG dieline if real image doesn't exist
-            alt={template.title}
-            style={{ width: '100%', height: '100%', objectFit: 'contain' }}
-          />
-        </div>
+      {/* Outer Rounded Container Box (Matching Screenshot Image) */}
+      <div 
+        className="tc-card-box" 
+        style={{ 
+          width: '100%',
+          aspectRatio: '1 / 1', 
+          background: '#ffffff', 
+          border: '1px solid #b0b0b0', 
+          borderRadius: '20px', 
+          overflow: 'hidden', 
+          display: 'flex', 
+          alignItems: 'center', 
+          justifyContent: 'center',
+          position: 'relative',
+          padding: '24px',
+          boxSizing: 'border-box',
+          transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)'
+        }}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+      >
+        {useFallbackSvg ? (
+          <FallbackDielineSvg />
+        ) : (
+          <>
+            {/* Main Image (2D Dieline) */}
+            <div style={{ opacity: isHovered ? 0 : 1, transition: 'all 0.3s ease', position: 'absolute', inset: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <img
+                src={imgRealSrc}
+                onError={() => {
+                  if (imgRealSrc !== svgPath && svgPath) {
+                    setImgRealSrc(svgPath);
+                  } else {
+                    setUseFallbackSvg(true);
+                  }
+                }}
+                alt={template.title}
+                style={{ width: '100%', height: '100%', objectFit: 'contain', transition: 'transform 0.4s ease' }}
+                className="main-img"
+              />
+            </div>
 
-        {/* Hover Image (3D Model or Logo) - Shows when hovered */}
-        <div style={{ opacity: isHovered ? 1 : 0, transition: 'opacity 0.3s ease', position: 'absolute', inset: 'var(--space-4)', width: 'calc(100% - var(--space-4) * 2)', height: 'calc(100% - var(--space-4) * 2)' }}>
-          <img
-            src={img3dSrc}
-            onError={() => setImg3dSrc('/brand/printera-logo-trans.png')}
-            alt={`معاينة ثلاثية الأبعاد — ${template.title}`}
-            style={{ width: '100%', height: '100%', objectFit: 'contain' }}
-          />
-        </div>
+            {/* Hover Image (3D Model) */}
+            <div style={{ opacity: isHovered ? 1 : 0, transition: 'all 0.3s ease', position: 'absolute', inset: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <img
+                src={img3dSrc}
+                onError={() => setImg3dSrc('/brand/printera-logo-trans.png')}
+                alt={`معاينة ثلاثية الأبعاد — ${template.title}`}
+                style={{ width: '100%', height: '100%', objectFit: 'contain', transition: 'transform 0.4s ease' }}
+                className="hover-img"
+              />
+            </div>
+          </>
+        )}
       </div>
-      <div style={{ padding: 'var(--space-4)', display: 'flex', flexDirection: 'column', gap: '6px', flex: 1 }}>
-        <span style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '0.04em', color: 'var(--brand-gold)', textTransform: 'uppercase' }}>
-          {template.categoryLabel}
-        </span>
-        <h4 style={{ margin: 0, minHeight: '1.2em', fontSize: '17px', fontWeight: 700, color: 'var(--brand-navy)' }}>
-          {template.title}
-        </h4>
-        <p style={{ margin: 0, minHeight: '2.6em', fontSize: '13.5px', color: 'var(--brand-muted-2)', lineHeight: '1.5', flex: 1 }}>
-          {template.desc}
-        </p>
-        <div style={{ height: '1px', background: 'var(--brand-border)', margin: '6px 0' }}></div>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 'var(--space-2)' }}>
-          <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-            {template.tags.map((tag, idx) => (
-              <span key={idx} style={{ display: 'flex', alignItems: 'center', gap: '4px', background: 'var(--brand-tag-bg)', color: 'var(--brand-muted)', fontSize: '11px', padding: '3px 9px', borderRadius: '6px' }}>
-                <i className="ph ph-tag" style={{ fontSize: '10px' }}></i>
-                {tag}
-              </span>
-            ))}
-          </div>
-          <Link to={`/template/${template.id}`} className="tc-design-link" style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '13px', fontWeight: 700, color: 'var(--brand-navy)', textDecoration: 'none' }}>
-            تصميم <i className="ph ph-arrow-left"></i>
-          </Link>
-        </div>
-      </div>
-    </div>
+
+      {/* Title placed OUTSIDE and BELOW the rounded container box */}
+      <span 
+        style={{ 
+          fontSize: '15px', 
+          fontWeight: 600, 
+          color: '#334155', 
+          marginTop: '14px', 
+          textAlign: 'center',
+          lineHeight: '1.4' 
+        }}
+      >
+        {template.title || 'علبة قابلة للطي'}
+      </span>
+
+      <style>{`
+        .tc-card-box:hover {
+          transform: translateY(-4px);
+          border-color: #007BFF !important;
+          box-shadow: 0 12px 28px rgba(0, 123, 255, 0.1) !important;
+        }
+        .tc-card-box:hover .main-img, .tc-card-box:hover .hover-img {
+          transform: scale(1.05);
+        }
+      `}</style>
+    </Link>
   );
 }
+

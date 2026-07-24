@@ -105,7 +105,7 @@ export default function PrintTemplate() {
       
       {/* ===== Breadcrumbs ===== */}
       <div className="print:hidden" style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: '#94a3b8', marginBottom: '14px' }}>
-        <Link to="/templates" style={{ color: '#94a3b8', textDecoration: 'none' }}>مكتبة القوالب</Link>
+        <Link to="/templates" style={{ color: '#94a3b8', textDecoration: 'none' }}>القوالب</Link>
         <i className="ph ph-caret-left" style={{ fontSize: '10px' }}></i>
         <span style={{ color: '#5a4c3c' }}>{meta.categoryLabel}</span>
         <i className="ph ph-caret-left" style={{ fontSize: '10px' }}></i>

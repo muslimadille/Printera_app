@@ -96,9 +96,14 @@ const D001Preview = ({ params, fitContainer = false, showDebug = true, showDimen
 
       ) : (
         <div
-          className="border rounded-lg p-3 bg-white overflow-auto flex justify-center"
-          dangerouslySetInnerHTML={{ __html: geo.svg }}
-        />
+          className="border rounded-lg p-3 bg-white flex justify-center items-center w-full h-full min-h-[400px] overflow-hidden"
+          style={{ height: '100%', minHeight: '400px' }}
+        >
+          <div 
+            style={{ width: '100%', height: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center' }} 
+            dangerouslySetInnerHTML={{ __html: geo.svg }} 
+          />
+        </div>
       )}
     </div>
   );
@@ -288,7 +293,7 @@ const D001Calculator = () => {
         previewArea={
           previewMode === 'template' ? (
             <div className="w-full h-full flex flex-col">
-              <D001Preview params={params} fitContainer showDebug={false} showDimensions={showDimensions} dimUnit={dimUnit} />
+              <D001Preview params={params} fitContainer={false} showDebug={false} showDimensions={showDimensions} dimUnit={dimUnit} />
             </div>
           ) : previewMode === 'sheet' ? (
             <D001SheetNestingPreview params={params} nesting={nesting} result={nestingResult} />

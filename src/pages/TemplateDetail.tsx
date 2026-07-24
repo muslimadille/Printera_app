@@ -103,7 +103,7 @@ export default function TemplateDetail() {
       {/* ===== Breadcrumb + title ===== */}
       <div style={{ padding: 'var(--space-6) var(--space-8) 0' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: 'var(--brand-muted-2)', marginBottom: 'var(--space-3)' }}>
-          <Link to="/templates" style={{ color: 'var(--brand-muted-2)', textDecoration: 'none' }} className="hover:text-brand-navy transition-colors">مكتبة القوالب</Link>
+          <Link to="/templates" style={{ color: 'var(--brand-muted-2)', textDecoration: 'none' }} className="hover:text-brand-navy transition-colors">القوالب</Link>
           <i className="ph ph-caret-left" style={{ fontSize: '11px' }}></i>
           {template && <span style={{ color: 'var(--brand-gold)' }}>{template.category_label || template.categoryLabel}</span>}
           {template && <i className="ph ph-caret-left" style={{ fontSize: '11px' }}></i>}

@@ -216,10 +216,13 @@ export function InteractiveSvgCanvas({ segments: initialSegments = [], svgWidth 
   const handleZoomOut = () => setZoom(z => Math.min(10, z * 1.25));
   const handleResetZoom = () => { setZoom(1); setPan({x:0, y:0}); };
 
-  const vbWidth = (svgWidth + 40) * zoom;
-  const vbHeight = (svgHeight + 40) * zoom;
-  const vbX = -20 + pan.x + (svgWidth + 40) * (1 - zoom) / 2;
-  const vbY = -20 + pan.y + (svgHeight + 40) * (1 - zoom) / 2;
+  const padX = Math.max(40, svgWidth * 0.25);
+  const padY = Math.max(40, svgHeight * 0.25);
+
+  const vbWidth = (svgWidth + padX * 2) * zoom;
+  const vbHeight = (svgHeight + padY * 2) * zoom;
+  const vbX = -padX + pan.x + (svgWidth + padX * 2) * (1 - zoom) / 2;
+  const vbY = -padY + pan.y + (svgHeight + padY * 2) * (1 - zoom) / 2;
 
   return (
     <div className="relative w-full h-full flex flex-col group">
