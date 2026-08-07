@@ -65,9 +65,12 @@ class EmployeeController extends Controller
         return response()->json(['success' => true]);
     }
 
+    // GET /employees/{id}/quotes-count  [BE-034]
     public function quotesCount(Request $request, string $id): JsonResponse
     {
-        return $this->todo('BE-034'); // GET /employees/{id}/quotes-count
+        $employee = $this->employees->findOwnEmployee($this->currentUser($request), $id);
+
+        return response()->json(['count' => $this->employees->quoteCount($employee)]);
     }
 
     public function getTabPermissions(Request $request, string $id): JsonResponse

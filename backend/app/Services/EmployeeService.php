@@ -149,6 +149,17 @@ class EmployeeService
         return $employee->refresh();
     }
 
+    // ── BE-034 · quote count ─────────────────────────────────────────────────
+
+    /**
+     * How many saved quotes the employee owns — index.ts:607-616. The SPA calls this
+     * before offering the delete dialog, to decide whether to ask about a handover.
+     */
+    public function quoteCount(AppUser $employee): int
+    {
+        return $employee->quotes()->count();
+    }
+
     // ── BE-033 · delete (+ optional quote transfer) ──────────────────────────
 
     /**
