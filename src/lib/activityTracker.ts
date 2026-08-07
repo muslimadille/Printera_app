@@ -1,9 +1,9 @@
 // Lightweight activity tracker.
 // Buffers events client-side and flushes them in batches every 30s
-// (and immediately on page hide / unload) to a single Edge Function call.
+// (and immediately on page hide / unload) in a single request.
 // Designed to be near-zero overhead — never blocks user actions.
 
-import { supabase } from '@/integrations/supabase/client';
+import { API_BASE_URL } from '@/lib/apiClient';
 
 export type ActivityAction =
   | 'tab_open'
@@ -26,7 +26,7 @@ interface QueuedEvent {
   occurred_at: string;
 }
 
-const FUNCTION_URL = `${(supabase as any).supabaseUrl}/functions/v1/manage-users`;
+const BATCH_URL = `${API_BASE_URL}/activity/batch`;
 const FLUSH_INTERVAL_MS = 30_000;
 const MAX_QUEUE = 200;
 
@@ -76,8 +76,12 @@ export function trackActivity(
 export async function flushNow(useBeacon = false): Promise<void> {
   if (!sessionToken || queue.length === 0) return;
   const batch = queue.splice(0, queue.length);
+
+  // The token travels in the BODY, not an Authorization header, because sendBeacon cannot
+  // set headers. /activity/batch is the one authenticated-in-spirit route outside the
+  // session middleware for exactly that reason, and it answers 200 even for a dead
+  // session so a flush on unload can never surface an error. See BE-025.
   const body = JSON.stringify({
-    action: 'log_activity_batch',
     session_token: sessionToken,
     events: batch,
   });
@@ -86,15 +90,12 @@ export async function flushNow(useBeacon = false): Promise<void> {
     if (useBeacon && navigator.sendBeacon) {
       // sendBeacon with a Blob preserves Content-Type and survives unload.
       const blob = new Blob([body], { type: 'application/json' });
-      const ok = navigator.sendBeacon(FUNCTION_URL, blob);
+      const ok = navigator.sendBeacon(BATCH_URL, blob);
       if (ok) return;
     }
-    await fetch(FUNCTION_URL, {
+    await fetch(BATCH_URL, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'apikey': (supabase as any).supabaseKey,
-      },
+      headers: { 'Content-Type': 'application/json' },
       body,
       keepalive: true,
     });
