@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers\Api\V1\Admin;
 
-use App\Http\Controllers\Concerns\NotImplemented;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\StoreUserRequest;
+use App\Http\Requests\Admin\UpdateUserRequest;
 use App\Http\Resources\AppUserResource;
 use App\Models\AppUser;
 use App\Services\AdminUserService;
@@ -14,8 +14,6 @@ use Illuminate\Http\Request;
 /** Admin: account CRUD. Ports list/create/update/delete. [BE-041/042] */
 class UserAdminController extends Controller
 {
-    use NotImplemented;
-
     public function __construct(private readonly AdminUserService $users) {}
 
     // GET /admin/users  [BE-041]
@@ -36,13 +34,19 @@ class UserAdminController extends Controller
         return response()->json(['user' => AppUserResource::make($user)->resolve()]);
     }
 
-    public function update(Request $request, string $id): JsonResponse
+    // PATCH /admin/users/{id}  [BE-042]
+    public function update(UpdateUserRequest $request, string $id): JsonResponse
     {
-        return $this->todo('BE-042'); // PATCH /admin/users/{id}
+        $user = $this->users->update($this->users->findOrFail($id), $request->changes());
+
+        return response()->json(['user' => AppUserResource::make($user)->resolve()]);
     }
 
+    // DELETE /admin/users/{id}  [BE-042]
     public function destroy(Request $request, string $id): JsonResponse
     {
-        return $this->todo('BE-042'); // DELETE /admin/users/{id}
+        $this->users->delete($id);
+
+        return response()->json(['success' => true]);
     }
 }
