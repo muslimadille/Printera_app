@@ -5,7 +5,10 @@ namespace App\Http\Requests\Employees;
 use Illuminate\Foundation\Http\FormRequest;
 
 /**
- * PUT /employees/{id}/tab-permissions.
+ * PUT /employees/{id}/tab-permissions [BE-035] and PUT /admin/users/{id}/tab-permissions
+ * [BE-043]. The request body is identical for both — only the gate in front differs — so
+ * the two controllers share this one class rather than keeping a duplicate under
+ * Requests/Admin.
  *
  * `present` rather than `required`: Laravel treats an empty array as absent for
  * `required`, and `{ "permissions": [] }` is a legitimate no-op the SPA can send.
