@@ -17,9 +17,14 @@ class EmployeeController extends Controller
 
     public function __construct(private readonly EmployeeService $employees) {}
 
+    // GET /employees  [BE-031]
     public function index(Request $request): JsonResponse
     {
-        return $this->todo('BE-031'); // GET /employees
+        return response()->json([
+            'employees' => AppUserResource::collection(
+                $this->employees->listFor($this->currentUser($request))
+            )->resolve(),
+        ]);
     }
 
     // POST /employees  [BE-030]

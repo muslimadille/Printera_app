@@ -6,6 +6,7 @@ use App\Exceptions\ApiException;
 use App\Models\AppUser;
 use App\Models\UserTabPermission;
 use App\Support\Messages;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -46,6 +47,19 @@ class EmployeeService
         }
 
         return $employee;
+    }
+
+    // ── BE-031 · list ────────────────────────────────────────────────────────
+
+    /**
+     * The caller's own employees, oldest first — index.ts:580-583. Ordering is part of the
+     * contract: the SPA's employee table renders the array as-is.
+     *
+     * @return Collection<int,AppUser>
+     */
+    public function listFor(AppUser $owner): Collection
+    {
+        return $owner->employees()->orderBy('created_at')->get();
     }
 
     // ── BE-030 · create ──────────────────────────────────────────────────────
