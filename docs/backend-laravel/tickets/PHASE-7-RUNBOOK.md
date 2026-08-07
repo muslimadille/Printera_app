@@ -145,12 +145,25 @@ Then, by hand — the report prints this list too:
 
 ## 6. Rollback
 
-Nothing is destructive to Supabase — every command reads from it. To roll back:
+Nothing here is destructive to Supabase — every command only reads from it.
 
-1. Point the frontend's `VITE_API_BASE_URL` back at Supabase (`@supabase/supabase-js` and
-   `src/integrations/supabase/` are still installed until Phase 8).
+> **Correction to an earlier note.** The Phase 6 hand-off said rollback was "an env swap:
+> point `VITE_API_BASE_URL` back at Supabase". **That is wrong and would not work.**
+> `apiClient` builds REST paths (`POST /auth/login`, `GET /quotes`); the Supabase backend
+> is a *single* function taking a `{ action, … }` envelope. No base URL makes one speak the
+> other. The package still being installed does not help either — nothing imports it.
+
+The actual rollback:
+
+1. **Redeploy the last pre-Phase-6 frontend build** (tag or artifact — keep one before
+   cutover; that build still contains the Supabase client and calls `manage-users`).
+   A `git revert` of the FE-060..064 commits achieves the same if no artifact was kept.
 2. If OPS-072 ran, restore `quote_data` from the `--backup` JSON it required.
 3. Keep Supabase **live, read-only if possible**, until the Phase 8 safety window elapses.
+
+Because rollback depends on that artifact rather than on the repo's current state, **tag the
+release before cutover** — e.g. `git tag pre-laravel-cutover` — and note the tag in the
+OPS-073 report.
 
 ---
 
