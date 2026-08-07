@@ -77,34 +77,75 @@ class EmployeeService
         }
     }
 
+    /**
+     * Run a write that may collide with the `app_users.username` unique index, and
+     * translate the collision into the reference's Arabic 400. index.ts:565 sniffs the
+     * driver message for "unique"; Laravel already classifies it, so the sniff is
+     * unnecessary and the Arabic string is identical.
+     *
+     * The transaction is not about atomicity — it is what makes the catch safe on
+     * PostgreSQL. A failed statement aborts the enclosing transaction ("current
+     * transaction is aborted, commands ignored until end of transaction block"), so
+     * without a savepoint to roll back to, every later query on that connection fails as
+     * well and the caught 400 never gets a chance to be returned cleanly. SQLite has no
+     * such rule, which is why this is invisible on the default suite.
+     *
+     * @template T
+     *
+     * @param  callable():T  $write
+     * @return T
+     */
+    private function rejectingDuplicateUsername(callable $write): mixed
+    {
+        try {
+            return DB::transaction($write);
+        } catch (UniqueConstraintViolationException) {
+            throw ApiException::badRequest(Messages::USERNAME_EXISTS);
+        }
+    }
+
     public function create(AppUser $owner, string $username, string $password, int $maxDevices): AppUser
     {
         $this->assertUnderEmployeeCap($owner);
 
-        try {
-            // The reference is not transactional: a failure while copying tab permissions
-            // leaves an employee with none. Wrapping both writes keeps the failure atomic
-            // without changing anything observable on the success path.
-            return DB::transaction(function () use ($owner, $username, $password, $maxDevices) {
-                $employee = AppUser::query()->create([
-                    'username' => $username,
-                    'password_hash' => Hash::make($password),
-                    'is_active' => true,
-                    'is_admin' => false,
-                    'parent_user_id' => $owner->id,
-                    'max_devices' => $maxDevices,
-                    'max_employees' => 0,
-                ]);
+        // The reference is not transactional: a failure while copying tab permissions
+        // leaves an employee with none. Grouping both writes keeps that atomic without
+        // changing anything observable on the success path.
+        return $this->rejectingDuplicateUsername(function () use ($owner, $username, $password, $maxDevices) {
+            $employee = AppUser::query()->create([
+                'username' => $username,
+                'password_hash' => Hash::make($password),
+                'is_active' => true,
+                'is_admin' => false,
+                'parent_user_id' => $owner->id,
+                'max_devices' => $maxDevices,
+                'max_employees' => 0,
+            ]);
 
-                $this->inheritTabPermissions($owner, $employee);
+            $this->inheritTabPermissions($owner, $employee);
 
-                return $employee;
-            });
-        } catch (UniqueConstraintViolationException) {
-            // index.ts:565 sniffs the driver message for "unique". Laravel already
-            // classifies it, so the sniff is unnecessary; the Arabic string is identical.
-            throw ApiException::badRequest(Messages::USERNAME_EXISTS);
+            return $employee;
+        });
+    }
+
+    // ── BE-032 · update ──────────────────────────────────────────────────────
+
+    /**
+     * Apply only the keys the request actually carried — index.ts:594-601. The caller has
+     * already been through findOwnEmployee(), so ownership is settled before we get here.
+     *
+     * @param  array<string,mixed>  $changes  may contain a raw `password`, hashed here
+     */
+    public function update(AppUser $employee, array $changes): AppUser
+    {
+        if (array_key_exists('password', $changes)) {
+            $changes['password_hash'] = Hash::make((string) $changes['password']);
+            unset($changes['password']);
         }
+
+        $this->rejectingDuplicateUsername(fn () => $employee->fill($changes)->save());
+
+        return $employee->refresh();
     }
 
     /**

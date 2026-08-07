@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\V1;
 use App\Http\Controllers\Concerns\NotImplemented;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Employees\StoreEmployeeRequest;
+use App\Http\Requests\Employees\UpdateEmployeeRequest;
 use App\Http\Resources\AppUserResource;
 use App\Services\EmployeeService;
 use Illuminate\Http\JsonResponse;
@@ -40,9 +41,13 @@ class EmployeeController extends Controller
         return response()->json(['employee' => AppUserResource::make($employee)->resolve()]);
     }
 
-    public function update(Request $request, string $id): JsonResponse
+    // PATCH /employees/{id}  [BE-032]
+    public function update(UpdateEmployeeRequest $request, string $id): JsonResponse
     {
-        return $this->todo('BE-032'); // PATCH /employees/{id}
+        $employee = $this->employees->findOwnEmployee($this->currentUser($request), $id);
+        $employee = $this->employees->update($employee, $request->changes());
+
+        return response()->json(['employee' => AppUserResource::make($employee)->resolve()]);
     }
 
     public function destroy(Request $request, string $id): JsonResponse
