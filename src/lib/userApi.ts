@@ -1,53 +1,13 @@
-import { supabase } from '@/integrations/supabase/client';
+// Client → backend calls. Every exported signature here is frozen: components pass a
+// `sessionToken` (and the admin panel an admin username/password) and this module decides
+// how that becomes a request. Phase 6 swapped the transport underneath — the single
+// `POST manage-users { action, ... }` envelope became REST under /api/v1 — without any
+// component changing.
+//
+// Action → endpoint mapping: docs/backend-laravel/03-API-SPECIFICATION.md §2.
+
+import { clearToken, request, requestSilent, setToken } from '@/lib/apiClient';
 import { trackActivity } from '@/lib/activityTracker';
-
-const FUNCTION_URL = `${(supabase as any).supabaseUrl}/functions/v1/manage-users`;
-
-function buildApiError(data: any, status?: number, fallbackMessage = 'حدث خطأ') {
-  const err: any = new Error(data?.error || fallbackMessage);
-  if (data?.device_limit_reached) {
-    err.device_limit_reached = true;
-    err.active_sessions = data.active_sessions || [];
-    err.max_devices = data.max_devices || 1;
-  }
-  if (status === 401 || data?.session_expired) {
-    err.session_expired = true;
-    err.silent = true;
-    try { window.dispatchEvent(new Event('printCalc:sessionExpired')); } catch {}
-  }
-  return err;
-}
-
-async function parseApiResponse(res: Response) {
-  let data: any = {};
-  try {
-    data = await res.json();
-  } catch {
-    data = {};
-  }
-
-  // Treat session_expired flag as a business error so the UI can cleanly
-  // force-logout without a runtime error overlay (per project convention:
-  // edge functions return 200 OK with JSON state for business errors).
-  if (!res.ok || data.device_limit_reached || data.session_expired || data.error) {
-    throw buildApiError(data, data.session_expired ? 401 : res.status);
-  }
-
-  return data;
-}
-
-async function callApi(body: Record<string, unknown>) {
-  const res = await fetch(FUNCTION_URL, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'apikey': (supabase as any).supabaseKey,
-    },
-    body: JSON.stringify(body),
-  });
-
-  return parseApiResponse(res);
-}
 
 export interface AppUser {
   id: string;
@@ -103,55 +63,69 @@ function getDeviceId(): string {
   }
 }
 
+// ── Auth ──────────────────────────────────────────────────────────────────────
+
 export async function loginUser(username: string, password: string, deviceInfo?: string): Promise<LoginResult> {
-  const res = await fetch(FUNCTION_URL, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'apikey': (supabase as any).supabaseKey,
-    },
-    body: JSON.stringify({ action: 'login', username, password, device_info: deviceInfo, device_id: getDeviceId() }),
+  const data = await request('POST', '/auth/login', {
+    auth: false,
+    body: { username, password, device_info: deviceInfo, device_id: getDeviceId() },
   });
 
-  return parseApiResponse(res);
+  // The bearer for every later call. Components keep their own copy in React state and
+  // localStorage; this is the one the client sends.
+  if (data?.session_token) setToken(data.session_token);
+
+  return data;
 }
 
 export async function forceLogin(username: string, password: string, terminateSessionIds: string[], deviceInfo?: string): Promise<LoginResult> {
-  return callApi({ action: 'force_login', username, password, terminate_session_ids: terminateSessionIds, device_info: deviceInfo, device_id: getDeviceId() });
+  const data = await request('POST', '/auth/force-login', {
+    auth: false,
+    body: {
+      username,
+      password,
+      terminate_session_ids: terminateSessionIds,
+      device_info: deviceInfo,
+      device_id: getDeviceId(),
+    },
+  });
+
+  if (data?.session_token) setToken(data.session_token);
+
+  return data;
 }
 
 export async function changePassword(username: string, oldPassword: string, newPassword: string) {
-  return callApi({ action: 'change_password', username, old_password: oldPassword, new_password: newPassword });
+  return request('POST', '/auth/change-password', {
+    auth: false,
+    body: { username, old_password: oldPassword, new_password: newPassword },
+  });
 }
 
 export async function verifySession(sessionToken: string) {
   // Silent verify — never throws. Returns { expired: true } when the session
   // is no longer valid so the UI can cleanly force-logout.
-  try {
-    const res = await fetch(FUNCTION_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'apikey': (supabase as any).supabaseKey,
-      },
-      body: JSON.stringify({ action: 'verify_session', session_token: sessionToken }),
-    });
-    let data: any = {};
-    try { data = await res.json(); } catch {}
-    if (res.status === 401 || data?.session_expired) return { expired: true, error: data?.error };
-    if (!res.ok) return { network_error: true, error: data?.error };
-    return data;
-  } catch (e: any) {
-    return { network_error: true, error: e?.message };
-  }
+  return requestSilent('GET', '/auth/me', { token: sessionToken });
 }
 
 export async function logoutSession(sessionToken: string) {
-  return callApi({ action: 'logout', session_token: sessionToken });
+  try {
+    return await request('POST', '/auth/logout', { token: sessionToken });
+  } finally {
+    // Even if the round trip fails, this browser is done with the token.
+    clearToken();
+  }
 }
 
+// ── Admin: accounts ───────────────────────────────────────────────────────────
+//
+// The admin functions still take (adminUsername, adminPassword, …) so the admin panel
+// compiles untouched, but the password is now IGNORED: /admin/* is gated by the logged-in
+// admin's own JWT (BE-040), which replaced the old verifyAdmin-per-request pattern. The
+// arguments are kept only as a signature contract and are removed in Phase 8.
+
 export async function listUsers(adminUsername: string, adminPassword: string): Promise<AppUser[]> {
-  const data = await callApi({ action: 'list', admin_username: adminUsername, admin_password: adminPassword });
+  const data = await request('GET', '/admin/users');
   return data.users;
 }
 
@@ -160,48 +134,7 @@ export async function createUser(
   adminPassword: string,
   params: { username: string; password: string; is_admin?: boolean; expires_at?: string | null; max_devices?: number; max_employees?: number }
 ) {
-  return callApi({ action: 'create', admin_username: adminUsername, admin_password: adminPassword, ...params });
-}
-
-// Employee management (by regular user)
-export async function createEmployee(
-  sessionToken: string,
-  params: { username: string; password: string; max_devices?: number }
-) {
-  return callApi({ action: 'create_employee', session_token: sessionToken, ...params });
-}
-
-export async function listEmployees(sessionToken: string): Promise<AppUser[]> {
-  const data = await callApi({ action: 'list_employees', session_token: sessionToken });
-  return data.employees;
-}
-
-export async function updateEmployee(
-  sessionToken: string,
-  params: { user_id: string; username?: string; password?: string; is_active?: boolean; max_devices?: number }
-) {
-  return callApi({ action: 'update_employee', session_token: sessionToken, ...params });
-}
-
-export async function deleteEmployee(sessionToken: string, userId: string, transferTo?: string) {
-  return callApi({ action: 'delete_employee', session_token: sessionToken, user_id: userId, transfer_to: transferTo || undefined });
-}
-
-export async function checkEmployeeQuotes(sessionToken: string, userId: string): Promise<{ count: number }> {
-  return callApi({ action: 'check_employee_quotes', session_token: sessionToken, user_id: userId });
-}
-
-export async function transferQuotes(sessionToken: string, fromUserId: string, toUserId: string) {
-  return callApi({ action: 'transfer_quotes', session_token: sessionToken, from_user_id: fromUserId, to_user_id: toUserId });
-}
-
-export async function getEmployeeTabPermissions(sessionToken: string, userId: string): Promise<TabPermission[]> {
-  const data = await callApi({ action: 'get_employee_tab_permissions', session_token: sessionToken, user_id: userId });
-  return data.permissions;
-}
-
-export async function updateEmployeeTabPermissions(sessionToken: string, userId: string, permissions: TabPermission[]) {
-  return callApi({ action: 'update_employee_tab_permissions', session_token: sessionToken, user_id: userId, permissions });
+  return request('POST', '/admin/users', { body: params });
 }
 
 export async function updateUser(
@@ -209,12 +142,61 @@ export async function updateUser(
   adminPassword: string,
   params: { user_id: string; username?: string; password?: string; is_active?: boolean; is_admin?: boolean; expires_at?: string | null; max_devices?: number; max_employees?: number }
 ) {
-  return callApi({ action: 'update', admin_username: adminUsername, admin_password: adminPassword, ...params });
+  const { user_id, ...changes } = params;
+  return request('PATCH', `/admin/users/${user_id}`, { body: changes });
 }
 
 export async function deleteUser(adminUsername: string, adminPassword: string, userId: string) {
-  return callApi({ action: 'delete', admin_username: adminUsername, admin_password: adminPassword, user_id: userId });
+  return request('DELETE', `/admin/users/${userId}`);
 }
+
+// ── Employee management (by an account owner) ─────────────────────────────────
+
+export async function createEmployee(
+  sessionToken: string,
+  params: { username: string; password: string; max_devices?: number }
+) {
+  return request('POST', '/employees', { token: sessionToken, body: params });
+}
+
+export async function listEmployees(sessionToken: string): Promise<AppUser[]> {
+  const data = await request('GET', '/employees', { token: sessionToken });
+  return data.employees;
+}
+
+export async function updateEmployee(
+  sessionToken: string,
+  params: { user_id: string; username?: string; password?: string; is_active?: boolean; max_devices?: number }
+) {
+  const { user_id, ...changes } = params;
+  return request('PATCH', `/employees/${user_id}`, { token: sessionToken, body: changes });
+}
+
+export async function deleteEmployee(sessionToken: string, userId: string, transferTo?: string) {
+  return request('DELETE', `/employees/${userId}`, {
+    token: sessionToken,
+    query: { transfer_to: transferTo || undefined },
+  });
+}
+
+export async function checkEmployeeQuotes(sessionToken: string, userId: string): Promise<{ count: number }> {
+  return request('GET', `/employees/${userId}/quotes-count`, { token: sessionToken });
+}
+
+export async function getEmployeeTabPermissions(sessionToken: string, userId: string): Promise<TabPermission[]> {
+  const data = await request('GET', `/employees/${userId}/tab-permissions`, { token: sessionToken });
+  return data.permissions;
+}
+
+export async function updateEmployeeTabPermissions(sessionToken: string, userId: string, permissions: TabPermission[]) {
+  return request('PUT', `/employees/${userId}/tab-permissions`, { token: sessionToken, body: { permissions } });
+}
+
+export async function toggleEmployeesViewQuotes(sessionToken: string, enabled: boolean) {
+  return request('POST', '/account/employees-view-quotes', { token: sessionToken, body: { enabled } });
+}
+
+// ── Admin: login logs ─────────────────────────────────────────────────────────
 
 export interface LoginLog {
   id: string;
@@ -225,9 +207,11 @@ export interface LoginLog {
 }
 
 export async function fetchLoginLogs(adminUsername: string, adminPassword: string): Promise<LoginLog[]> {
-  const data = await callApi({ action: 'login_logs', admin_username: adminUsername, admin_password: adminPassword });
+  const data = await request('GET', '/admin/login-logs');
   return data.logs;
 }
+
+// ── Admin: analytics ──────────────────────────────────────────────────────────
 
 export interface SessionEventEntry {
   event_type: string;
@@ -291,81 +275,109 @@ export interface UserAnalytics {
 }
 
 export async function getUserAnalytics(adminUsername: string, adminPassword: string, userId?: string): Promise<UserAnalytics[]> {
-  const data = await callApi({
-    action: 'get_user_analytics',
-    admin_username: adminUsername,
-    admin_password: adminPassword,
-    user_id: userId,
-  });
+  const data = await request('GET', '/admin/analytics', { query: { user_id: userId } });
   return data.analytics || [];
 }
 
-// Tab permissions
+// ── Admin: tab permissions (any user) ─────────────────────────────────────────
+
 export async function getTabPermissions(adminUsername: string, adminPassword: string, userId: string): Promise<TabPermission[]> {
-  const data = await callApi({ action: 'get_tab_permissions', admin_username: adminUsername, admin_password: adminPassword, user_id: userId });
+  const data = await request('GET', `/admin/users/${userId}/tab-permissions`);
   return data.permissions;
 }
 
 export async function updateTabPermissions(adminUsername: string, adminPassword: string, userId: string, permissions: TabPermission[]) {
-  return callApi({ action: 'update_tab_permissions', admin_username: adminUsername, admin_password: adminPassword, user_id: userId, permissions });
+  return request('PUT', `/admin/users/${userId}/tab-permissions`, { body: { permissions } });
 }
 
-// User settings (cloud)
+// ── User settings (cloud) ─────────────────────────────────────────────────────
+
 export async function saveUserSettings(sessionToken: string, userId: string, settings: { key: string; value: any }[]) {
-  return callApi({ action: 'save_settings', session_token: sessionToken, user_id: userId, settings });
+  // `user_id` is echoed back the way the old client did; the server accepts it when it
+  // matches the caller and 403s when it does not (03 §5), so the check still runs.
+  return request('PUT', '/settings', { token: sessionToken, body: { user_id: userId, settings } });
 }
 
 export async function loadUserSettings(sessionToken: string, userId: string): Promise<Record<string, any>> {
-  const data = await callApi({ action: 'load_settings', session_token: sessionToken, user_id: userId });
+  const data = await request('GET', '/settings', { token: sessionToken, query: { user_id: userId } });
   return data.settings;
 }
 
-// Sessions
+// ── Admin: sessions ───────────────────────────────────────────────────────────
+
 export async function getUserSessions(adminUsername: string, adminPassword: string, userId: string) {
-  const data = await callApi({ action: 'get_sessions', admin_username: adminUsername, admin_password: adminPassword, user_id: userId });
+  const data = await request('GET', `/admin/users/${userId}/sessions`);
   return data.sessions;
 }
 
 export async function terminateSession(adminUsername: string, adminPassword: string, sessionId: string) {
-  return callApi({ action: 'terminate_session', admin_username: adminUsername, admin_password: adminPassword, session_id: sessionId });
+  return request('DELETE', `/admin/sessions/${sessionId}`);
 }
 
-// Saved Quotes
+// ── Saved quotes ──────────────────────────────────────────────────────────────
+
 export async function saveQuote(sessionToken: string, params: { title: string; customer_name: string; quote_number: string; source_type: string; quote_data: Record<string, any> }): Promise<SavedQuote> {
-  const data = await callApi({ action: 'save_quote', session_token: sessionToken, ...params });
+  const data = await request('POST', '/quotes', { token: sessionToken, body: params });
   trackActivity('save_quote', params.source_type, { quote_number: params.quote_number, customer: params.customer_name });
   return data.quote;
 }
 
 export async function updateQuote(sessionToken: string, quoteId: string, params: { title?: string; customer_name?: string; quote_number?: string; quote_data?: Record<string, any> }): Promise<SavedQuote> {
-  const data = await callApi({ action: 'update_quote', session_token: sessionToken, quote_id: quoteId, ...params });
+  const data = await request('PATCH', `/quotes/${quoteId}`, { token: sessionToken, body: params });
   trackActivity('update_quote', null, { quote_id: quoteId });
   return data.quote;
 }
 
 export async function deleteQuote(sessionToken: string, quoteId: string) {
-  const r = await callApi({ action: 'delete_quote', session_token: sessionToken, quote_id: quoteId });
+  const r = await request('DELETE', `/quotes/${quoteId}`, { token: sessionToken });
   trackActivity('delete_quote', null, { quote_id: quoteId });
   return r;
 }
 
 export async function listQuotes(sessionToken: string): Promise<{ quotes: SavedQuote[]; related_quotes: SavedQuote[] }> {
-  return callApi({ action: 'list_quotes', session_token: sessionToken });
+  return request('GET', '/quotes', { token: sessionToken });
 }
 
-export async function toggleEmployeesViewQuotes(sessionToken: string, enabled: boolean) {
-  return callApi({ action: 'toggle_employees_view_quotes', session_token: sessionToken, enabled });
+export async function transferQuotes(sessionToken: string, fromUserId: string, toUserId: string) {
+  return request('POST', '/quotes/transfer', {
+    token: sessionToken,
+    body: { from_user_id: fromUserId, to_user_id: toUserId },
+  });
 }
 
-// Storage helpers
+// ── Storage helpers ───────────────────────────────────────────────────────────
+//
+// Only the URL minting goes through here. The browser still PUTs the file to `upload_url`
+// and opens `signed_url` with NO headers — those URLs carry their own signature.
+
 export async function getUploadUrl(sessionToken: string, fileName: string): Promise<{ path: string; upload_url: string; token: string }> {
-  return callApi({ action: 'get_upload_url', session_token: sessionToken, file_name: fileName });
+  return request('POST', '/files/upload-url', { token: sessionToken, body: { file_name: fileName } });
 }
 
 export async function getFileUrl(sessionToken: string, filePath: string): Promise<{ signed_url: string }> {
-  return callApi({ action: 'get_file_url', session_token: sessionToken, file_path: filePath });
+  return request('POST', '/files/download-url', { token: sessionToken, body: { file_path: filePath } });
 }
 
 export async function deleteFile(sessionToken: string, filePath: string) {
-  return callApi({ action: 'delete_file', session_token: sessionToken, file_path: filePath });
+  return request('POST', '/files/delete', { token: sessionToken, body: { file_path: filePath } });
+}
+
+// ── Voice ─────────────────────────────────────────────────────────────────────
+
+export interface VoiceParseResult {
+  fields: Record<string, any>;
+  transcript?: string;
+}
+
+/**
+ * Arabic speech → calculator fields. This used to be a separate, unauthenticated Supabase
+ * function invoked straight from the component; /voice/parse requires a session (BE-051),
+ * so it now goes through the authed client like everything else.
+ */
+export async function parseVoiceInput(
+  transcript: string,
+  calcType: string,
+  paperTypeNames: string[] = [],
+): Promise<VoiceParseResult> {
+  return request('POST', '/voice/parse', { body: { transcript, calcType, paperTypeNames } });
 }
