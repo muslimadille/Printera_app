@@ -66,9 +66,9 @@ class PostgresSchemaTest extends TestCase
         ], $overrides);
     }
 
-    // ── 1 · partial unique index on (user_id, device_id) ─────────────────────
+    // ── 1 · unique index on (user_id, device_id) ─────────────────────────────
 
-    public function test_partial_unique_index_exists_and_is_partial(): void
+    public function test_the_user_device_unique_exists_and_is_no_longer_partial(): void
     {
         $def = DB::selectOne(
             "select indexdef from pg_indexes where schemaname = 'public' and indexname = ?",
@@ -79,38 +79,14 @@ class PostgresSchemaTest extends TestCase
         $this->assertStringContainsString('UNIQUE INDEX', $def->indexdef);
         $this->assertStringContainsString('user_id', $def->indexdef);
         $this->assertStringContainsString('device_id', $def->indexdef);
-        // The WHERE clause is the whole point — without it, NULL device_ids would collide.
-        $this->assertStringContainsString('WHERE (device_id IS NOT NULL)', $def->indexdef);
-    }
 
-    public function test_two_sessions_may_share_a_null_device_id(): void
-    {
-        $user = $this->makeUser();
-
-        DB::table('user_sessions')->insert($this->sessionRow($user, ['device_id' => null]));
-        DB::table('user_sessions')->insert($this->sessionRow($user, ['device_id' => null]));
-
-        $this->assertSame(2, DB::table('user_sessions')->where('user_id', $user->id)->count());
-    }
-
-    public function test_the_same_device_id_cannot_be_registered_twice_for_one_user(): void
-    {
-        $user = $this->makeUser();
-        DB::table('user_sessions')->insert($this->sessionRow($user, ['device_id' => 'dev-shared']));
-
-        $this->expectException(QueryException::class);
-        DB::table('user_sessions')->insert($this->sessionRow($user, ['device_id' => 'dev-shared']));
-    }
-
-    public function test_the_same_device_id_is_fine_across_different_users(): void
-    {
-        $a = $this->makeUser('pg-a');
-        $b = $this->makeUser('pg-b');
-
-        DB::table('user_sessions')->insert($this->sessionRow($a, ['device_id' => 'dev-shared']));
-        DB::table('user_sessions')->insert($this->sessionRow($b, ['device_id' => 'dev-shared']));
-
-        $this->assertSame(2, DB::table('user_sessions')->where('device_id', 'dev-shared')->count());
+        // BE-060 dropped the `WHERE (device_id IS NOT NULL)` clause. It was never
+        // load-bearing — SQL treats NULLs as distinct in a unique index, so a plain one
+        // already allows many NULL-device rows per user — and MySQL cannot express a
+        // partial index at all, which left the production engine with NO constraint.
+        // The behaviour is unchanged and asserted on all three engines in
+        // SchemaSemanticsTest; this pins that the clause is really gone here.
+        $this->assertStringNotContainsString('WHERE', $def->indexdef);
     }
 
     // ── 2 · jsonb columns and their {} defaults ──────────────────────────────
@@ -132,28 +108,27 @@ class PostgresSchemaTest extends TestCase
         }
     }
 
-    public function test_jsonb_defaults_apply_when_the_column_is_omitted(): void
+    public function test_the_json_columns_carry_no_database_default(): void
     {
-        $user = $this->makeUser();
+        // BE-060 removed `DEFAULT '{}'` because MySQL forbids a literal default on a JSON
+        // column, and moved it to the models. Postgres would happily keep the old default,
+        // so this asserts the two engines actually agree — otherwise a raw insert would
+        // store '{}' here and NULL in production, and only one of them would be tested.
+        foreach ([
+            ['saved_quotes', 'quote_data'],
+            ['activity_events', 'details'],
+            ['user_settings', 'setting_value'],
+        ] as [$table, $column]) {
+            $meta = DB::selectOne(
+                'select column_default, is_nullable from information_schema.columns
+                 where table_name = ? and column_name = ?',
+                [$table, $column]
+            );
 
-        // Insert via the query builder so Eloquent casts/attributes cannot supply the
-        // value — this asserts the DATABASE default, which is what 02 §2.5-2.7 specify.
-        $quoteId = (string) Str::uuid();
-        DB::table('saved_quotes')->insert(['id' => $quoteId, 'user_id' => $user->id]);
-
-        $eventId = (string) Str::uuid();
-        DB::table('activity_events')->insert([
-            'id' => $eventId, 'user_id' => $user->id, 'username' => $user->username, 'action' => 'tab_open',
-        ]);
-
-        $settingId = (string) Str::uuid();
-        DB::table('user_settings')->insert([
-            'id' => $settingId, 'user_id' => $user->id, 'setting_key' => 'paperTypes',
-        ]);
-
-        $this->assertSame('{}', DB::table('saved_quotes')->where('id', $quoteId)->value('quote_data'));
-        $this->assertSame('{}', DB::table('activity_events')->where('id', $eventId)->value('details'));
-        $this->assertSame('{}', DB::table('user_settings')->where('id', $settingId)->value('setting_value'));
+            $this->assertNotNull($meta, "{$table}.{$column} not found");
+            $this->assertNull($meta->column_default, "{$table}.{$column} must have no DB default");
+            $this->assertSame('YES', $meta->is_nullable, "{$table}.{$column} must be nullable");
+        }
     }
 
     public function test_jsonb_round_trips_through_the_models(): void

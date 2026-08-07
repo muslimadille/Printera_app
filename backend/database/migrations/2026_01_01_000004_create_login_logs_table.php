@@ -11,9 +11,9 @@ return new class extends Migration
         Schema::create('login_logs', function (Blueprint $table) {
             $table->uuid('id')->primary();
             $table->uuid('user_id');
-            $table->text('username');
+            $table->string('username', 191);              // denormalised copy of app_users.username
             $table->timestampTz('logged_in_at')->useCurrent();
-            $table->text('ip_address')->nullable();
+            $table->string('ip_address', 45)->nullable(); // fits IPv6 + ::ffff: prefix
 
             $table->foreign('user_id')->references('id')->on('app_users')->cascadeOnDelete();
         });

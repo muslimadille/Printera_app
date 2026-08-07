@@ -63,7 +63,22 @@ return [
             'engine' => null,
             'options' => extension_loaded('pdo_mysql') ? array_filter([
                 Mysql::ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
-            ]) : [],
+
+                /*
+                 * Make UPDATE report MATCHED rows, not CHANGED rows.
+                 *
+                 * MySQL's default counts only rows whose values actually differ, so an
+                 * UPDATE that sets a column to the value it already holds returns 0.
+                 * PostgreSQL and SQLite report matched rows either way. That difference
+                 * is observable in the API: POST /quotes/transfer returns
+                 * `transferred: <affected rows>`, so transferring a quote to its current
+                 * owner answered `1` on Postgres and `0` on MySQL for the same request.
+                 *
+                 * Aligning MySQL with the other two keeps every `->update()` return value
+                 * engine-independent. Found by the BE-060 MySQL lane.
+                 */
+                Mysql::ATTR_FOUND_ROWS => true,
+            ], fn ($value) => $value !== null) : [],
         ],
 
         'mariadb' => [

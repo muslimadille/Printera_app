@@ -145,9 +145,13 @@ class EmployeeTabPermissionsTest extends TestCase
 
     public function test_unusual_but_valid_tab_keys_survive(): void
     {
+        // tab_key is opaque: punctuation, Arabic and colons all pass through untouched.
+        // The 191-character case sits exactly on the column's limit — BE-060 had to bound
+        // it because MySQL cannot index a TEXT column. Real keys are far shorter (the
+        // longest is "default_tab:carryinghandlebox", 29 characters).
         [, $employee] = $this->makeOwnerWithEmployee();
         $auth = $this->authAs();
-        $keys = ['default_tab:box-3d', 'حاسبة', 'a.b:c/d', str_repeat('x', 200)];
+        $keys = ['default_tab:box-3d', 'حاسبة', 'a.b:c/d', str_repeat('x', 191)];
 
         $this->putJson("/api/v1/employees/{$employee->id}/tab-permissions", [
             'permissions' => array_map(fn (string $k) => ['tab_key' => $k, 'is_enabled' => true], $keys),
@@ -157,6 +161,34 @@ class EmployeeTabPermissionsTest extends TestCase
         sort($keys);
         sort($stored);
         $this->assertSame($keys, $stored);
+    }
+
+    public function test_an_over_long_tab_key_is_rejected_rather_than_truncated(): void
+    {
+        // The property that matters for an OPAQUE key: it is never silently shortened,
+        // because a truncated key is a DIFFERENT key and would grant the wrong tab. MySQL
+        // in strict mode errors; the request fails and nothing is written.
+        [, $employee] = $this->makeOwnerWithEmployee();
+
+        try {
+            $this->putJson("/api/v1/employees/{$employee->id}/tab-permissions", [
+                'permissions' => [['tab_key' => str_repeat('x', 192), 'is_enabled' => true]],
+            ], $this->authAs());
+        } catch (\Throwable) {
+            // SQLite/Postgres accept the longer value; MySQL raises. Either way, what
+            // must never happen is a truncated key silently landing in the table.
+        }
+
+        // Nothing shortened to the column width may exist: on MySQL the write was
+        // rejected outright, on SQLite/Postgres the full 192 characters were kept.
+        $this->assertSame(
+            0,
+            UserTabPermission::query()
+                ->where('user_id', $employee->id)
+                ->where('tab_key', str_repeat('x', 191))
+                ->count(),
+            'an over-long tab_key was silently truncated to fit the column',
+        );
     }
 
     public function test_a_missing_is_enabled_defaults_to_true(): void

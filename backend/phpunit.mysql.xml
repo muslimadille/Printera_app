@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  BE-060: runs the suite against a real MySQL 8 instance — the PRODUCTION engine.
+
+  The default phpunit.xml uses in-memory SQLite and phpunit.pgsql.xml uses PostgreSQL.
+  Neither catches what MySQL rejects: TEXT columns in an index without a prefix length,
+  a literal DEFAULT on a JSON column, partial indexes, or case-insensitive collation on
+  identity columns. Running the WHOLE suite here is what proves the schema deploys.
+
+  Usage (the docker command to bring up a throwaway instance is in the MysqlSchemaTest
+  class docblock; port 33066 avoids clashing with a locally installed MySQL):
+
+    ./vendor/bin/phpunit -c phpunit.mysql.xml
+
+  Requires MySQL 8.0.16+ — the first release that ENFORCES CHECK constraints rather than
+  parsing and ignoring them. On Windows, pdo_mysql may need loading per command:
+  php -d extension=pdo_mysql ./vendor/bin/phpunit -c phpunit.mysql.xml
+-->
+<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:noNamespaceSchemaLocation="./vendor/phpunit/phpunit/phpunit.xsd"
+         bootstrap="vendor/autoload.php"
+         colors="true">
+    <testsuites>
+        <testsuite name="Unit">
+            <directory>tests/Unit</directory>
+        </testsuite>
+        <testsuite name="Feature">
+            <directory>tests/Feature</directory>
+        </testsuite>
+    </testsuites>
+    <source>
+        <include>
+            <directory>app</directory>
+        </include>
+    </source>
+    <php>
+        <env name="APP_ENV" value="testing" force="true"/>
+        <env name="APP_KEY" value="base64:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=" force="true"/>
+        <env name="APP_MAINTENANCE_DRIVER" value="file" force="true"/>
+        <env name="BCRYPT_ROUNDS" value="4" force="true"/>
+        <env name="CACHE_STORE" value="array" force="true"/>
+        <env name="DB_CONNECTION" value="mysql" force="true"/>
+        <env name="DB_HOST" value="127.0.0.1" force="true"/>
+        <env name="DB_PORT" value="33066" force="true"/>
+        <env name="DB_DATABASE" value="cct_printera_test" force="true"/>
+        <env name="DB_USERNAME" value="root" force="true"/>
+        <env name="DB_PASSWORD" value="rootpw" force="true"/>
+        <env name="MAIL_MAILER" value="array" force="true"/>
+        <env name="QUEUE_CONNECTION" value="sync" force="true"/>
+        <env name="SESSION_DRIVER" value="array" force="true"/>
+        <env name="JWT_SECRET" value="testing-only-secret-please-override-in-real-env-0000000000" force="true"/>
+    </php>
+</phpunit>

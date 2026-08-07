@@ -1,5 +1,6 @@
 <?php
 
+use App\Support\SchemaCollation;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -9,10 +10,21 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('user_tab_permissions', function (Blueprint $table) {
+        $collation = SchemaCollation::identity();
+
+        Schema::create('user_tab_permissions', function (Blueprint $table) use ($collation) {
             $table->uuid('id')->primary();
             $table->uuid('user_id');
-            $table->text('tab_key');
+
+            // Part of the composite unique below → must be VARCHAR on MySQL. 191 is
+            // ample: the longest real key is "default_tab:carryinghandlebox". The
+            // case-sensitive collation keeps this OPAQUE key from being folded — see
+            // SchemaCollation.
+            $tabKey = $table->string('tab_key', 191);
+            if ($collation) {
+                $tabKey->collation($collation);
+            }
+
             $table->boolean('is_enabled')->default(true);
             $table->timestampTz('created_at')->useCurrent();
 

@@ -13,12 +13,12 @@ return new class extends Migration
         Schema::create('session_events', function (Blueprint $table) {
             $table->uuid('id')->primary();
             $table->uuid('user_id');
-            $table->text('username');
-            $table->text('session_token')->nullable();
-            $table->text('device_id')->nullable();
-            $table->text('device_info')->nullable();
-            $table->text('ip_address')->nullable();
-            $table->text('event_type'); // login | logout | heartbeat | auto_logout (CHECK below)
+            $table->string('username', 191);                        // denormalised copy
+            $table->string('session_token', 191)->nullable();       // indexed → VARCHAR
+            $table->string('device_id', 191)->nullable();
+            $table->text('device_info')->nullable();                // free text
+            $table->string('ip_address', 45)->nullable();
+            $table->string('event_type', 32);                       // CHECK added below
             $table->timestampTz('occurred_at')->useCurrent();
 
             $table->index('user_id', 'idx_session_events_user_id');
@@ -26,7 +26,11 @@ return new class extends Migration
             $table->index('session_token', 'idx_session_events_session_token');
         });
 
-        if (Schema::getConnection()->getDriverName() === 'pgsql') {
+        // Enforced on PostgreSQL and on MySQL 8.0.16+, which is the first release where
+        // CHECK is honoured rather than parsed and ignored. SQLite is skipped only
+        // because Laravel cannot ALTER a table to add one; the application writes these
+        // four values and nothing else (SessionService::logEvent).
+        if (in_array(Schema::getConnection()->getDriverName(), ['pgsql', 'mysql'], true)) {
             DB::statement(
                 'ALTER TABLE session_events ADD CONSTRAINT session_events_event_type_check '.
                 "CHECK (event_type IN ('login','logout','heartbeat','auto_logout'))"
