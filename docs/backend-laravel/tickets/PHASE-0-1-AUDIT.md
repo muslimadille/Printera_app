@@ -451,7 +451,11 @@ true affected-row count. The SPA only branches on `success`.
 `employees_can_view_quotes` gates **listing only**. An employee can `PATCH`/`DELETE` the
 owner's quote even when it is hidden from their list, because the reference's
 `getFamilyUserIds` gate does not consult the flag. Faithful port; tests document it rather
-than quietly diverging. Worth a product decision later if it is not intended.
+than quietly diverging.
+
+> **Accepted / won't change — matches Supabase.** Reviewed during Phase 3 planning and
+> settled as a product decision: parity with the reference wins. Do not re-raise; do not
+> "fix" it by teaching `getFamilyUserIds` about the flag.
 
 ### `sometimes|string` on quote PATCH fields (BE-023)
 The text columns are `NOT NULL` and the reference passes an explicit `null` straight to the
@@ -461,6 +465,64 @@ generic Arabic `500`. The client never sends `null` (`JSON.stringify` drops `und
 ### JS falsy-coalescing on quote defaults (BE-021)
 `source_type || 'calculator'` means an **empty string** takes the default. PHP's `??` would
 keep `''`. `QuoteService::orDefault()` reproduces the JS semantics.
+
+---
+
+## 7b. Phase 3 — deliberate deviations worth remembering
+
+### No role middleware in front of `/employees` (BE-030..035)
+Deliberate, and required for parity. The reference blocks non-owners **structurally**: an
+employee is created with `max_employees = 0`, so the create cap fires first, and every
+`{id}` lookup is scoped to `parent_user_id = caller.id`, which an employee can never satisfy
+because it has no children. A `role:account_owner` guard would answer with a *different*
+Arabic string than the reference does. `GET /employees` likewise returns `[]` for an
+employee rather than `403`. Only BE-036 checks a role directly, because its target is the
+caller's own row and there is nothing to scope by.
+
+### Duplicate username maps to the Arabic constant (BE-030 / BE-032)
+`index.ts:565` sniffs the driver message for `"unique"` and otherwise returns
+`error.message` **raw** at `400`. Laravel classifies the violation
+(`UniqueConstraintViolationException`), so the sniff is unnecessary and the Arabic string is
+identical — but non-unique driver errors now surface as the generic `500`
+`"حدث خطأ في الخادم"` instead of echoing PostgreSQL's text to the client.
+
+### Catching a unique violation needs a savepoint under PostgreSQL (BE-032)
+Found while verifying BE-032 on pgsql, not on SQLite. A failed statement aborts the
+enclosing transaction (`SQLSTATE[25P02] current transaction is aborted, commands ignored
+until end of transaction block`), so a `catch` that intends to return a clean `400` instead
+poisons every later query on that connection. `EmployeeService::rejectingDuplicateUsername()`
+wraps the write in a transaction purely to give the catch a savepoint to roll back to.
+SQLite has no such rule, which is why the default suite could never have caught it. Same
+class of driver-divergence as F18.
+
+### Required fields where the reference validated nothing (BE-030 / BE-035 / BE-036)
+`username`+`password` on create, `permissions` on the tab-permission PUT, and `enabled` on
+the view-quotes toggle are now validated, turning a NOT NULL violation / a `TypeError` on
+iterating `undefined` / a silent no-op into the standard `200` `INCOMPLETE_DATA` body. The
+SPA always sends all of them. One consequence worth knowing: for a create request that is
+**both** over cap and malformed, validation now answers first where the reference answered
+with the cap error.
+
+### `transfer_to` may name the employee being deleted (BE-033)
+A reference quirk, ported as-is. The id passes the "is an employee of the caller" check
+because it *is* one, the quotes are moved to themselves, and the cascade then deletes them —
+so asking for a handover to the departing employee silently discards the quotes. The SPA
+never offers that combination. Covered by a test so it stays a decision.
+
+### `transfer_to` is read from both the query string and the body (BE-033)
+`03 §4` specifies `?transfer_to=`; `src/lib/userApi.ts` sends a single JSON envelope.
+Laravel's `input()` resolves against the JSON payload on a JSON request and would miss a
+query value entirely, so `DeleteEmployeeRequest` checks the query first, then the body.
+
+### Deterministic ordering where the reference had none (BE-035)
+`GET /employees/{id}/tab-permissions` now orders by `tab_key`. The reference issues an
+unordered `select`, so no order was ever guaranteed and nothing could have depended on one.
+
+### Transactions around multi-write operations (BE-030 / BE-033)
+Create + inherit-permissions, and transfer-quotes + delete, each run in one transaction. The
+reference issues them unguarded, where a failure between the two steps leaves an employee
+with no permissions, or quotes orphaned on a user that still exists. Nothing observable
+changes on the success path.
 
 ---
 

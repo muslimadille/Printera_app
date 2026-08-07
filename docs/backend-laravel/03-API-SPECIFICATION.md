@@ -191,7 +191,16 @@ user (force re-login). Errors return 200-error with the exact Arabic strings, e.
 
 ## 4. Employees (owner)
 
-All require `role=account_owner` and target ownership `parent_user_id = caller.id`.
+All target the caller's own employees: `parent_user_id = caller.id`, else `403 "غير مصرح"`.
+
+> **There is no `role:account_owner` middleware on these routes, deliberately.** The
+> reference blocks non-owners *structurally* and the port keeps that, because a role guard
+> would answer with a different Arabic string than the SPA expects. An employee is created
+> with `max_employees = 0`, so `POST /employees` fails the cap check; every `{id}` lookup is
+> scoped to `parent_user_id = caller.id`, which an employee can never satisfy since it has
+> no children; and `GET /employees` returns `[]` rather than an error. The single exception
+> is `POST /account/employees-view-quotes`, whose target is the caller's own row — there is
+> nothing to scope by, so it tests `parent_user_id` directly and has its own message.
 
 - **POST /employees** `{ username, password, max_devices? }` → enforce `max_employees` cap
   (`400 { "error":"وصلت للحد الأقصى من الموظفين (N)" }`), create with `parent_user_id=caller`,
@@ -201,11 +210,18 @@ All require `role=account_owner` and target ownership `parent_user_id = caller.i
 - **PATCH /employees/{id}** `{ username?, is_active?, max_devices?, password? }` → ownership
   check then update; `403 "غير مصرح"` if not own employee.
 - **DELETE /employees/{id}?transfer_to=<id>** → if `transfer_to` given, validate it's the
-  caller or another own employee, move that employee's quotes, then delete.
+  caller or another own employee (else `400 "المستخدم المستهدف غير موجود"`), move that
+  employee's quotes, then delete. Without it the FK cascade takes the employee's quotes,
+  sessions, settings and tab permissions with it. Ownership is checked **before** the
+  transfer target, so a foreign `{id}` answers `403`, not `400`. `transfer_to` is accepted
+  in the query string **and** in the JSON body, because the current client sends the latter.
 - **GET /employees/{id}/quotes-count** → `{ "count": N }`.
-- **GET /employees/{id}/tab-permissions** → `{ "permissions":[{tab_key,is_enabled}] }`.
+- **GET /employees/{id}/tab-permissions** → `{ "permissions":[{tab_key,is_enabled}] }`,
+  ordered by `tab_key`. `tab_key` is **opaque** — including the special `default_tab:<key>`
+  row, which round-trips unparsed.
 - **PUT /employees/{id}/tab-permissions** `{ permissions:[{tab_key,is_enabled}] }` → upsert
-  each on `(user_id, tab_key)`; `{ "success": true }`.
+  each on `(user_id, tab_key)`; `{ "success": true }`. Additive: keys not mentioned are left
+  alone, never deleted. A missing `is_enabled` defaults to `true` (the column default).
 - **POST /account/employees-view-quotes** `{ enabled: bool }` → owner-only
   (`403 "غير مصرح - فقط المستخدم الرئيسي"` if employee); updates
   `employees_can_view_quotes`; returns `{ success:true, employees_can_view_quotes }`.
