@@ -4,6 +4,9 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Concerns\NotImplemented;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Quotes\StoreQuoteRequest;
+use App\Http\Resources\QuoteResource;
+use App\Services\QuoteService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -12,14 +15,20 @@ class QuoteController extends Controller
 {
     use NotImplemented;
 
+    public function __construct(private readonly QuoteService $quotes) {}
+
     public function index(Request $request): JsonResponse
     {
         return $this->todo('BE-022'); // GET /quotes → { quotes, related_quotes } (visibility matrix)
     }
 
-    public function store(Request $request): JsonResponse
+    // POST /quotes  [BE-021]
+    public function store(StoreQuoteRequest $request): JsonResponse
     {
-        return $this->todo('BE-021'); // POST /quotes
+        $quote = $this->quotes->create($this->currentUser($request), $request->payload());
+
+        // 200, not 201 — the reference returns 200 and the SPA reads `data.quote`.
+        return response()->json(['quote' => QuoteResource::make($quote)->resolve()]);
     }
 
     public function update(Request $request, string $id): JsonResponse
