@@ -526,6 +526,72 @@ changes on the success path.
 
 ---
 
+## 7c. Phase 4 — deliberate deviations worth remembering
+
+### `EnsureAdmin` reads only the session-resolved caller (BE-040)
+It previously fell back to `auth('api')->user()`, which resolves a caller straight from the
+JWT. Unreachable while the route group is ordered `session.active → role.admin`, but it
+meant a **revoked-yet-unexpired admin token** would have satisfied the admin gate if that
+order ever changed. Now fails closed; a test registers `role.admin` on its own to prove it.
+
+The gate also reads `is_admin` from the row the session layer loaded, **not** from the JWT
+`role` claim — so demoting an admin takes effect on their next request rather than at the
+token's 30-day expiry.
+
+### Unknown `{id}` on admin routes answers Arabic, not PostgREST (BE-041/042/043/044)
+The reference has no existence check anywhere in the admin handlers:
+- `handleUpdate` lets `.single()` fail and returns PostgREST's **English** *"JSON object
+  requested, multiple (or no) rows returned"* at 400;
+- `handleGetTabPermissions` returns `{permissions: []}` for a user that does not exist;
+- `handleUpdateTabPermissions` returns `{success:true}` having written nothing (the loop
+  ignores errors, so the FK violation is swallowed).
+
+All now answer `400 "المستخدم المستهدف غير موجود"` (an existing verbatim constant).
+**`DELETE /admin/users/{id}` and `DELETE /admin/sessions/{id}` deliberately stay
+idempotent**, matching the reference — their postcondition holds whether or not the row
+existed, unlike a read or an update, which have nothing to return.
+
+### An admin can delete its own account (BE-042) · **worth a product decision**
+The reference has no self-delete guard and neither does this port; adding one would be
+inventing product behavior. The cascade takes the caller's own sessions, so the request
+succeeds and the very next one is a `401`. If the last admin does this, nobody can reach
+the admin panel again. Ported and tested as-is — **flagged, not fixed.**
+
+### Terminating a session now writes `auto_logout` (BE-045) · **addition**
+Sanctioned by `04-ADMIN-CONTROL-PANEL-SPEC.md §5` ("optionally log `auto_logout`"); the
+reference writes nothing. Without it, an admin-killed session is indistinguishable in
+analytics from a user who closed their laptop. Attributed to the **session owner**, not the
+admin, and carries the `session_token` so the event closes out the real session summary.
+
+> Related, **not changed** because it is Phase 1 code outside these tickets: force-login's
+> own `auto_logout` (`AuthService`) omits the `session_token`, exactly as the reference does
+> (index.ts:927-935 selects everything *but* the token). Those events therefore land in a
+> synthetic `__nokey_` analytics bucket instead of closing their session.
+
+### `is_active` is always a boolean in analytics (BE-046)
+The reference computes `s.token && …`, which evaluates to **`null`** when the session token
+is null — a JS truthiness artifact that contradicts its own `is_active: boolean` interface
+in `src/lib/userApi.ts`. This port returns a real `false`. Falsy either way to the SPA.
+
+### Analytics quirks reproduced on purpose (BE-046)
+- **Asymmetric grouping of legacy tokenless rows.** `session_events` with no token bucket by
+  the **minute** they occurred in; `activity_events` with no token all share **one**
+  `__nokey_act` bucket (index.ts:1069-1080). Tidying this would silently redraw session
+  boundaries in historical data.
+- **The 20k caps read oldest-first.** `order by occurred_at asc limit 20000` means that past
+  20k events the window shows the **oldest** slice, not the most recent. Kept per `04 §4.5`,
+  which already flags an aggregation table as the eventual fix.
+- The dead `synth++` counter in the reference's grouping loop (immediately overwritten by
+  the minute-bucket key) is simply not ported — it has no observable effect.
+
+### Shared services rather than duplicated handlers (BE-041/043)
+`TabPermissionService` and the `RejectsDuplicateUsernames` trait were extracted out of
+`EmployeeService` so the owner-scoped and admin-scoped endpoints run the *same* code behind
+different gates — the reference duplicates each pair of handlers. Behavior-preserving: the
+114 Phase 3 tests passed unchanged against the extracted code.
+
+---
+
 ## 6. BE-019 — PostgreSQL verification
 
 **Instance:** PostgreSQL **16.11** (Debian, `postgres:16` container, port 55432 to avoid a

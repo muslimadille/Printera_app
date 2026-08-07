@@ -329,10 +329,22 @@ All require `role:admin` (admin JWT). Bodies no longer carry `admin_username`/`a
   → create + seed default tab permissions (primary ON / secondary OFF as in `handleCreate`).
   Duplicate → `400 "اسم المستخدم موجود مسبقاً"`.
 - **PATCH /admin/users/{id}** `{ username?, is_active?, is_admin?, expires_at?, max_devices?, max_employees?, password? }`.
-- **DELETE /admin/users/{id}** → cascade deletes sessions/quotes/settings/permissions/employees.
-- **GET /admin/users/{id}/tab-permissions** / **PUT** `{ permissions:[…] }` (upsert).
-- **GET /admin/users/{id}/sessions** → `{ sessions:[ user_sessions… ] }`.
-- **DELETE /admin/sessions/{sessionId}** → terminate one session.
+  Scalars apply on presence, `password` on truthiness (an empty string is ignored, not
+  hashed). `expires_at: ''` or `null` clears the subscription.
+- **DELETE /admin/users/{id}** → cascade deletes sessions/quotes/settings/permissions/employees
+  — and, through `app_users.parent_user_id`, everything those employees own. Idempotent.
+- **GET /admin/users/{id}/tab-permissions** / **PUT** `{ permissions:[…] }` (upsert on
+  `(user_id, tab_key)`, additive — unmentioned keys are left alone; missing `is_enabled`
+  defaults to `true`). Identical behavior to §4's employee routes, minus the ownership scope.
+
+> **Unknown `{id}`:** every admin route that reads or updates a single user answers
+> `400 "المستخدم المستهدف غير موجود"`. The two DELETEs stay **idempotent** (`200
+> {success:true}`) because their postcondition holds regardless. See PHASE-0-1-AUDIT.md §7c.
+- **GET /admin/users/{id}/sessions** → `{ sessions:[ user_sessions… ] }`, most recently
+  active first.
+- **DELETE /admin/sessions/{sessionId}** → terminate one session. Deleting the row revokes
+  its JWT (the `jti` leaves the allow-list), so the device is logged out on its next
+  request. Writes an `auto_logout` `session_event` attributed to the **session owner**.
 - **GET /admin/login-logs** → `{ logs:[…] }` (latest 100).
 - **GET /admin/analytics?user_id=** → `{ analytics:[ UserAnalytics… ] }` (port
   `handleGetUserAnalytics`: per-user online status, totals, per-session summaries with

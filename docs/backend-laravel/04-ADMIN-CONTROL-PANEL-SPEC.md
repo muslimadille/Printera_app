@@ -103,6 +103,15 @@ Port `handleGetUserAnalytics` exactly. Per user:
 - **Performance tier:** count activities in last 30 days → `active`≥200, `average`≥50, else `low`.
 - **Data window caps:** read at most 20k `session_events` and 20k `activity_events` per
   query (as today). Note: fine at current scale; revisit with an aggregation table if data grows.
+  ⚠ The rows are ordered **oldest-first**, so past 20k events the window shows the *oldest*
+  slice, not the most recent. Ported as-is; this is the concrete symptom the aggregation
+  table would fix.
+- **Legacy tokenless rows** are grouped **asymmetrically**: `session_events` without a
+  `session_token` bucket by the *minute* they occurred in, while `activity_events` without
+  one all share a *single* bucket. Reproduced deliberately — changing it would redraw
+  session boundaries in historical data. See PHASE-0-1-AUDIT.md §7c.
+- **`is_active`** on a session summary is a real boolean. The reference emits `null` for
+  tokenless sessions (`s.token && …`), contradicting its own TypeScript interface.
 
 ---
 
