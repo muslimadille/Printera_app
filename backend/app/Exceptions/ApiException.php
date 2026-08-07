@@ -59,6 +59,20 @@ class ApiException extends RuntimeException
     }
 
     /**
+     * HTTP 400. Used only where the reference itself answers 400 rather than the usual
+     * 200-with-error-body — the employee cap, a duplicate username and a bad
+     * `transfer_to` target (index.ts:548, 566, 655). The SPA handles both the same way
+     * (`parseApiResponse` throws on `!res.ok` as well as on a body carrying `error`), so
+     * this is kept for parity rather than because the status matters to the client.
+     *
+     * @param  array<string,mixed>  $extra
+     */
+    public static function badRequest(string $message, array $extra = []): self
+    {
+        return new self($message, 400, $extra);
+    }
+
+    /**
      * Device-limit business payload (HTTP 200).
      *
      * @param  array<int,array<string,mixed>>  $activeSessions

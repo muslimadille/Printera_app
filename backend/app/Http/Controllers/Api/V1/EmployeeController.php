@@ -4,6 +4,9 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Concerns\NotImplemented;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Employees\StoreEmployeeRequest;
+use App\Http\Resources\AppUserResource;
+use App\Services\EmployeeService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -12,14 +15,24 @@ class EmployeeController extends Controller
 {
     use NotImplemented;
 
+    public function __construct(private readonly EmployeeService $employees) {}
+
     public function index(Request $request): JsonResponse
     {
         return $this->todo('BE-031'); // GET /employees
     }
 
-    public function store(Request $request): JsonResponse
+    // POST /employees  [BE-030]
+    public function store(StoreEmployeeRequest $request): JsonResponse
     {
-        return $this->todo('BE-030'); // POST /employees (cap + inherit tab perms)
+        $employee = $this->employees->create(
+            $this->currentUser($request),
+            $request->username(),
+            $request->password(),
+            $request->maxDevices(),
+        );
+
+        return response()->json(['employee' => AppUserResource::make($employee)->resolve()]);
     }
 
     public function update(Request $request, string $id): JsonResponse
