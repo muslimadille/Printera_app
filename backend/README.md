@@ -58,9 +58,18 @@ and `../docs/backend-laravel/tickets/PHASE-0-1-DETAILED.md`.
 
 ## Tests
 ```bash
-php artisan test            # or ./vendor/bin/phpunit
+php artisan test            # or ./vendor/bin/phpunit   (in-memory SQLite)
 ./vendor/bin/pint --test    # code style (PSR-12)
+
+# Schema behaviors SQLite cannot express (partial unique index, jsonb defaults,
+# the event_type CHECK). Port 55432 avoids clashing with a local Postgres.
+docker run -d --name printera-pg -e POSTGRES_PASSWORD=pw -e POSTGRES_USER=printera \
+  -e POSTGRES_DB=printera -p 55432:5432 postgres:16
+./vendor/bin/phpunit -c phpunit.pgsql.xml
 ```
+> On Windows the Laragon PHP build ships `php_pdo_pgsql.dll` but does not enable it.
+> Either uncomment `extension=pdo_pgsql` in `php.ini`, or prefix the command:
+> `php -d extension=pdo_pgsql ./vendor/bin/phpunit -c phpunit.pgsql.xml`.
 `tests/Feature/AuthTest.php` covers part of the Phase 1 acceptance criteria (login, device
 limit → force login, me/logout revocation, change-password invalidation, SHA-256→bcrypt).
 `tests/Feature/ErrorConventionTest.php` covers BE-003's response shapes.

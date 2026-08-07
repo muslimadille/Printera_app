@@ -116,8 +116,14 @@ saved_quotes, user_settings, user_tab_permissions`.
 - `activity_events`: `details` cast `array`; indexes per spec; `$timestamps=false`.
 - `login_logs`: `$timestamps=false` (`logged_in_at` only).
 
+> **Declare `app_users.id` primary key EXPLICITLY**, not fluently. `$table->uuid('id')->primary()`
+> is appended to the end of Blueprint's command list, which puts it *after* the
+> self-referencing `parent_user_id` FK and makes the migration fail on Postgres with
+> `SQLSTATE[42830] there is no unique constraint matching given keys`. SQLite inlines FKs
+> and hides this. See `PHASE-0-1-AUDIT.md` F18.
+
 **Acceptance**
-- [ ] `php artisan migrate` runs clean on Postgres **and** SQLite (for tests).
+- [x] `php artisan migrate` runs clean on Postgres **and** SQLite (for tests).
 - [ ] Every unique/index constraint from `02` exists (assert via a schema test or `migrate:status` + review).
 - [ ] Models expose the relationships in `02 §3` (`employees()`, `sessions()`, `quotes()`, `settings()`, `tabPermissions()`, `parent()`).
 

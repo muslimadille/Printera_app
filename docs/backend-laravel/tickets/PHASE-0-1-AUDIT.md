@@ -36,7 +36,8 @@ verification).
 | F16 | pre-BE-017 | **Fixed** | `pint` across 14 files |
 | F17 | pre-BE-017 | **Fixed** | `use Throwable;` removed |
 | Test backfill | BE-018 | **Fixed** | See §4 |
-| Postgres | BE-019 | **Verified** | See §6 |
+| **F18** | BE-019 | **Fixed** | `create_app_users_table` failed on Postgres: the fluent `->primary()` is appended *after* the self-referencing FK, so the FK referenced a column with no unique constraint yet. Now declared explicitly. **Found only because BE-019 ran on a real Postgres** |
+| Postgres | BE-019 | **Verified** | Postgres 16.11 — see §6 |
 
 **Design decision recorded (F1):** validation failures return
 `{"error": "البيانات غير مكتملة", "errors": {…}}` at HTTP 200. The Arabic constant is used
@@ -115,7 +116,7 @@ therefore a product-owner decision, not an executor's — flagged, not applied.
 |---|---|---|
 | BE-000 Scaffold + `/api/v1` + health | **Partial** | **F0:** won't install as pinned. `pint --test` fails on 14 files (F16). `.env.example` defaults break on first cache/queue/session write (F3). |
 | BE-001 JWT wiring | **Works** | Proven indirectly — JWTs mint and validate in the passing tests. `config/jwt.php` unpublished, `JWT_SECRET` empty (F14). No test decodes `sub`/`role`/`jti`. |
-| BE-002 Migrations + models | **Done on SQLite** | Matches `02-DATABASE-SCHEMA.md` column-for-column and migrates clean under SQLite. **Postgres unverified** — the actual deployment target. |
+| BE-002 Migrations + models | **Verified on Postgres 16.11** | Matches `02-DATABASE-SCHEMA.md` column-for-column. BE-019 found and fixed **F18**, a migration that failed outright on Postgres while passing on SQLite. |
 | BE-003 Error convention + messages + seeder | **Partial** | **F1 (blocker, confirmed by probe):** validation failures render `500`, violating `03 §1`. Also F2, F4. |
 | BE-010 `EnsureSessionActive` | **Done** | F6 (hardening), F11 (unreachable edge). |
 | BE-011 `POST /auth/login` | **Done** | Faithful port. 4 of 6 acceptance boxes untested (§4). F8 (IP fallback deviation). |
@@ -422,6 +423,68 @@ delete sessions by token. The end state is identical (no session, no crash) and 
 treats 401 and `session_expired` the same way. `test_logging_out_twice_does_not_error`
 documents the actual behavior. **Suggested spec edit:** reword BE-014's acceptance to
 "calling twice does not error — the second call returns `401 session_expired`".
+
+---
+
+## 6. BE-019 — PostgreSQL verification
+
+**Instance:** PostgreSQL **16.11** (Debian, `postgres:16` container, port 55432 to avoid a
+locally installed Postgres on 5432). **Runtime:** PHP 8.5.1 with `pdo_pgsql` loaded
+per-command (`php -d extension=pdo_pgsql …`) — the Laragon build ships the DLL but does not
+enable it, and no global `php.ini` was modified.
+
+**Repeatable from the repo:** `backend/phpunit.pgsql.xml` + `tests/Feature/PostgresSchemaTest.php`
+(15 tests, skipped automatically under any non-pgsql driver).
+
+| Step | Result |
+|---|---|
+| `php artisan migrate:fresh --seed --force` | **FAILED first** — see F18 below. **Passes after the fix**: all 13 migrations + `AdminSeeder` |
+| Full suite on Postgres | **73 tests, 242 assertions, OK** |
+| Full suite on SQLite (unchanged default) | **58 passed, 15 skipped** (the pgsql-only ones) |
+| `pint --test` | clean |
+
+### F18 — `create_app_users_table` was broken on Postgres · **High · found by BE-019**
+`backend/database/migrations/2026_01_01_000001_create_app_users_table.php`
+
+```
+SQLSTATE[42830]: Invalid foreign key: 7 ERROR: there is no unique constraint matching
+given keys for referenced table "app_users"
+```
+
+`Blueprint::addFluentIndexes()` appends a fluent `$table->uuid('id')->primary()` to the
+**end** of the command list, while an explicit `$table->foreign(...)` keeps its position.
+On Postgres both are emitted as separate `ALTER TABLE` statements, so the self-referencing
+FK on `parent_user_id` ran *before* the primary key existed and the table could not be
+created at all. SQLite inlines foreign keys into `CREATE TABLE` and never evaluated the
+ordering, so the entire test suite passed against a schema that could not deploy.
+
+Only `app_users` is affected — every other FK targets an already-created `app_users`. Fixed
+by declaring the key explicitly (`$table->uuid('id'); $table->primary('id');`) before the
+FK, with a comment so it is not "tidied" back into the fluent form.
+
+### What the three pgsql-only behaviors actually do
+
+1. **Partial unique index** `user_sessions_user_device_unique` exists with
+   `WHERE (device_id IS NOT NULL)`. Verified behaviorally: a second row with the same
+   `(user_id, device_id)` is rejected; two rows with `device_id IS NULL` for the same user
+   are allowed; the same `device_id` across *different* users is allowed.
+2. **`jsonb` defaults** apply. `quote_data`, `details`, and `setting_value` are genuinely
+   `jsonb` (asserted against `information_schema`), and inserting via the query builder
+   while omitting them yields `{}` — so `->default('{}')` needed no `DB::raw` cast.
+   **Newly documented:** `jsonb` does **not** preserve object key order (it sorts by key
+   length then bytewise), which SQLite hides by storing JSON text verbatim. Harmless —
+   `quote_data` is opaque and read by key — but no consumer may depend on key order, and
+   `test_jsonb_reorders_object_keys` pins it so a switch to `json` would be noticed.
+3. **`session_events_event_type_check`** exists and enforces: all four documented types
+   insert successfully, an unknown value is rejected.
+
+Also verified on Postgres: every documented table plus the 5 framework tables exist; the
+`user_settings` / `user_tab_permissions` upsert targets are unique; deleting an owner
+cascades to employees and sessions; `username` is unique.
+
+> **Caveat:** run on Postgres **16**. `02-DATABASE-SCHEMA.md` does not pin a major version
+> and the local client is 18.1. Nothing used here is version-sensitive, but if production
+> targets a different major it is worth re-running `phpunit.pgsql.xml` against it.
 
 ---
 
