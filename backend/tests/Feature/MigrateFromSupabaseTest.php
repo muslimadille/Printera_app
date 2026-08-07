@@ -3,110 +3,51 @@
 namespace Tests\Feature;
 
 use App\Console\Commands\MigrateFromSupabase;
+use App\Models\ActivityEvent;
 use App\Models\AppUser;
 use App\Models\SavedQuote;
 use App\Models\UserSession;
 use App\Models\UserSetting;
 use App\Models\UserTabPermission;
 use App\Support\Messages;
+use App\Support\TargetColumns;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Tests\Concerns\ComparesJson;
 use Tests\Concerns\MakesUsers;
+use Tests\Concerns\SeedsSupabaseSource;
 use Tests\TestCase;
 
 /**
- * OPS-070 — the Supabase → Laravel copy.
+ * OPS-070 — the Supabase → Laravel copy, run for real across two databases.
  *
- * The `supabase` connection is pointed at a second database carrying the same schema, and
- * the command is run for real across the two. That exercises the parts a mocked test would
- * miss: the two-pass ordering that keeps the app_users self-FK valid, upsert-based
- * resumability, and JSON columns surviving the crossing.
+ * The source is a fixture carrying the SUPABASE schema (text, jsonb, timestamptz, uuid),
+ * not this app's — see SeedsSupabaseSource. That distinction is the whole ticket: with
+ * both sides built from the same migrations the copy is a no-op, and the first time it met
+ * a real PostgreSQL source it copied **zero rows** into MySQL because Postgres renders
+ * `timestamptz` with an offset that MySQL's parser refuses.
+ *
+ * Point it at the production pairing with SUPABASE_TEST_DRIVER=pgsql (phpunit.mysql.xml
+ * and phpunit.pgsql.xml both do); otherwise a SQLite stand-in keeps `php artisan test`
+ * runnable with no infrastructure.
  */
 class MigrateFromSupabaseTest extends TestCase
 {
-    use ComparesJson, MakesUsers, RefreshDatabase;
-
-    private string $sourcePath = '';
+    use ComparesJson, MakesUsers, RefreshDatabase, SeedsSupabaseSource;
 
     protected function setUp(): void
     {
         parent::setUp();
 
-        // A separate file-backed SQLite database standing in for Supabase. Not :memory:,
-        // because the command opens its own connection and would otherwise see an empty
-        // database. One file per test: Windows keeps the handle open until the connection
-        // is collected, so a shared path can survive its unlink() and leak rows forward.
-        $path = storage_path('framework/testing/supabase-source-'.Str::random(8).'.sqlite');
-        @mkdir(dirname($path), 0777, true);
-        touch($path);
-        $this->sourcePath = $path;
-
-        config([
-            'database.connections.supabase' => [
-                'driver' => 'sqlite',
-                'database' => $path,
-                'prefix' => '',
-                'foreign_key_constraints' => true,
-            ],
-        ]);
-        DB::purge('supabase');
-
-        $this->artisan('migrate', ['--database' => 'supabase', '--force' => true])->run();
+        $this->bootSupabaseSource();
     }
 
     protected function tearDown(): void
     {
-        DB::purge('supabase');
-        @unlink($this->sourcePath);
+        $this->tearDownSupabaseSource();
 
         parent::tearDown();
-    }
-
-    // ── source fixtures ──────────────────────────────────────────────────────
-
-    /** @param array<string,mixed> $attrs */
-    private function sourceUser(array $attrs = []): string
-    {
-        $id = (string) Str::uuid();
-
-        DB::connection('supabase')->table('app_users')->insert(array_merge([
-            'id' => $id,
-            'username' => 'user-'.Str::random(6),
-            'password_hash' => '$2y$04$abcdefghijklmnopqrstuv',
-            'is_active' => true,
-            'is_admin' => false,
-            'expires_at' => null,
-            'max_devices' => 2,
-            'max_employees' => 0,
-            'parent_user_id' => null,
-            'employees_can_view_quotes' => false,
-            'created_at' => now(),
-            'updated_at' => now(),
-        ], $attrs));
-
-        return $id;
-    }
-
-    private function sourceQuote(string $userId, string $title, array $quoteData = []): string
-    {
-        $id = (string) Str::uuid();
-
-        DB::connection('supabase')->table('saved_quotes')->insert([
-            'id' => $id,
-            'user_id' => $userId,
-            'title' => $title,
-            'customer_name' => 'عميل',
-            'quote_number' => 'Q-1',
-            'source_type' => 'calculator',
-            'quote_data' => json_encode($quoteData, JSON_UNESCAPED_UNICODE),
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
-
-        return $id;
     }
 
     // ── the copy ─────────────────────────────────────────────────────────────
@@ -117,27 +58,27 @@ class MigrateFromSupabaseTest extends TestCase
         $employeeId = $this->sourceUser(['username' => 'emp', 'parent_user_id' => $ownerId]);
         $quoteId = $this->sourceQuote($ownerId, 'كتالوج', ['sheets' => 500]);
 
-        DB::connection('supabase')->table('user_settings')->insert([
-            'id' => (string) Str::uuid(), 'user_id' => $ownerId,
-            'setting_key' => 'paperTypes', 'setting_value' => json_encode(['a' => 1]),
-            'created_at' => now(), 'updated_at' => now(),
+        $this->sourceRow('user_settings', [
+            'user_id' => $ownerId, 'setting_key' => 'paperTypes',
+            'setting_value' => json_encode(['a' => 1]),
+            'created_at' => $this->sourceTimestamp(), 'updated_at' => $this->sourceTimestamp(),
         ]);
-        DB::connection('supabase')->table('user_tab_permissions')->insert([
-            'id' => (string) Str::uuid(), 'user_id' => $ownerId,
-            'tab_key' => 'default_tab:diecut5', 'is_enabled' => true, 'created_at' => now(),
+        $this->sourceRow('user_tab_permissions', [
+            'user_id' => $ownerId, 'tab_key' => 'default_tab:diecut5',
+            'is_enabled' => true, 'created_at' => $this->sourceTimestamp(),
         ]);
-        DB::connection('supabase')->table('login_logs')->insert([
-            'id' => (string) Str::uuid(), 'user_id' => $ownerId, 'username' => 'owner',
-            'ip_address' => '203.0.113.7', 'logged_in_at' => now(),
+        $this->sourceRow('login_logs', [
+            'user_id' => $ownerId, 'username' => 'owner',
+            'ip_address' => '203.0.113.7', 'logged_in_at' => $this->sourceTimestamp(),
         ]);
-        DB::connection('supabase')->table('session_events')->insert([
-            'id' => (string) Str::uuid(), 'user_id' => $ownerId, 'username' => 'owner',
-            'session_token' => 'legacy-opaque-token', 'event_type' => 'login', 'occurred_at' => now(),
+        $this->sourceRow('session_events', [
+            'user_id' => $ownerId, 'username' => 'owner', 'session_token' => 'legacy-opaque-token',
+            'event_type' => 'login', 'occurred_at' => $this->sourceTimestamp(),
         ]);
-        DB::connection('supabase')->table('activity_events')->insert([
-            'id' => (string) Str::uuid(), 'user_id' => $ownerId, 'username' => 'owner',
-            'tab_key' => 'itemcost', 'action' => 'calculate',
-            'details' => json_encode(['n' => 1]), 'occurred_at' => now(),
+        $this->sourceRow('activity_events', [
+            'user_id' => $ownerId, 'username' => 'owner', 'tab_key' => 'itemcost',
+            'action' => 'calculate', 'details' => json_encode(['n' => 1]),
+            'occurred_at' => $this->sourceTimestamp(),
         ]);
 
         $this->artisan('app:migrate-from-supabase')->assertSuccessful();
@@ -174,11 +115,10 @@ class MigrateFromSupabaseTest extends TestCase
     public function test_user_sessions_are_never_copied(): void
     {
         $ownerId = $this->sourceUser(['username' => 'owner']);
-        DB::connection('supabase')->table('user_sessions')->insert([
-            'id' => (string) Str::uuid(), 'user_id' => $ownerId,
-            'session_token' => 'opaque-supabase-token-not-a-jwt',
+        $this->sourceRow('user_sessions', [
+            'user_id' => $ownerId, 'session_token' => 'opaque-supabase-token-not-a-jwt',
             'device_id' => 'dev-1', 'device_info' => 'Chrome', 'ip_address' => '203.0.113.1',
-            'last_active_at' => now(), 'created_at' => now(),
+            'last_active_at' => $this->sourceTimestamp(), 'created_at' => $this->sourceTimestamp(),
         ]);
 
         $this->artisan('app:migrate-from-supabase')->assertSuccessful();
@@ -191,6 +131,204 @@ class MigrateFromSupabaseTest extends TestCase
     public function test_naming_user_sessions_explicitly_is_refused(): void
     {
         $this->artisan('app:migrate-from-supabase', ['--table' => 'user_sessions'])->assertFailed();
+    }
+
+    // ── crossing the engine boundary ─────────────────────────────────────────
+
+    public function test_timestamps_keep_their_instant_across_engines(): void
+    {
+        // The failure that made the first cross-engine run copy nothing:
+        //   1292 Incorrect datetime value: '2026-04-05 09:00:00+00' for column 'created_at'
+        // Postgres renders timestamptz with an offset; MySQL will not parse one.
+        $ownerId = $this->sourceUser([
+            'username' => 'owner',
+            'created_at' => $this->sourceTimestamp('2026-04-05 09:00:00'),
+            'updated_at' => $this->sourceTimestamp('2026-04-05 09:00:00'),
+        ]);
+
+        $this->artisan('app:migrate-from-supabase')->assertSuccessful();
+
+        $this->assertSame(
+            '2026-04-05 09:00:00',
+            AppUser::query()->findOrFail($ownerId)->created_at->utc()->format('Y-m-d H:i:s'),
+        );
+    }
+
+    public function test_a_non_utc_offset_is_converted_rather_than_dropped(): void
+    {
+        // Whatever TimeZone the source session happens to use, the offset carries the
+        // real instant. Reading it and converting is what makes the copy independent of
+        // that setting — dropping it would move the row by hours.
+        $ownerId = $this->sourceUser([
+            'username' => 'cairo',
+            'created_at' => '2026-04-05 11:00:00+02',
+            'updated_at' => '2026-04-05 11:00:00+02',
+        ]);
+
+        $this->artisan('app:migrate-from-supabase')->assertSuccessful();
+
+        $this->assertSame(
+            '2026-04-05 09:00:00',
+            AppUser::query()->findOrFail($ownerId)->created_at->utc()->format('Y-m-d H:i:s'),
+        );
+    }
+
+    public function test_sub_second_precision_is_floored_never_rounded(): void
+    {
+        // Every timestamp column in this schema is precision 0 on all three engines, so
+        // the fraction has nowhere to live. Truncating keeps ordering monotonic; MySQL's
+        // own rounding would push this row into the next day.
+        $ownerId = $this->sourceUser([
+            'username' => 'fractional',
+            'created_at' => '2026-04-05 23:59:59.704374+00',
+            'updated_at' => '2026-04-05 23:59:59.704374+00',
+        ]);
+
+        $this->artisan('app:migrate-from-supabase')->assertSuccessful();
+
+        $this->assertSame(
+            '2026-04-05 23:59:59',
+            AppUser::query()->findOrFail($ownerId)->created_at->utc()->format('Y-m-d H:i:s'),
+        );
+    }
+
+    public function test_a_far_future_expiry_survives_the_2038_boundary(): void
+    {
+        // Why expires_at is DATETIME and not TIMESTAMP (BE-060). A long subscription sold
+        // today lands past MySQL's TIMESTAMP ceiling of 2038-01-19.
+        $ownerId = $this->sourceUser([
+            'username' => 'long-subscription',
+            'expires_at' => $this->sourceTimestamp('2087-06-01 12:00:00'),
+        ]);
+
+        $this->artisan('app:migrate-from-supabase')->assertSuccessful();
+
+        $this->assertSame(
+            '2087-06-01',
+            AppUser::query()->findOrFail($ownerId)->expires_at->toDateString(),
+        );
+    }
+
+    public function test_booleans_and_integers_cross_intact(): void
+    {
+        // pdo_pgsql returns real PHP bools; MySQL stores tinyint(1). Nothing in between
+        // should reinterpret them.
+        $ownerId = $this->sourceUser([
+            'username' => 'flags', 'is_active' => false, 'is_admin' => true,
+            'employees_can_view_quotes' => true, 'max_devices' => 7, 'max_employees' => 9,
+        ]);
+
+        $this->artisan('app:migrate-from-supabase')->assertSuccessful();
+
+        $owner = AppUser::query()->findOrFail($ownerId);
+        $this->assertFalse($owner->is_active);
+        $this->assertTrue($owner->is_admin);
+        $this->assertTrue($owner->employees_can_view_quotes);
+        $this->assertSame(7, $owner->max_devices);
+        $this->assertSame(9, $owner->max_employees);
+    }
+
+    public function test_a_source_column_with_nowhere_to_go_stops_the_run(): void
+    {
+        // Silently dropping a column during a one-way migration is unrecoverable once
+        // Supabase is retired, so the preflight refuses rather than copying what fits.
+        $this->sourceUser(['username' => 'owner']);
+        DB::connection('supabase')->statement('ALTER TABLE app_users ADD COLUMN legacy_email text');
+
+        try {
+            $this->artisan('app:migrate-from-supabase')
+                ->expectsOutputToContain('legacy_email')
+                ->assertFailed();
+
+            $this->assertSame(0, AppUser::query()->count());
+        } finally {
+            DB::connection('supabase')->statement('ALTER TABLE app_users DROP COLUMN legacy_email');
+        }
+    }
+
+    // ── values too long for the target columns ───────────────────────────────
+
+    /**
+     * The width preflight can only fire where the target declares widths.
+     *
+     * SQLite does not: it reports every string column as a bare `varchar` and enforces no
+     * limit, so there is nothing to check and nothing to refuse. That is the correct
+     * behaviour there, not a gap — but it means these three tests need MySQL or Postgres
+     * to have anything to assert.
+     */
+    private function requiresBoundedTarget(): void
+    {
+        if (TargetColumns::for('login_logs')->widthOf('ip_address') === null) {
+            $this->markTestSkipped('This engine declares no column widths, so none can be exceeded.');
+        }
+    }
+
+    public function test_an_over_long_value_stops_the_run_before_anything_is_written(): void
+    {
+        $this->requiresBoundedTarget();
+
+        // Supabase types every string as unbounded `text`; BE-060 had to bound the ones
+        // MySQL indexes. ip_address is the one to expect in production: varchar(45) here,
+        // and the edge function stored a raw x-forwarded-for proxy chain.
+        $ownerId = $this->sourceUser(['username' => 'owner']);
+        $this->sourceRow('login_logs', [
+            'user_id' => $ownerId, 'username' => 'owner',
+            'ip_address' => '203.0.113.7, 172.71.126.44, 10.0.0.5, 2001:db8:85a3::8a2e:370:7334',
+            'logged_in_at' => $this->sourceTimestamp(),
+        ]);
+
+        $this->artisan('app:migrate-from-supabase')
+            ->expectsOutputToContain('login_logs.ip_address')
+            ->assertFailed();
+
+        // Nothing at all — not even the tables that would have fitted.
+        $this->assertSame(0, AppUser::query()->count());
+        $this->assertSame(0, DB::table('login_logs')->count());
+    }
+
+    public function test_truncate_overlong_trims_to_fit_and_lists_what_it_touched(): void
+    {
+        $this->requiresBoundedTarget();
+
+        $ownerId = $this->sourceUser(['username' => 'owner']);
+        $logId = $this->sourceRow('login_logs', [
+            'user_id' => $ownerId, 'username' => 'owner',
+            'ip_address' => '203.0.113.7, 172.71.126.44, 10.0.0.5, 2001:db8:85a3::8a2e:370:7334',
+            'logged_in_at' => $this->sourceTimestamp(),
+        ]);
+
+        $this->artisan('app:migrate-from-supabase', ['--truncate-overlong' => true])
+            ->expectsOutputToContain($logId)
+            ->assertSuccessful();
+
+        // The leftmost entry of an x-forwarded-for chain is the client, so the part the
+        // admin panel actually shows is the part that is kept.
+        $stored = (string) DB::table('login_logs')->where('id', $logId)->value('ip_address');
+        $this->assertSame(45, mb_strlen($stored));
+        $this->assertStringStartsWith('203.0.113.7,', $stored);
+    }
+
+    public function test_an_over_long_value_is_measured_in_characters_not_bytes(): void
+    {
+        // 200 Arabic characters is 400 bytes. A byte-wise check would reject a title that
+        // fits varchar(255) perfectly well.
+        $ownerId = $this->sourceUser(['username' => 'owner']);
+        $quoteId = $this->sourceQuote($ownerId, str_repeat('ط', 200));
+
+        $this->artisan('app:migrate-from-supabase')->assertSuccessful();
+
+        $this->assertSame(200, mb_strlen(SavedQuote::query()->findOrFail($quoteId)->title));
+    }
+
+    public function test_skip_width_check_bypasses_the_scan(): void
+    {
+        // The resume case: the question has already been answered, and the scan is a full
+        // table read per bounded column.
+        $this->sourceUser(['username' => 'owner']);
+
+        $this->artisan('app:migrate-from-supabase', ['--skip-width-check' => true])->assertSuccessful();
+
+        $this->assertSame(1, AppUser::query()->count());
     }
 
     // ── the password rule ────────────────────────────────────────────────────
@@ -252,12 +390,35 @@ class MigrateFromSupabaseTest extends TestCase
         $this->assertSameJson($quoteData, SavedQuote::query()->findOrFail($quoteId)->quote_data);
     }
 
+    public function test_jsonb_arrives_as_json_not_as_a_quoted_string(): void
+    {
+        // jsonb comes out of pdo_pgsql as a JSON *string*. Handing that to a MySQL `json`
+        // column unencoded is what keeps it a document; encoding it again would store the
+        // literal text and every reader would get a string back.
+        $this->requiresPostgresSource();
+
+        $ownerId = $this->sourceUser(['username' => 'owner']);
+        $quoteId = $this->sourceQuote($ownerId, 'json shape', ['sheets' => 500, 'ar' => 'ورق']);
+        $this->sourceRow('activity_events', [
+            'user_id' => $ownerId, 'username' => 'owner', 'action' => 'calculate',
+            'details' => json_encode(['n' => 1]), 'occurred_at' => $this->sourceTimestamp(),
+        ]);
+
+        $this->artisan('app:migrate-from-supabase')->assertSuccessful();
+
+        $quoteData = SavedQuote::query()->findOrFail($quoteId)->quote_data;
+        $this->assertIsArray($quoteData);
+        $this->assertSame(500, $quoteData['sheets']);
+        $this->assertSame('ورق', $quoteData['ar']);
+        $this->assertSame(['n' => 1], ActivityEvent::query()->firstOrFail()->details);
+    }
+
     public function test_the_opaque_default_tab_permission_survives(): void
     {
         $ownerId = $this->sourceUser(['username' => 'owner']);
-        DB::connection('supabase')->table('user_tab_permissions')->insert([
-            'id' => (string) Str::uuid(), 'user_id' => $ownerId,
-            'tab_key' => 'default_tab:boxpricing', 'is_enabled' => true, 'created_at' => now(),
+        $this->sourceRow('user_tab_permissions', [
+            'user_id' => $ownerId, 'tab_key' => 'default_tab:boxpricing',
+            'is_enabled' => true, 'created_at' => $this->sourceTimestamp(),
         ]);
 
         $this->artisan('app:migrate-from-supabase')->assertSuccessful();
@@ -274,10 +435,10 @@ class MigrateFromSupabaseTest extends TestCase
     {
         $ownerId = $this->sourceUser(['username' => 'owner']);
         $this->sourceQuote($ownerId, 'كتالوج');
-        DB::connection('supabase')->table('user_settings')->insert([
-            'id' => (string) Str::uuid(), 'user_id' => $ownerId,
-            'setting_key' => 'paperTypes', 'setting_value' => json_encode(['v' => 1]),
-            'created_at' => now(), 'updated_at' => now(),
+        $this->sourceRow('user_settings', [
+            'user_id' => $ownerId, 'setting_key' => 'paperTypes',
+            'setting_value' => json_encode(['v' => 1]),
+            'created_at' => $this->sourceTimestamp(), 'updated_at' => $this->sourceTimestamp(),
         ]);
 
         $this->artisan('app:migrate-from-supabase')->assertSuccessful();
@@ -327,6 +488,23 @@ class MigrateFromSupabaseTest extends TestCase
         $this->assertSame(0, SavedQuote::query()->count());
     }
 
+    public function test_a_dry_run_still_reports_values_that_would_not_fit(): void
+    {
+        // The rehearsal has to surface the problem, not discover it during the window.
+        $this->requiresBoundedTarget();
+
+        $ownerId = $this->sourceUser(['username' => 'owner']);
+        $this->sourceRow('login_logs', [
+            'user_id' => $ownerId, 'username' => 'owner',
+            'ip_address' => str_repeat('9', 60),
+            'logged_in_at' => $this->sourceTimestamp(),
+        ]);
+
+        $this->artisan('app:migrate-from-supabase', ['--dry-run' => true])
+            ->expectsOutputToContain('login_logs.ip_address')
+            ->assertFailed();
+    }
+
     public function test_table_filter_copies_only_what_was_asked_for(): void
     {
         $ownerId = $this->sourceUser(['username' => 'owner']);
@@ -343,10 +521,10 @@ class MigrateFromSupabaseTest extends TestCase
         $ownerId = $this->sourceUser(['username' => 'owner']);
 
         foreach ([1, 45] as $daysAgo) {
-            DB::connection('supabase')->table('activity_events')->insert([
-                'id' => (string) Str::uuid(), 'user_id' => $ownerId, 'username' => 'owner',
-                'tab_key' => 'itemcost', 'action' => 'calculate', 'details' => json_encode([]),
-                'occurred_at' => now()->subDays($daysAgo),
+            $this->sourceRow('activity_events', [
+                'user_id' => $ownerId, 'username' => 'owner', 'tab_key' => 'itemcost',
+                'action' => 'calculate', 'details' => json_encode([]),
+                'occurred_at' => $this->sourceTimestamp(now()->subDays($daysAgo)->format('Y-m-d H:i:s')),
             ]);
         }
         $this->sourceQuote($ownerId, 'old quote');
@@ -374,7 +552,9 @@ class MigrateFromSupabaseTest extends TestCase
 
     public function test_it_fails_cleanly_when_the_source_is_unreachable(): void
     {
-        config(['database.connections.supabase.database' => '/nonexistent/path/nope.sqlite']);
+        config(['database.connections.supabase' => [
+            'driver' => 'sqlite', 'database' => '/nonexistent/path/nope.sqlite', 'prefix' => '',
+        ]]);
         DB::purge('supabase');
 
         $this->artisan('app:migrate-from-supabase')->assertFailed();
@@ -393,10 +573,10 @@ class MigrateFromSupabaseTest extends TestCase
 
         $this->sourceQuote($ownerId, 'عرض المالك');
         $this->sourceQuote($employeeId, 'عرض الموظف');
-        DB::connection('supabase')->table('user_settings')->insert([
-            'id' => (string) Str::uuid(), 'user_id' => $ownerId,
-            'setting_key' => 'paperTypes', 'setting_value' => json_encode(['name' => 'كوشيه']),
-            'created_at' => now(), 'updated_at' => now(),
+        $this->sourceRow('user_settings', [
+            'user_id' => $ownerId, 'setting_key' => 'paperTypes',
+            'setting_value' => json_encode(['name' => 'كوشيه'], JSON_UNESCAPED_UNICODE),
+            'created_at' => $this->sourceTimestamp(), 'updated_at' => $this->sourceTimestamp(),
         ]);
 
         $this->artisan('app:migrate-from-supabase')->assertSuccessful();
@@ -416,5 +596,46 @@ class MigrateFromSupabaseTest extends TestCase
         // The family visibility matrix works off the migrated parent_user_id.
         $quotes->assertJsonCount(1, 'related_quotes');
         $quotes->assertJsonPath('related_quotes.0.employee_username', 'emp');
+    }
+
+    public function test_a_migrated_quote_keeps_a_usable_attachment_reference(): void
+    {
+        // The link between OPS-070 and OPS-071: the key inside quote_data has to survive
+        // the copy unchanged, because the storage migration preserves keys rather than
+        // rewriting references.
+        $ownerId = $this->sourceUser(['username' => 'owner']);
+        $key = $ownerId.'/1712345678901-montage.pdf';
+        $quoteId = $this->sourceQuote($ownerId, 'مع مرفق', [
+            'attachmentUrl' => "storage:{$key}", 'attachmentName' => 'montage.pdf',
+        ]);
+
+        $this->artisan('app:migrate-from-supabase')->assertSuccessful();
+
+        $this->assertSame(
+            "storage:{$key}",
+            SavedQuote::query()->findOrFail($quoteId)->quote_data['attachmentUrl'],
+        );
+    }
+
+    public function test_history_survives_a_user_that_no_longer_exists(): void
+    {
+        // Neither event table has a foreign key on user_id — on either side. A deleted
+        // user's history is still history, and an FK here would drop it.
+        $this->sourceUser(['username' => 'owner']);
+        $ghost = (string) Str::uuid();
+
+        $this->sourceRow('session_events', [
+            'user_id' => $ghost, 'username' => 'deleted-user', 'event_type' => 'logout',
+            'occurred_at' => $this->sourceTimestamp(),
+        ]);
+        $this->sourceRow('activity_events', [
+            'user_id' => $ghost, 'username' => 'deleted-user', 'action' => 'tab_open',
+            'details' => json_encode([]), 'occurred_at' => $this->sourceTimestamp(),
+        ]);
+
+        $this->artisan('app:migrate-from-supabase')->assertSuccessful();
+
+        $this->assertSame(1, DB::table('session_events')->where('user_id', $ghost)->count());
+        $this->assertSame(1, DB::table('activity_events')->where('user_id', $ghost)->count());
     }
 }

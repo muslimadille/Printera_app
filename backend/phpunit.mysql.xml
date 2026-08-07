@@ -49,5 +49,20 @@
         <env name="QUEUE_CONNECTION" value="sync" force="true"/>
         <env name="SESSION_DRIVER" value="array" force="true"/>
         <env name="JWT_SECRET" value="testing-only-secret-please-override-in-real-env-0000000000" force="true"/>
+
+        <!--
+          OPS-070a: the migration source. Postgres, because production is Supabase
+          PostgreSQL -> MySQL and a same-engine fixture cannot prove that copy. Create it
+          alongside the target instance:
+            docker exec printera-pg psql -U printera -d postgres -c "CREATE DATABASE supabase_source_test"
+          Unset, the tests fall back to a SQLite stand-in; set but unreachable, they FAIL
+          rather than downgrade — see Tests\Concerns\SeedsSupabaseSource.
+        -->
+        <env name="SUPABASE_TEST_DRIVER" value="pgsql" force="true"/>
+        <env name="SUPABASE_TEST_HOST" value="127.0.0.1" force="true"/>
+        <env name="SUPABASE_TEST_PORT" value="55432" force="true"/>
+        <env name="SUPABASE_TEST_DATABASE" value="supabase_source_test" force="true"/>
+        <env name="SUPABASE_TEST_USERNAME" value="printera" force="true"/>
+        <env name="SUPABASE_TEST_PASSWORD" value="pw" force="true"/>
     </php>
 </phpunit>

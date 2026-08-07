@@ -2,6 +2,8 @@
 
 namespace App\Console\Commands;
 
+use App\Support\TargetColumns;
+use Carbon\CarbonImmutable;
 use Illuminate\Console\Command;
 use Illuminate\Database\Connection;
 use Illuminate\Database\Query\Builder;
@@ -11,9 +13,11 @@ use Illuminate\Support\Facades\DB;
 /**
  * OPS-070 — copy the Supabase tables into this database.
  *
- * A command rather than pg_dump/psql because the run has to be **idempotent, resumable and
- * verifiable**: it reports per-table counts, can be re-run after a partial failure without
- * duplicating anything, and can be rehearsed with --dry-run against staging.
+ * A command rather than pg_dump/psql because this is a **cross-engine** copy: the source
+ * is Supabase PostgreSQL and the target is MySQL 8 (BE-060). No dump file speaks both, so
+ * the rows are streamed through PHP — which also buys what the run actually needs: it is
+ * idempotent, resumable and verifiable, reports per-table counts, and can be rehearsed
+ * with --dry-run.
  *
  * Three rules the copy must not break (02-DATABASE-SCHEMA.md §6):
  *
@@ -30,6 +34,13 @@ use Illuminate\Support\Facades\DB;
  * `quote_data`, `setting_value` and `details` are opaque JSON and cross as-is. Postgres
  * `jsonb` may reorder object keys — that is not a content change and nothing reads them
  * positionally (PHASE-0-1-AUDIT.md §6).
+ *
+ * Rule 1 has exactly one carve-out, forced by the engines rather than chosen:
+ * **timestamps are re-rendered in UTC**. Postgres prints `timestamptz` with an offset and
+ * microseconds (`2026-04-05 09:00:00.704374+00`); MySQL rejects that string outright
+ * ("1292 Incorrect datetime value"), which is what made the first cross-engine rehearsal
+ * copy zero rows. The instant is preserved exactly; only its spelling changes. See
+ * normaliseTimestamp().
  */
 class MigrateFromSupabase extends Command
 {
@@ -37,7 +48,9 @@ class MigrateFromSupabase extends Command
                             {--table= : Copy only this table (repeatable, comma-separated)}
                             {--since-days= : For the two event tables, copy only rows newer than N days}
                             {--chunk=500 : Rows per read/write batch}
-                            {--dry-run : Read and report, write nothing}';
+                            {--dry-run : Read and report, write nothing}
+                            {--skip-width-check : Skip the pre-flight scan for over-long values}
+                            {--truncate-overlong : Copy over-long values trimmed to fit instead of refusing}';
 
     protected $description = 'Copy app data from the Supabase database into this one (Phase 7, OPS-070)';
 
@@ -64,6 +77,12 @@ class MigrateFromSupabase extends Command
 
     private bool $dryRun = false;
 
+    /** @var array<string,TargetColumns> the target schema, read once per table */
+    private array $schema = [];
+
+    /** @var array<int,array{table:string,column:string,id:string,from:int,to:int}> */
+    private array $truncated = [];
+
     public function handle(): int
     {
         $this->dryRun = (bool) $this->option('dry-run');
@@ -75,6 +94,10 @@ class MigrateFromSupabase extends Command
         }
 
         if (! $this->assertSourceReachable()) {
+            return self::FAILURE;
+        }
+
+        if (! $this->preflight($tables)) {
             return self::FAILURE;
         }
 
@@ -103,6 +126,8 @@ class MigrateFromSupabase extends Command
             ],
             $report,
         ));
+
+        $this->reportTruncations();
 
         $failed = array_filter($report, fn (array $row): bool => $row['status'] !== 'ok');
 
@@ -169,6 +194,136 @@ class MigrateFromSupabase extends Command
         }
 
         return true;
+    }
+
+    /**
+     * Refuse to start a run that is going to lose data half way through.
+     *
+     * Two failure modes, both invisible until the write that hits them, and both far more
+     * expensive to discover during the maintenance window than five minutes beforehand:
+     *
+     *  - a source column with **nowhere to go** — the target would silently drop it;
+     *  - a source value **too long for the target column**. Supabase types every string as
+     *    unbounded `text`; BE-060 had to bound the indexed ones so MySQL could index them.
+     *    `ip_address` is the one to expect: it is `varchar(45)` here, and the edge function
+     *    stored a raw `x-forwarded-for`, which is a comma-separated proxy chain.
+     *
+     * @param  array<int,string>  $tables
+     */
+    private function preflight(array $tables): bool
+    {
+        $fatal = false;
+
+        foreach ($tables as $table) {
+            $target = $this->schema[$table] = TargetColumns::for($table);
+            $sourceColumns = $this->source()->getSchemaBuilder()->getColumnListing($table);
+
+            $orphaned = array_values(array_diff($sourceColumns, $target->names));
+            $absent = array_values(array_diff($target->names, $sourceColumns));
+
+            if ($orphaned !== []) {
+                $fatal = true;
+                $this->error("{$table}: the source has column(s) this schema does not: ".implode(', ', $orphaned));
+                $this->line('  A straight copy would drop them silently. Add them here, or exclude the table.');
+            }
+
+            if ($absent !== []) {
+                // Not fatal: the target's own default fills these. Worth saying out loud.
+                $this->warn("{$table}: not present in the source, will take this schema's default: ".implode(', ', $absent));
+            }
+        }
+
+        if ($fatal) {
+            return false;
+        }
+
+        return $this->option('skip-width-check') ? true : $this->checkWidths($tables);
+    }
+
+    /**
+     * Scan the source for values that cannot fit the target columns.
+     *
+     * A full scan per bounded column — a sequential read on the event tables, but this
+     * runs once, and the alternative is finding out mid-write with half the rows across.
+     * `--skip-width-check` exists for the resume case, where it has already been answered.
+     *
+     * @param  array<int,string>  $tables
+     */
+    private function checkWidths(array $tables): bool
+    {
+        /** @var array<int,array<int,string>> $offenders */
+        $offenders = [];
+
+        foreach ($tables as $table) {
+            foreach ($this->schema[$table]->widths as $column => $width) {
+                $length = $this->charLength($column);
+
+                $stats = (clone $this->sourceQuery($table))
+                    ->whereRaw("{$length} > ?", [$width])
+                    ->selectRaw("count(*) as n, max({$length}) as longest")
+                    ->first();
+
+                $count = (int) ($stats->n ?? 0);
+
+                if ($count === 0) {
+                    continue;
+                }
+
+                $samples = (clone $this->sourceQuery($table))
+                    ->whereRaw("{$length} > ?", [$width])
+                    ->orderBy('id')
+                    ->limit(3)
+                    ->pluck('id')
+                    ->all();
+
+                $offenders[] = [
+                    "{$table}.{$column}",
+                    (string) $width,
+                    (string) ($stats->longest ?? '?'),
+                    (string) $count,
+                    implode("\n", $samples),
+                ];
+            }
+        }
+
+        if ($offenders === []) {
+            return true;
+        }
+
+        $this->newLine();
+        $this->error('Source values too long for this schema:');
+        $this->table(['column', 'target width', 'longest source value', 'rows', 'example ids'], $offenders);
+
+        if ($this->option('truncate-overlong')) {
+            $this->warn('--truncate-overlong: these will be trimmed to fit. Every trimmed row is listed at the end.');
+
+            return true;
+        }
+
+        $this->newLine();
+        $this->line('Nothing was copied. Choose one:');
+        $this->line('  • widen the column(s) in a migration and re-run — no data is lost;');
+        $this->line('  • re-run with --truncate-overlong to trim them, which prints an audit list.');
+        $this->line('    Expected for `ip_address`: Supabase stored a raw x-forwarded-for chain, whose');
+        $this->line('    LEFTMOST entry is the client IP, so a trim keeps the part the admin panel shows.');
+
+        return false;
+    }
+
+    /**
+     * A character-count expression for the source engine.
+     *
+     * MySQL's `length()` counts bytes, so it needs `char_length()` — a two-byte Arabic
+     * character must not read as two. The cast is not cosmetic either: `id` is `uuid` on
+     * the source but `char(36)` here, and Postgres has no `length(uuid)`.
+     */
+    private function charLength(string $column): string
+    {
+        $wrapped = $this->source()->getQueryGrammar()->wrap($column);
+
+        return $this->source()->getDriverName() === 'mysql'
+            ? "char_length(cast({$wrapped} as char))"
+            : "length(cast({$wrapped} as text))";
     }
 
     // ── the copy ─────────────────────────────────────────────────────────────
@@ -262,7 +417,7 @@ class MigrateFromSupabase extends Command
                 break;
             }
 
-            $rows = $page->map(fn ($row): array => $this->normalise((array) $row))->all();
+            $rows = $page->map(fn ($row): array => $this->normalise($table, (array) $row))->all();
             $read += count($rows);
             $lastId = $page->last()->id;
 
@@ -287,25 +442,97 @@ class MigrateFromSupabase extends Command
     }
 
     /**
-     * PDO hands back everything as strings/resources depending on the driver. Booleans and
-     * JSON are the two that matter: `jsonb` arrives as a JSON string and must be written
-     * back as one (the target column is jsonb too), while `bool` arrives as PHP bool from
-     * pdo_pgsql and needs no help. Resources appear for `bytea`, which this schema has
-     * none of — guarded anyway so a surprise column fails loudly rather than silently
-     * writing "Resource id #5".
+     * Make one source row acceptable to the target engine, changing as little as possible.
+     *
+     * PDO hands back everything as strings/bools depending on the driver. Booleans arrive
+     * as PHP bool from pdo_pgsql and need no help; `jsonb` arrives as a JSON string and is
+     * written back as one, unparsed, so the blob is never reshaped. Resources appear for
+     * `bytea`, which this schema has none of — guarded anyway so a surprise column fails
+     * loudly rather than silently writing "Resource id #5".
      *
      * @param  array<string,mixed>  $row
      * @return array<string,mixed>
      */
-    private function normalise(array $row): array
+    private function normalise(string $table, array $row): array
     {
+        $target = $this->schema[$table];
+
         foreach ($row as $column => $value) {
             if (is_resource($value)) {
                 throw new \RuntimeException("Unexpected binary column `{$column}` — the copy does not handle bytea.");
             }
+
+            if ($value === null) {
+                continue;
+            }
+
+            if ($target->isTemporal($column)) {
+                $row[$column] = $this->normaliseTimestamp($table, $column, $value);
+
+                continue;
+            }
+
+            $width = $target->widthOf($column);
+
+            if ($width !== null && is_string($value) && mb_strlen($value) > $width) {
+                // The preflight already refused unless --truncate-overlong was given.
+                $this->truncated[] = [
+                    'table' => $table, 'column' => $column, 'id' => (string) ($row['id'] ?? '?'),
+                    'from' => mb_strlen($value), 'to' => $width,
+                ];
+                $row[$column] = mb_substr($value, 0, $width);
+            }
         }
 
         return $row;
+    }
+
+    /**
+     * Re-render one instant in UTC, in a spelling the target engine accepts.
+     *
+     * Postgres prints `timestamptz` as `2026-04-05 09:00:00.704374+00`. MySQL's parser
+     * rejects the offset in strict mode, so the string is rebuilt — but the *instant* is
+     * read from the offset first, which also makes the copy independent of whatever
+     * `TimeZone` the source session happens to be set to.
+     *
+     * Postgres targets keep an explicit offset so nothing is left to the session; MySQL
+     * and SQLite take a naive UTC string (the mysql connection pins `time_zone` to +00:00
+     * in config/database.php, so "naive" is unambiguous there too).
+     *
+     * Sub-second precision is dropped by TRUNCATION, not rounding: every timestamp column
+     * in this schema is precision 0 on all three engines, so the fraction has nowhere to
+     * live, and flooring cannot push an event into the following second the way MySQL's
+     * own rounding can.
+     */
+    private function normaliseTimestamp(string $table, string $column, mixed $value): string
+    {
+        $format = DB::connection()->getDriverName() === 'pgsql' ? 'Y-m-d H:i:sP' : 'Y-m-d H:i:s';
+
+        if ($value instanceof \DateTimeInterface) {
+            return CarbonImmutable::instance($value)->utc()->format($format);
+        }
+
+        try {
+            return CarbonImmutable::parse((string) $value)->utc()->format($format);
+        } catch (\Throwable) {
+            throw new \RuntimeException(
+                "`{$table}.{$column}` is a timestamp here but the source holds ".var_export($value, true)
+            );
+        }
+    }
+
+    private function reportTruncations(): void
+    {
+        if ($this->truncated === []) {
+            return;
+        }
+
+        $this->newLine();
+        $this->warn(sprintf('%d value(s) were trimmed to fit. Audit list:', count($this->truncated)));
+        $this->table(['table', 'column', 'row id', 'chars', 'kept'], array_map(
+            fn (array $t): array => [$t['table'], $t['column'], $t['id'], (string) $t['from'], (string) $t['to']],
+            $this->truncated,
+        ));
     }
 
     // ── source access ────────────────────────────────────────────────────────

@@ -57,6 +57,20 @@ return [
             'unix_socket' => env('DB_SOCKET', ''),
             'charset' => env('DB_CHARSET', 'utf8mb4'),
             'collation' => env('DB_COLLATION', 'utf8mb4_unicode_ci'),
+
+            /*
+             * Pin the session time zone to UTC.
+             *
+             * MySQL converts TIMESTAMP columns between the session zone and UTC on every
+             * read and write, and all but `expires_at` are TIMESTAMP here. Left unset,
+             * Laravel emits no `SET time_zone` and the value silently depends on the
+             * server's own default — so the same row means different instants on two
+             * hosts. The application already writes UTC (Carbon, `app.timezone=UTC`) and
+             * OPS-070 writes naive UTC strings converted from Postgres `timestamptz`;
+             * this is what makes "naive" unambiguous. See OPS-070a.
+             */
+            'timezone' => env('DB_TIMEZONE', '+00:00'),
+
             'prefix' => '',
             'prefix_indexes' => true,
             'strict' => true,
