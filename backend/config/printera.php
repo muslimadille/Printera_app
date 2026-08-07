@@ -42,6 +42,21 @@ return [
     | parse-voice-input edge function. Server-side only; the key is never
     | exposed to the SPA. Wired up in Phase 5 (BE-051).
     */
+    /*
+    | Supabase storage, read by `app:migrate-supabase-storage` (OPS-071) ONLY — the
+    | running application never touches Supabase. The service-role key bypasses bucket
+    | policies, which is what lets the copy read every tenant's objects; it is a SECRET,
+    | belongs only in the migration operator's .env, and should be rotated or revoked once
+    | Phase 8 decommissions the project.
+    |
+    | Delete this block in Phase 8.
+    */
+    'supabase_storage' => [
+        'url' => env('SUPABASE_URL'),
+        'service_role_key' => env('SUPABASE_SERVICE_ROLE_KEY'),
+        'bucket' => env('SUPABASE_STORAGE_BUCKET', 'montage-files'),
+    ],
+
     'voice' => [
         'base_url' => env('VOICE_AI_BASE_URL', 'https://ai-gateway.lovable.dev/v1/chat/completions'),
         'model' => env('VOICE_AI_MODEL', 'google/gemini-2.5-flash'),
