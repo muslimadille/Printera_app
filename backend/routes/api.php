@@ -33,6 +33,19 @@ Route::prefix('v1')->group(function () {
     Route::post('/auth/force-login', [AuthController::class, 'forceLogin']);
     Route::post('/auth/change-password', [AuthController::class, 'changePassword']);
 
+    // ---- File transfer (local disk only)  [Phase 5: BE-050] ----
+    // Public by necessity, authorized by the URL signature alone. The browser PUTs the
+    // file to `upload_url` and opens `signed_url` with no headers of any kind (see
+    // MontageUpload.tsx), exactly as it did against Supabase's presigned bucket URLs — so
+    // the credential has to travel in the URL. `signed` covers the `path` query parameter,
+    // which is what stops a caller swapping in another tenant's key.
+    // On an S3 montage disk these are never called: StorageService hands out genuine
+    // presigned URLs and the browser talks to the bucket directly.
+    Route::put('/files/upload', [FileController::class, 'upload'])
+        ->middleware('signed')->name('files.upload');
+    Route::get('/files/download', [FileController::class, 'download'])
+        ->middleware('signed')->name('files.download');
+
     // ---- Activity logging  [Phase 2: BE-025] ----
     // DELIBERATELY OUTSIDE the session.active group. The client flushes this queue via
     // navigator.sendBeacon on page hide, where a 401 loses the batch with no retry and no
