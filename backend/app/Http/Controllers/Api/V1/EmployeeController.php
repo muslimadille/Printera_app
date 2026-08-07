@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers\Api\V1;
 
-use App\Http\Controllers\Concerns\NotImplemented;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Employees\DeleteEmployeeRequest;
 use App\Http\Requests\Employees\StoreEmployeeRequest;
+use App\Http\Requests\Employees\ToggleViewQuotesRequest;
 use App\Http\Requests\Employees\UpdateEmployeeRequest;
 use App\Http\Requests\Employees\UpdateTabPermissionsRequest;
 use App\Http\Resources\AppUserResource;
@@ -16,8 +16,6 @@ use Illuminate\Http\Request;
 /** Account-owner employee management + tab permissions. [BE-030..036] */
 class EmployeeController extends Controller
 {
-    use NotImplemented;
-
     public function __construct(private readonly EmployeeService $employees) {}
 
     // GET /employees  [BE-031]
@@ -92,8 +90,14 @@ class EmployeeController extends Controller
         return response()->json(['success' => true]);
     }
 
-    public function toggleViewQuotes(Request $request): JsonResponse
+    // POST /account/employees-view-quotes  [BE-036]
+    public function toggleViewQuotes(ToggleViewQuotesRequest $request): JsonResponse
     {
-        return $this->todo('BE-036'); // POST /account/employees-view-quotes
+        $enabled = $this->employees->setEmployeesCanViewQuotes(
+            $this->currentUser($request),
+            $request->enabled(),
+        );
+
+        return response()->json(['success' => true, 'employees_can_view_quotes' => $enabled]);
     }
 }

@@ -149,6 +149,28 @@ class EmployeeService
         return $employee->refresh();
     }
 
+    // ── BE-036 · employees-can-view-quotes toggle ────────────────────────────
+
+    /**
+     * Owner-only — index.ts:819-831. This is the ONE place in Phase 3 with an explicit
+     * role check rather than an ownership-scoped lookup, because the target is the
+     * caller's own row: there is nothing to scope, so `parent_user_id` is tested directly
+     * and employees get a distinct message ("غير مصرح - فقط المستخدم الرئيسي").
+     *
+     * The flag governs only whether employees see the OWNER's quotes. Sibling quotes are
+     * mutually visible regardless — see QuoteService::listFor.
+     */
+    public function setEmployeesCanViewQuotes(AppUser $caller, bool $enabled): bool
+    {
+        if ($caller->parent_user_id !== null) {
+            throw ApiException::forbidden(Messages::ONLY_MAIN_USER);
+        }
+
+        $caller->forceFill(['employees_can_view_quotes' => $enabled])->save();
+
+        return (bool) $caller->refresh()->employees_can_view_quotes;
+    }
+
     // ── BE-035 · tab permissions ─────────────────────────────────────────────
 
     /**
