@@ -303,11 +303,28 @@ created_at, updated_at }`.
 
 Disk `montage` (local/S3), key `"{user_id}/{ts}-{sanitized}"`, private, signed URLs.
 - **POST /files/upload-url** `{ file_name }` → `{ path, upload_url, token }` (signed PUT).
+  Missing name → `400 "اسم الملف مطلوب"`.
 - **POST /files/download-url** `{ file_path }` → `{ signed_url }` (1-hour expiry).
-- **POST /files/delete** `{ file_path }` → `{ success:true }`.
+- **POST /files/delete** `{ file_path }` → `{ success:true }` (idempotent).
+  Missing path on either → `400 "مسار الملف مطلوب"`.
 > Enforce that `file_path` begins with the caller's `user_id/` prefix (defense-in-depth;
 > the current function scopes uploads by prefix but doesn't re-check on download/delete — the
-> rebuild should).
+> rebuild should). Violations → `403 "غير مصرح"`.
+
+**Signing.** On an S3 `montage` disk these are genuine presigned URLs and the browser talks
+to the bucket directly. On a local disk there is no such concept, so `upload_url` and
+`signed_url` point at two `signed`-middleware routes on this API — `PUT /files/upload` and
+`GET /files/download`, both keyed by a `path` query parameter the signature covers. They are
+outside `session.active` by necessity: the browser sends **no headers at all** on those
+transfers (see `MontageUpload.tsx`), so the URL itself is the credential.
+
+> ⚠ **Local downloads are served from the API's own origin**, which Supabase's bucket was
+> not. Only a safelist of inert types (pdf, png, jpg, gif, webp) may render inline, with
+> `Content-Type` pinned from the extension; everything else — **SVG included** — is forced
+> to `application/octet-stream` + `attachment`, alongside `nosniff` and a
+> `default-src 'none'; sandbox` CSP. Without this, an uploaded HTML file opened from a
+> signed link executes script against the app's origin and its `localStorage` session.
+> See PHASE-0-1-AUDIT.md §7c.
 
 ---
 
@@ -316,7 +333,15 @@ Disk `montage` (local/S3), key `"{user_id}/{ts}-{sanitized}"`, private, signed U
 - **POST /voice/parse** `{ transcript, calcType, paperTypeNames?[] }` → returns
   `{ fields: {…}, transcript }` (port `parse-voice-input`: same Arabic system prompt, per
   `calcType` field schema for `employee|box|magazine|manual`, JSON-object response). Provider
-  key from server env; never expose it to the client.
+  key from server config; never expose it to the client.
+  - An **empty or missing `transcript` short-circuits first**, before anything else, and
+    returns `{ fields: {} }` — `fields` alone, with no echoed `transcript`. Validation must
+    not reject a request ahead of that branch.
+  - `fields` is always a JSON **object**, never `[]`; unparseable model output yields `{}`.
+  - Unknown `calcType` falls back to the `employee` catalogue.
+  - Unlike the reference — a separate, **unauthenticated** edge function callable by anyone
+    holding the public anon key — this route sits behind `session.active`. Provider failures
+    return the generic `500`, not the upstream error body.
 
 ---
 

@@ -584,6 +584,53 @@ in `src/lib/userApi.ts`. This port returns a real `false`. Falsy either way to t
 - The dead `synth++` counter in the reference's grouping loop (immediately overwritten by
   the minute-bucket key) is simply not ported — it has no observable effect.
 
+### Phase 5 · Serving montage files from our OWN origin needed hardening (BE-050) · **security**
+Supabase served `montage-files` from a **different origin**, so an uploaded `.html` or
+`.svg` rendered inline could never reach the app. Serving from our own domain removes that
+boundary, and a signed download URL carries **no credentials** — so a tenant could upload a
+payload, mint a URL and send it to an admin, whose browser would execute it against the
+app's origin and the `localStorage` the SPA keeps its session in. The per-user prefix rule
+does not help: the attacker downloads their *own* file; the victim only opens the link.
+
+`StorageService::download()` therefore pins `Content-Type` from a safelist of inert
+extensions (pdf/png/jpg/gif/webp) and forces everything else to
+`application/octet-stream` + `Content-Disposition: attachment` — **SVG included**, since it
+is an XML document that can carry script — plus `nosniff` and a `default-src 'none'; sandbox`
+CSP. The safelist is what keeps PDF viewing and MontageUpload's `<img>` preview working.
+S3 is unaffected; those URLs point at the bucket's own origin.
+
+### Phase 5 · Download/delete now enforce the caller's prefix (BE-050)
+The reference scopes **uploads** by `{user_id}/` but never re-checks on download or delete
+(`index.ts:851-878`), so any authenticated user could read or destroy another tenant's
+montage artwork by guessing a path. Closed per `03 §8`, and tested from the attacker's side
+— including the near-miss `"<id>evil/…"` that a naive `startsWith` would admit.
+
+### Phase 5 · Filename sanitising must be UTF-8 aware (BE-050)
+JS `replace(/[^a-zA-Z0-9._-]/g, '_')` works per **character**; PHP's `preg_replace` without
+the `/u` modifier works per **byte**, so an Arabic filename produced two underscores per
+letter and a different object key than the same upload made against the reference. Fixed
+with `/u` plus a byte-wise fallback for malformed UTF-8.
+
+Note the sanitiser keeps `.`, so `../../x` becomes `.._.._x`: the dots survive but the
+separators do not, which is what makes traversal impossible — the key ends up with exactly
+one `/`, the user prefix.
+
+### Phase 5 · `POST /voice/parse` requires a session (BE-051) · **hardening**
+`parse-voice-input` was a **separate, entirely unauthenticated** edge function invoked with
+the public anon key, so anyone who read it out of the JS bundle could spend the project's AI
+credits. It now sits behind `session.active`. No role gate: voice input appears on
+calculator tabs any user can open.
+
+### Phase 5 · Provider errors no longer reach the client (BE-051)
+The reference returns `AI API error [status]: <body>` verbatim, forwarding upstream account
+detail into an Arabic RTL toast. Now the generic `500 "حدث خطأ في الخادم"`, with the real
+reason logged. A 30-second timeout was also added, where the reference sets none and a hung
+provider would pin a worker until PHP's own limit.
+
+Also: `calcType` defaults to `employee` when absent instead of interpolating the literal
+string `"undefined"` into the Arabic prompt naming the calculator. That is a defect in the
+reference's prompt, not behavior worth preserving.
+
 ### Shared services rather than duplicated handlers (BE-041/043)
 `TabPermissionService` and the `RejectsDuplicateUsernames` trait were extracted out of
 `EmployeeService` so the owner-scoped and admin-scoped endpoints run the *same* code behind
