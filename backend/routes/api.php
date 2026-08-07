@@ -33,6 +33,15 @@ Route::prefix('v1')->group(function () {
     Route::post('/auth/force-login', [AuthController::class, 'forceLogin']);
     Route::post('/auth/change-password', [AuthController::class, 'changePassword']);
 
+    // ---- Activity logging  [Phase 2: BE-025] ----
+    // DELIBERATELY OUTSIDE the session.active group. The client flushes this queue via
+    // navigator.sendBeacon on page hide, where a 401 loses the batch with no retry and no
+    // way to surface the failure. The controller resolves the token softly instead and
+    // always answers 200 — an invalid session returns { session_expired: true } in the
+    // body. This mirrors the reference, which is 200-always for this action.
+    // See 03-API-SPECIFICATION.md §7.
+    Route::post('/activity/batch', [ActivityController::class, 'batch']);
+
     // ---- Authenticated (JWT + revocable session allow-list) ----
     // session.active performs BOTH JWT validation and the jti allow-list check so
     // that every auth failure returns the { session_expired: true } shape the SPA
@@ -59,9 +68,6 @@ Route::prefix('v1')->group(function () {
         Route::patch('/quotes/{id}', [QuoteController::class, 'update']);
         Route::delete('/quotes/{id}', [QuoteController::class, 'destroy']);
         Route::post('/quotes/transfer', [QuoteController::class, 'transfer']);
-
-        // Activity logging (accepts sendBeacon)  [Phase 2: BE-025]
-        Route::post('/activity/batch', [ActivityController::class, 'batch']);
 
         // Employees (account owner)  [Phase 3: BE-030..036]
         Route::get('/employees', [EmployeeController::class, 'index']);

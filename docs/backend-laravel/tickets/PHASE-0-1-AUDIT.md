@@ -426,6 +426,44 @@ documents the actual behavior. **Suggested spec edit:** reword BE-014's acceptan
 
 ---
 
+## 7. Phase 2 — deliberate deviations worth remembering
+
+Recorded here because they are the kind of thing a future reader would otherwise "fix".
+
+### `/activity/batch` is exempt from `EnsureSessionActive` (BE-025)
+The only authenticated-in-spirit route outside the middleware. `activityTracker.ts` flushes
+via `navigator.sendBeacon()` on page hide, where a `401` silently loses the batch and
+nothing can read the response. The reference is `200`-always for this action
+(`index.ts:340-374`). The token therefore travels in the JSON body — `sendBeacon` cannot set
+an `Authorization` header — and is still verified as a signed JWT whose `jti` is matched
+against `user_sessions` scoped by `sub`, so events cannot be attributed to another user.
+`last_active_at` is deliberately **not** refreshed, so a background beacon cannot make an
+idle session look alive to analytics or to the 72h prune. Full rationale in
+`03-API-SPECIFICATION.md §7`.
+
+### `transferred` now reports the real count (BE-024)
+`handleTransferQuotes` returns `count || 0` from a supabase `.update()` called **without**
+`{ count: 'exact' }`, so the reference reports `0` on every successful transfer. `03 §4` and
+the backlog both specify `{success:true, transferred:N}`, so the Laravel version returns the
+true affected-row count. The SPA only branches on `success`.
+
+### Quote mutation is family-scoped, listing is flag-scoped (BE-022 / BE-023)
+`employees_can_view_quotes` gates **listing only**. An employee can `PATCH`/`DELETE` the
+owner's quote even when it is hidden from their list, because the reference's
+`getFamilyUserIds` gate does not consult the flag. Faithful port; tests document it rather
+than quietly diverging. Worth a product decision later if it is not intended.
+
+### `sometimes|string` on quote PATCH fields (BE-023)
+The text columns are `NOT NULL` and the reference passes an explicit `null` straight to the
+database. Validating instead turns that into the standard `200` business error rather than a
+generic Arabic `500`. The client never sends `null` (`JSON.stringify` drops `undefined`).
+
+### JS falsy-coalescing on quote defaults (BE-021)
+`source_type || 'calculator'` means an **empty string** takes the default. PHP's `??` would
+keep `''`. `QuoteService::orDefault()` reproduces the JS semantics.
+
+---
+
 ## 6. BE-019 — PostgreSQL verification
 
 **Instance:** PostgreSQL **16.11** (Debian, `postgres:16` container, port 55432 to avoid a

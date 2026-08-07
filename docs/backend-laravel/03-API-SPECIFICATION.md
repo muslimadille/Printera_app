@@ -245,11 +245,41 @@ created_at, updated_at }`.
 
 ## 7. Activity
 
-- **POST /activity/batch** `{ events:[{ tab_key?, action, details?, occurred_at? }] }` →
+- **POST /activity/batch** `{ session_token, events:[{ tab_key?, action, details?, occurred_at? }] }` →
   accept up to 200; filter to the **allowed action set** (`02 §2.5`); insert rows tagged with
   the caller's id/username + `jti`. Must accept a raw JSON body from `navigator.sendBeacon`
   (Blob, `application/json`). Return `{ success:true, logged:N }`. Never block; invalid → 200.
   Session invalid → `200 { session_expired:true }` (tracker silently re-queues).
+
+> ### ⚠ Auth exception: this route is NOT behind `EnsureSessionActive`
+>
+> It is the **only** authenticated-in-spirit route that skips the middleware, and that is
+> deliberate. `src/lib/activityTracker.ts` flushes the queue from
+> `navigator.sendBeacon()` on `visibilitychange` / `pagehide` / `beforeunload`. A beacon
+> is fire-and-forget: the page is already unloading, nothing reads the response, and a
+> `401` simply loses the batch. The reference is `200`-always for this action
+> (`index.ts:340-374`) and the client depends on that.
+>
+> Consequences, all intentional:
+> - **The token travels in the JSON body.** `sendBeacon` cannot set an `Authorization`
+>   header — that is a browser API limitation, not a design choice. A bearer header is
+>   also accepted, for the `fetch` path and future mobile clients.
+> - **Every outcome is HTTP 200.** Missing token → `{ error:"جلسة غير صالحة",
+>   session_expired:true }`; unresolvable/revoked session or deactivated user →
+>   `{ error:"جلسة منتهية", session_expired:true }`; write failure →
+>   `{ success:false, error:"تعذر تسجيل النشاط" }`. Any uncaught throwable is caught and
+>   reported as that last shape, never a 5xx.
+> - **Branch order is load-bearing.** The missing-token check precedes the payload check,
+>   but an *empty* batch short-circuits to `{ success:true, logged:0 }` **without**
+>   validating the session — so a stale tab with nothing queued never generates noise.
+> - **`last_active_at` is NOT refreshed.** A background beacon must not make an idle
+>   session look alive; admin analytics and the 72h idle prune both read that column. The
+>   reference likewise reads `user_sessions` directly here instead of going through
+>   `getUserFromSession`.
+>
+> Identity still comes from the JWT — the body's `session_token` is verified as a signed
+> token and its `jti` matched against `user_sessions` (scoped by `sub`), so a caller
+> cannot attribute events to another user by putting `user_id` in the payload.
 
 ---
 
