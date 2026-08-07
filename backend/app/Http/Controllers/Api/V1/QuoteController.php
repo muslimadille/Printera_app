@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\V1;
 use App\Http\Controllers\Concerns\NotImplemented;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Quotes\StoreQuoteRequest;
+use App\Http\Requests\Quotes\UpdateQuoteRequest;
 use App\Http\Resources\QuoteResource;
 use App\Services\QuoteService;
 use Illuminate\Http\JsonResponse;
@@ -32,14 +33,21 @@ class QuoteController extends Controller
         return response()->json(['quote' => QuoteResource::make($quote)->resolve()]);
     }
 
-    public function update(Request $request, string $id): JsonResponse
+    // PATCH /quotes/{id}  [BE-023]
+    public function update(UpdateQuoteRequest $request, string $id): JsonResponse
     {
-        return $this->todo('BE-023'); // PATCH /quotes/{id}
+        $quote = $this->quotes->findInFamily($this->currentUser($request), $id);
+        $quote = $this->quotes->update($quote, $request->changes());
+
+        return response()->json(['quote' => QuoteResource::make($quote)->resolve()]);
     }
 
+    // DELETE /quotes/{id}  [BE-023]
     public function destroy(Request $request, string $id): JsonResponse
     {
-        return $this->todo('BE-023'); // DELETE /quotes/{id}
+        $this->quotes->findInFamily($this->currentUser($request), $id)->delete();
+
+        return response()->json(['success' => true]);
     }
 
     public function transfer(Request $request): JsonResponse

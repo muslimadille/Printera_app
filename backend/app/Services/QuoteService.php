@@ -2,9 +2,11 @@
 
 namespace App\Services;
 
+use App\Exceptions\ApiException;
 use App\Http\Resources\QuoteResource;
 use App\Models\AppUser;
 use App\Models\SavedQuote;
+use App\Support\Messages;
 use Illuminate\Support\Collection;
 
 /**
@@ -134,5 +136,82 @@ class QuoteService
             'quotes' => $own->map(fn (SavedQuote $q) => QuoteResource::make($q)->resolve())->all(),
             'related_quotes' => $related->map(fn (SavedQuote $q) => QuoteResource::make($q)->resolve())->values()->all(),
         ];
+    }
+
+    // ── BE-023 · update / delete (family gate) ───────────────────────────────
+
+    /**
+     * Resolve a quote the caller is allowed to mutate. Branch order is the reference's
+     * (index.ts:730-733): existence first, then family membership — so probing for a
+     * foreign quote id returns 404 "not found", never a 403 that would confirm it exists.
+     */
+    public function findInFamily(AppUser $caller, string $quoteId): SavedQuote
+    {
+        $quote = SavedQuote::query()->find($quoteId);
+
+        if ($quote === null) {
+            throw new ApiException(Messages::QUOTE_NOT_FOUND, 404);
+        }
+
+        if (! in_array($quote->user_id, $caller->familyIds(), true)) {
+            throw ApiException::forbidden(Messages::NOT_AUTHORIZED);
+        }
+
+        return $quote;
+    }
+
+    /**
+     * Only keys actually present in the request are applied — the reference tests
+     * `params.x !== undefined`. `updated_at` is always touched, even when nothing else
+     * changed, matching index.ts:740.
+     *
+     * @param  array<string,mixed>  $changes
+     */
+    public function update(SavedQuote $quote, array $changes): SavedQuote
+    {
+        $quote->fill($changes);
+        $quote->updated_at = now();
+        $quote->save();
+
+        return $quote->refresh();
+    }
+
+    // ── BE-024 · transfer (owner-scoped) ─────────────────────────────────────
+
+    /**
+     * Each id must be the caller itself or an employee OF THE CALLER
+     * (`parent_user_id = caller.id`) — index.ts:626-635. Note this is narrower than
+     * familyIds(): an employee has no employees, so an employee can only ever transfer
+     * from itself to itself.
+     */
+    private function assertTransferParticipant(AppUser $caller, ?string $userId): void
+    {
+        if ($userId === null || $userId === '') {
+            throw ApiException::forbidden(Messages::NOT_AUTHORIZED);
+        }
+
+        if ($userId === $caller->id) {
+            return;
+        }
+
+        $isOwnEmployee = AppUser::query()
+            ->where('id', $userId)
+            ->where('parent_user_id', $caller->id)
+            ->exists();
+
+        if (! $isOwnEmployee) {
+            throw ApiException::forbidden(Messages::NOT_AUTHORIZED);
+        }
+    }
+
+    /** @return int rows moved */
+    public function transfer(AppUser $caller, ?string $fromUserId, ?string $toUserId): int
+    {
+        $this->assertTransferParticipant($caller, $fromUserId);
+        $this->assertTransferParticipant($caller, $toUserId);
+
+        return SavedQuote::query()
+            ->where('user_id', $fromUserId)
+            ->update(['user_id' => $toUserId, 'updated_at' => now()]);
     }
 }
