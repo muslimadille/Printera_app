@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\UserSetting;
 use App\Support\Messages;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\Concerns\ComparesJson;
 use Tests\Concerns\MakesUsers;
 use Tests\TestCase;
 
@@ -14,7 +15,7 @@ use Tests\TestCase;
  */
 class SettingsTest extends TestCase
 {
-    use MakesUsers, RefreshDatabase;
+    use ComparesJson, MakesUsers, RefreshDatabase;
 
     /** @return array<string,string> */
     private function authAs(string $username = 'tester', string $device = 'dev-1'): array
@@ -95,7 +96,7 @@ class SettingsTest extends TestCase
             'settings' => [['key' => 'finishingItems', 'value' => $payload]],
         ], $auth)->assertOk();
 
-        $this->assertSame(
+        $this->assertSameJson(
             $payload,
             $this->getJson('/api/v1/settings', $auth)->json('settings.finishingItems')
         );

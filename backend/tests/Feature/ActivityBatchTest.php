@@ -8,6 +8,7 @@ use App\Services\ActivityService;
 use App\Support\Messages;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Testing\TestResponse;
+use Tests\Concerns\ComparesJson;
 use Tests\Concerns\MakesUsers;
 use Tests\TestCase;
 
@@ -19,7 +20,7 @@ use Tests\TestCase;
  */
 class ActivityBatchTest extends TestCase
 {
-    use MakesUsers, RefreshDatabase;
+    use ComparesJson, MakesUsers, RefreshDatabase;
 
     private function tokenForNewSession(): string
     {
@@ -79,7 +80,7 @@ class ActivityBatchTest extends TestCase
 
         $this->postBatch($token, [$this->event('calculate', ['details' => $details])])->assertOk();
 
-        $this->assertSame($details, ActivityEvent::query()->firstOrFail()->details);
+        $this->assertSameJson($details, ActivityEvent::query()->firstOrFail()->details);
     }
 
     public function test_the_bearer_header_is_accepted_as_well_as_the_body(): void

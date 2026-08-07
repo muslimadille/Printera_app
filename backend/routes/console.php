@@ -1,12 +1,14 @@
 <?php
 
-// Retention: prune activity_events and session_events older than 30 days
-// (replaces the Supabase AFTER-INSERT cleanup triggers). See 02-DATABASE-SCHEMA.md §4.
+use Illuminate\Support\Facades\Schedule;
+
+// Retention: prune activity_events and session_events older than 30 days.
+// Replaces the Supabase AFTER-INSERT cleanup triggers, which fired on ~1% of inserts.
+// See 02-DATABASE-SCHEMA.md §4 and the app:prune-events command (BE-026).
 //
-// The schedule is commented out until `app:prune-events` exists (Phase 2). Registering a
-// schedule for a non-existent command makes `php artisan schedule:list` and
-// `schedule:run` fail outright. Re-enable this line in the same commit that adds the
-// command. See PHASE-0-1-AUDIT.md F12.
-//
-// use Illuminate\Support\Facades\Schedule;
-// Schedule::command('app:prune-events')->daily();
+// Re-enabled here now that the command exists — it was commented out under F12 because
+// scheduling a non-existent command breaks `schedule:list` and `schedule:run`.
+Schedule::command('app:prune-events')
+    ->daily()
+    ->withoutOverlapping()
+    ->runInBackground();

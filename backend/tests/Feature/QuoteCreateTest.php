@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\SavedQuote;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\Concerns\ComparesJson;
 use Tests\Concerns\MakesUsers;
 use Tests\TestCase;
 
@@ -12,7 +13,7 @@ use Tests\TestCase;
  */
 class QuoteCreateTest extends TestCase
 {
-    use MakesUsers, RefreshDatabase;
+    use ComparesJson, MakesUsers, RefreshDatabase;
 
     /** @return array<string,string> */
     private function authAs(string $username = 'tester', string $device = 'dev-1'): array
@@ -95,7 +96,7 @@ class QuoteCreateTest extends TestCase
         $id = $this->postJson('/api/v1/quotes', ['quote_data' => $payload], $this->authAs())
             ->assertOk()->json('quote.id');
 
-        $this->assertSame($payload, SavedQuote::query()->findOrFail($id)->quote_data);
+        $this->assertSameJson($payload, SavedQuote::query()->findOrFail($id)->quote_data);
     }
 
     public function test_a_quote_is_always_owned_by_the_caller_not_a_body_user_id(): void

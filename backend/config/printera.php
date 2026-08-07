@@ -30,6 +30,14 @@ return [
     'admin_password' => env('ADMIN_PASSWORD'),
 
     /*
+    | Retention for the two append-only audit tables, consumed by `app:prune-events`
+    | (scheduled daily in routes/console.php). Replaces the Supabase AFTER-INSERT triggers
+    | cleanup_old_activity_events / cleanup_old_session_events, which fired on ~1% of
+    | inserts. Keep the 30-day window from 02-DATABASE-SCHEMA.md §4.
+    */
+    'event_retention_days' => (int) env('EVENT_RETENTION_DAYS', 30),
+
+    /*
     | Voice AI provider backing POST /voice/parse — the port of the
     | parse-voice-input edge function. Server-side only; the key is never
     | exposed to the SPA. Wired up in Phase 5 (BE-051).
