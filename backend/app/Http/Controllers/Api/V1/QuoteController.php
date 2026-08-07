@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers\Api\V1;
 
-use App\Http\Controllers\Concerns\NotImplemented;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Quotes\StoreQuoteRequest;
+use App\Http\Requests\Quotes\TransferQuotesRequest;
 use App\Http\Requests\Quotes\UpdateQuoteRequest;
 use App\Http\Resources\QuoteResource;
 use App\Services\QuoteService;
@@ -14,8 +14,6 @@ use Illuminate\Http\Request;
 /** Saved quotes (family-scoped). Ports save/update/delete/list_quotes + transfer. [BE-021..024] */
 class QuoteController extends Controller
 {
-    use NotImplemented;
-
     public function __construct(private readonly QuoteService $quotes) {}
 
     // GET /quotes → { quotes, related_quotes }  [BE-022]
@@ -50,8 +48,15 @@ class QuoteController extends Controller
         return response()->json(['success' => true]);
     }
 
-    public function transfer(Request $request): JsonResponse
+    // POST /quotes/transfer  [BE-024]
+    public function transfer(TransferQuotesRequest $request): JsonResponse
     {
-        return $this->todo('BE-024'); // POST /quotes/transfer
+        $moved = $this->quotes->transfer(
+            $this->currentUser($request),
+            $request->fromUserId(),
+            $request->toUserId(),
+        );
+
+        return response()->json(['success' => true, 'transferred' => $moved]);
     }
 }
