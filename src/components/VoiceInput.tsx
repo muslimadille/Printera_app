@@ -2,7 +2,7 @@ import { useState, useCallback, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Mic, MicOff, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
-import { supabase } from '@/integrations/supabase/client';
+import { parseVoiceInput } from '@/lib/userApi';
 import {
   Tooltip,
   TooltipContent,
@@ -82,11 +82,11 @@ const VoiceInput = ({ calcType, onFieldsParsed, paperTypeNames = [], className }
   const parseTranscript = async (text: string) => {
     setIsParsing(true);
     try {
-      const { data, error } = await supabase.functions.invoke('parse-voice-input', {
-        body: { transcript: text, calcType, paperTypeNames },
-      });
-
-      if (error) throw error;
+      // Goes through the authed API client now: /voice/parse requires a session, where
+      // the old Supabase function was callable by anyone with the public anon key.
+      // Failures throw (including a 401, which force-logs-out via printCalc:sessionExpired)
+      // and land in the catch below, same as the old `error` branch did.
+      const data = await parseVoiceInput(text, calcType, paperTypeNames);
 
       if (data?.fields && Object.keys(data.fields).length > 0) {
         onFieldsParsed(data.fields);
