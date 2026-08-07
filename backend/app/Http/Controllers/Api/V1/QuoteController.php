@@ -17,9 +17,10 @@ class QuoteController extends Controller
 
     public function __construct(private readonly QuoteService $quotes) {}
 
+    // GET /quotes → { quotes, related_quotes }  [BE-022]
     public function index(Request $request): JsonResponse
     {
-        return $this->todo('BE-022'); // GET /quotes → { quotes, related_quotes } (visibility matrix)
+        return response()->json($this->quotes->listFor($this->currentUser($request)));
     }
 
     // POST /quotes  [BE-021]
