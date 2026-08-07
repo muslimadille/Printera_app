@@ -296,8 +296,16 @@ The client keeps polling `/auth/me` every 60s, exactly as today.
 user/device/ip before delete); delete the `user_sessions` row. Return `{ success:true }`. Idempotent.
 
 **Acceptance**
-- [ ] Session row removed; `logout` event written; token no longer validates.
-- [ ] Calling twice does not error.
+- [x] Session row removed; `logout` event written; token no longer validates.
+- [x] Calling twice does not error — the second call returns `401 session_expired`.
+
+> **Clarification (found in BE-018).** The reference `handleLogout` is *unauthenticated*
+> and takes the token in the body, so a repeat call returns `{success:true}`. Here logout
+> sits behind `session.active`, so the second call never reaches the handler: the
+> allow-list row is already gone → `401 session_expired`. Not changed, because moving the
+> route outside the middleware would contradict `03 §2` (logout requires JWT) and would let
+> an unauthenticated caller delete sessions by guessing a token. End state is identical and
+> the SPA handles 401 and `session_expired` the same way.
 
 ---
 

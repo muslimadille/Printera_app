@@ -392,34 +392,36 @@ These were checked line-by-line against `manage-users` and match:
 
 ---
 
-## 4. Test coverage vs acceptance criteria
+## 4. Test coverage vs acceptance criteria — **closed in BE-018**
 
-`tests/Feature/AuthTest.php` has 7 tests against ~28 acceptance checkboxes.
+Grew from **7 tests / 39 assertions** to **58 tests / 196 assertions**, across six files:
 
-**Covered:** health endpoint · login success shape + `user_sessions`/`login_logs`/
-`session_events` rows · bad-credentials business 200 · device-limit → force-login →
-`auto_logout` · `/auth/me` → logout → token revoked 401 · change-password invalidates
-sessions · SHA-256 → bcrypt migration.
-
-**Not covered:**
-
-| Ticket | Untested acceptance criterion |
+| File | Covers |
 |---|---|
-| BE-001 | Mint a JWT and decode `sub`, `role`, custom `jti`; `JWT_TTL` configurable |
-| BE-002 | Migrations run clean on Postgres; unique/index constraints exist; model relationships |
-| BE-003 | `ApiException::business` → `200 {"error":"x"}`; uncaught → `500` Arabic; `AdminSeeder` creates one admin from env and fails loudly without it; no legacy passwords in `database/` |
-| BE-010 | `last_active_at` updated per request; inactive account → 401; expired account → 401 |
-| BE-011 | Same `device_id` re-login reuses the row and rotates the token; inactive/expired → Arabic business errors; IP taken from `x-forwarded-for`/`cf-connecting-ip` |
-| BE-012 | Own-device reuse path; still-over-cap → `403` with the exact Arabic string |
-| BE-013 | Heartbeat row written at most once per 5 min; revoked session → 401 |
-| BE-014 | Logout is idempotent (calling twice does not error) |
-| BE-015 | All 6 Arabic failure branches (incomplete / too short / must differ / not found / wrong current / expired) |
-| BE-016 | **Everything** — no test asserts idle prune at all |
-| Exit | Full `login → me → heartbeat(throttle) → logout` chain; `pint --test`; `php artisan test` |
+| `tests/Feature/AuthTest.php` | health, login happy path, bad credentials, device-limit → force-login, me → logout revocation, change-password invalidation, SHA-256 → bcrypt |
+| `tests/Feature/LoginTest.php` | BE-001 JWT claims (`sub`/`role`/`jti`) incl. all three role tiers · device reuse (rotates token, no extra row, old JWT revoked) · device-limit payload shape · `max_devices` 0 → 1 · deactivated login · IP from `x-forwarded-for` / `cf-connecting-ip` · BE-012 own-device reuse, oldest-session termination, still-over-cap 403 |
+| `tests/Feature/SessionLifecycleTest.php` | BE-016 idle prune (4 tests incl. the config-driven window and the cap-frees-up case) · BE-010 `last_active_at` refresh, deactivated → 401, cross-user `jti` → 401, garbage token → 401 · BE-013 `/auth/me` shape + 5-minute heartbeat throttle + no separate heartbeat route · BE-014 logout event/revocation/double-call · F10 expiry parity (3 tests) |
+| `tests/Feature/ChangePasswordTest.php` | BE-015 — all six Arabic failure branches asserted with `assertExactJson` against `App\Support\Messages`, plus branch *ordering* and the success path |
+| `tests/Feature/AdminSeederTest.php` | BE-003 — one admin from config, bcrypt hash, idempotent re-run, aborts loudly on missing username/password, no row on abort |
+| `tests/Unit/NoLegacyCredentialsTest.php` | BE-003 — no legacy demo password (`1234`, `M123123`) appears as a string literal anywhere in `database/`; no seeder hardcodes a hash or calls `env()`. Tokenized so comments *warning* about those passwords don't false-positive, plus a guard-the-guard test |
 
-The device-limit test asserts `assertJson(['device_limit_reached' => true])` but never
-checks `max_devices`, the `active_sessions` element shape, or the Arabic error string —
-the parts the SPA actually renders.
+The device-limit assertion gap is closed: `max_devices`, the `active_sessions` element
+shape, the count, and the exact Arabic string are all asserted now.
+
+### Spec mismatch found while testing — BE-014 "idempotent"
+
+BE-014 and `03 §3` say logout is "idempotent if already gone". In the reference,
+`handleLogout` is **unauthenticated** and takes the token in the body, so deleting an
+already-deleted token returns `{success:true}`. In the rebuild, logout sits behind
+`session.active`, so the second call never reaches the handler — it returns
+`401 session_expired` because the allow-list row is gone.
+
+Flagged rather than changed: moving logout outside the middleware would contradict
+`03 §2` ("`POST /auth/logout` | JWT") and hand an unauthenticated caller the ability to
+delete sessions by token. The end state is identical (no session, no crash) and the SPA
+treats 401 and `session_expired` the same way. `test_logging_out_twice_does_not_error`
+documents the actual behavior. **Suggested spec edit:** reword BE-014's acceptance to
+"calling twice does not error — the second call returns `401 session_expired`".
 
 ---
 
