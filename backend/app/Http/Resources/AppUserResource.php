@@ -23,6 +23,24 @@ use Illuminate\Http\Resources\Json\JsonResource;
  */
 class AppUserResource extends JsonResource
 {
+    /**
+     * Declared (not magic) so it resolves as a real property inside toArray() rather than
+     * being forwarded to the wrapped model by JsonResource::__get().
+     */
+    private bool $withViewQuotesFlag = false;
+
+    /**
+     * Append `employees_can_view_quotes`. Only `GET /admin/users` does this — handleList
+     * (index.ts:380) is the single reference select that includes the column, while
+     * create/update return the plain shape. See 04-ADMIN-CONTROL-PANEL-SPEC.md §4.1.
+     */
+    public function withViewQuotesFlag(): static
+    {
+        $this->withViewQuotesFlag = true;
+
+        return $this;
+    }
+
     /** @return array<string,mixed> */
     public function toArray(Request $request): array
     {
@@ -36,6 +54,11 @@ class AppUserResource extends JsonResource
             'max_devices' => (int) $this->max_devices,
             'max_employees' => (int) $this->max_employees,
             'parent_user_id' => $this->parent_user_id,
+
+            // Last, matching the reference's column order.
+            $this->mergeWhen($this->withViewQuotesFlag, fn () => [
+                'employees_can_view_quotes' => (bool) $this->employees_can_view_quotes,
+            ]),
         ];
     }
 }

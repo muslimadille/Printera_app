@@ -4,6 +4,10 @@ namespace App\Http\Controllers\Api\V1\Admin;
 
 use App\Http\Controllers\Concerns\NotImplemented;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Admin\StoreUserRequest;
+use App\Http\Resources\AppUserResource;
+use App\Models\AppUser;
+use App\Services\AdminUserService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -12,14 +16,24 @@ class UserAdminController extends Controller
 {
     use NotImplemented;
 
+    public function __construct(private readonly AdminUserService $users) {}
+
+    // GET /admin/users  [BE-041]
     public function index(Request $request): JsonResponse
     {
-        return $this->todo('BE-041'); // GET /admin/users
+        return response()->json([
+            'users' => $this->users->all()
+                ->map(fn (AppUser $user) => AppUserResource::make($user)->withViewQuotesFlag()->resolve())
+                ->all(),
+        ]);
     }
 
-    public function store(Request $request): JsonResponse
+    // POST /admin/users  [BE-041]
+    public function store(StoreUserRequest $request): JsonResponse
     {
-        return $this->todo('BE-041'); // POST /admin/users (+ default tab perms)
+        $user = $this->users->create($request->payload());
+
+        return response()->json(['user' => AppUserResource::make($user)->resolve()]);
     }
 
     public function update(Request $request, string $id): JsonResponse

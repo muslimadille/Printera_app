@@ -5,13 +5,11 @@ namespace App\Services;
 use App\Exceptions\ApiException;
 use App\Models\AppUser;
 use App\Models\SavedQuote;
-use App\Models\UserTabPermission;
+use App\Services\Concerns\RejectsDuplicateUsernames;
 use App\Support\Messages;
 use Illuminate\Database\Eloquent\Collection;
-use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Str;
 
 /**
  * Account-owner employee management. Ports handleCreateEmployee / handleListEmployees /
@@ -26,6 +24,10 @@ use Illuminate\Support\Str;
  */
 class EmployeeService
 {
+    use RejectsDuplicateUsernames;
+
+    public function __construct(private readonly TabPermissionService $tabs) {}
+
     // ── ownership ────────────────────────────────────────────────────────────
 
     /**
@@ -78,33 +80,6 @@ class EmployeeService
         }
     }
 
-    /**
-     * Run a write that may collide with the `app_users.username` unique index, and
-     * translate the collision into the reference's Arabic 400. index.ts:565 sniffs the
-     * driver message for "unique"; Laravel already classifies it, so the sniff is
-     * unnecessary and the Arabic string is identical.
-     *
-     * The transaction is not about atomicity — it is what makes the catch safe on
-     * PostgreSQL. A failed statement aborts the enclosing transaction ("current
-     * transaction is aborted, commands ignored until end of transaction block"), so
-     * without a savepoint to roll back to, every later query on that connection fails as
-     * well and the caught 400 never gets a chance to be returned cleanly. SQLite has no
-     * such rule, which is why this is invisible on the default suite.
-     *
-     * @template T
-     *
-     * @param  callable():T  $write
-     * @return T
-     */
-    private function rejectingDuplicateUsername(callable $write): mixed
-    {
-        try {
-            return DB::transaction($write);
-        } catch (UniqueConstraintViolationException) {
-            throw ApiException::badRequest(Messages::USERNAME_EXISTS);
-        }
-    }
-
     public function create(AppUser $owner, string $username, string $password, int $maxDevices): AppUser
     {
         $this->assertUnderEmployeeCap($owner);
@@ -123,7 +98,7 @@ class EmployeeService
                 'max_employees' => 0,
             ]);
 
-            $this->inheritTabPermissions($owner, $employee);
+            $this->tabs->copy($owner, $employee);
 
             return $employee;
         });
@@ -174,58 +149,26 @@ class EmployeeService
     // ── BE-035 · tab permissions ─────────────────────────────────────────────
 
     /**
-     * The employee's feature flags — index.ts:667-677. Only `tab_key` and `is_enabled` are
-     * exposed; the row id and created_at are internal.
-     *
-     * The reference issues an unordered select, so no particular order was ever
-     * guaranteed. Sorting by tab_key makes the response deterministic across drivers
-     * without breaking anything that relied on the old behavior, because nothing could.
+     * The employee's feature flags — index.ts:667-677. Identical reads and writes to the
+     * admin endpoints (BE-043), so both go through TabPermissionService; only the
+     * authorization in front of them differs.
      *
      * @return array<int,array{tab_key:string,is_enabled:bool}>
      */
     public function tabPermissions(AppUser $employee): array
     {
-        return $employee->tabPermissions()
-            ->orderBy('tab_key')
-            ->get(['tab_key', 'is_enabled'])
-            ->map(fn (UserTabPermission $permission): array => [
-                'tab_key' => $permission->tab_key,
-                'is_enabled' => (bool) $permission->is_enabled,
-            ])
-            ->all();
+        return $this->tabs->listFor($employee);
     }
 
     /**
-     * Upsert each entry on (user_id, tab_key) — index.ts:679-691, which loops one upsert
-     * per entry rather than sending a batch.
-     *
-     * A missing `is_enabled` becomes true: the reference passes `undefined`, which
-     * supabase-js strips, leaving the column's `DEFAULT true` to apply.
+     * Upsert each entry on (user_id, tab_key) — index.ts:679-691.
      *
      * @param  array<int,mixed>  $permissions
      * @return int number of entries written
      */
     public function upsertTabPermissions(AppUser $employee, array $permissions): int
     {
-        $written = 0;
-
-        foreach ($permissions as $permission) {
-            if (! is_array($permission)
-                || ! isset($permission['tab_key'])
-                || ! is_string($permission['tab_key'])
-                || $permission['tab_key'] === '') {
-                continue;
-            }
-
-            $employee->tabPermissions()->updateOrCreate(
-                ['tab_key' => $permission['tab_key']],
-                ['is_enabled' => (bool) ($permission['is_enabled'] ?? true)],
-            );
-
-            $written++;
-        }
-
-        return $written;
+        return $this->tabs->upsertMany($employee, $permissions);
     }
 
     // ── BE-034 · quote count ─────────────────────────────────────────────────
@@ -286,30 +229,6 @@ class EmployeeService
 
         if (! $isOwnEmployee) {
             throw ApiException::badRequest(Messages::TARGET_USER_NOT_FOUND);
-        }
-    }
-
-    /**
-     * Copy every one of the owner's tab-permission rows to the new employee — index.ts:572-576.
-     * `tab_key` is opaque and includes the special `default_tab:<key>` row, so this is a
-     * straight copy with no filtering.
-     */
-    private function inheritTabPermissions(AppUser $from, AppUser $to): void
-    {
-        $rows = UserTabPermission::query()
-            ->where('user_id', $from->id)
-            ->get(['tab_key', 'is_enabled'])
-            ->map(fn (UserTabPermission $permission): array => [
-                'id' => (string) Str::uuid(),
-                'user_id' => $to->id,
-                'tab_key' => $permission->tab_key,
-                'is_enabled' => $permission->is_enabled,
-                'created_at' => now(),
-            ])
-            ->all();
-
-        if ($rows !== []) {
-            UserTabPermission::query()->insert($rows);
         }
     }
 }
