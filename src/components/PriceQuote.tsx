@@ -7,7 +7,7 @@ import { Printer, Save, Loader2, Eye, AlertCircle, Paperclip, X, FileIcon, Downl
 import { Button } from '@/components/ui/button';
 import ProfitMargins from '@/components/ProfitMargins';
 import PrintPreview from '@/components/PrintPreview';
-import { saveQuote, updateQuote, getUploadUrl } from '@/lib/userApi';
+import { saveQuote, updateQuote, getUploadUrl, getFileUrl } from '@/lib/userApi';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -86,7 +86,16 @@ const PriceQuote = ({ sessionToken, editingQuoteId, onClearEditingQuote, existin
 
   const handleDownloadFile = async (url: string, fileName: string) => {
     try {
-      const response = await fetch(url);
+      // Saved attachments are stored as `storage:{key}`, not as a fetchable URL — the
+      // bucket is private, so a fresh signed URL has to be minted per download. Values
+      // that are already a URL are legacy rows from when the bucket was public
+      // (OPS-072 converts those to keys); they are still fetched directly so nothing
+      // regresses before that command runs.
+      const target = url.startsWith('storage:')
+        ? (await getFileUrl(sessionToken, url.replace('storage:', ''))).signed_url
+        : url;
+
+      const response = await fetch(target);
       const blob = await response.blob();
       const blobUrl = URL.createObjectURL(blob);
       const a = document.createElement('a');
