@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Exceptions\ApiException;
 use App\Models\AppUser;
+use App\Models\SavedQuote;
 use App\Models\UserTabPermission;
 use App\Support\Messages;
 use Illuminate\Database\Eloquent\Collection;
@@ -146,6 +147,56 @@ class EmployeeService
         $this->rejectingDuplicateUsername(fn () => $employee->fill($changes)->save());
 
         return $employee->refresh();
+    }
+
+    // ── BE-033 · delete (+ optional quote transfer) ──────────────────────────
+
+    /**
+     * Delete one of the caller's employees — index.ts:646-665.
+     *
+     * With `transfer_to`, the employee's saved quotes are reassigned FIRST and therefore
+     * survive; without it the `saved_quotes.user_id` foreign key cascades and they go with
+     * the employee, along with its sessions, settings and tab permissions.
+     *
+     * The transfer target must be the caller itself or another employee of the caller,
+     * else 400 "المستخدم المستهدف غير موجود". Note the reference does NOT exclude the
+     * employee being deleted from that set: transfer_to = the target's own id passes the
+     * check, moves the rows to themselves, and the cascade then deletes them anyway. That
+     * quirk is ported as-is rather than "fixed", since the SPA never offers it.
+     */
+    public function delete(AppUser $owner, AppUser $employee, ?string $transferTo): void
+    {
+        if ($transferTo !== null) {
+            $this->assertTransferTarget($owner, $transferTo);
+        }
+
+        // The reference runs the transfer and the delete as two unguarded statements; a
+        // failure between them would orphan the quotes on a user that still exists.
+        DB::transaction(function () use ($employee, $transferTo) {
+            if ($transferTo !== null) {
+                SavedQuote::query()
+                    ->where('user_id', $employee->id)
+                    ->update(['user_id' => $transferTo, 'updated_at' => now()]);
+            }
+
+            $employee->delete();
+        });
+    }
+
+    private function assertTransferTarget(AppUser $owner, string $transferTo): void
+    {
+        if ($transferTo === $owner->id) {
+            return;
+        }
+
+        $isOwnEmployee = AppUser::query()
+            ->where('id', $transferTo)
+            ->where('parent_user_id', $owner->id)
+            ->exists();
+
+        if (! $isOwnEmployee) {
+            throw ApiException::badRequest(Messages::TARGET_USER_NOT_FOUND);
+        }
     }
 
     /**

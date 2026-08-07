@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Concerns\NotImplemented;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Employees\DeleteEmployeeRequest;
 use App\Http\Requests\Employees\StoreEmployeeRequest;
 use App\Http\Requests\Employees\UpdateEmployeeRequest;
 use App\Http\Resources\AppUserResource;
@@ -50,9 +51,18 @@ class EmployeeController extends Controller
         return response()->json(['employee' => AppUserResource::make($employee)->resolve()]);
     }
 
-    public function destroy(Request $request, string $id): JsonResponse
+    // DELETE /employees/{id}?transfer_to=<id>  [BE-033]
+    public function destroy(DeleteEmployeeRequest $request, string $id): JsonResponse
     {
-        return $this->todo('BE-033'); // DELETE /employees/{id}?transfer_to=
+        $owner = $this->currentUser($request);
+
+        $this->employees->delete(
+            $owner,
+            $this->employees->findOwnEmployee($owner, $id),
+            $request->transferTo(),
+        );
+
+        return response()->json(['success' => true]);
     }
 
     public function quotesCount(Request $request, string $id): JsonResponse
