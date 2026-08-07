@@ -43,6 +43,22 @@ class StorageService
     private const UPLOAD_TTL_MINUTES = 30;
 
     /**
+     * Extensions that may be rendered inline, and the Content-Type they are pinned to.
+     * Deliberately excludes SVG, which is an XML document that can carry script. See
+     * download().
+     *
+     * @var array<string,string>
+     */
+    private const INLINE_TYPES = [
+        'pdf' => 'application/pdf',
+        'png' => 'image/png',
+        'jpg' => 'image/jpeg',
+        'jpeg' => 'image/jpeg',
+        'gif' => 'image/gif',
+        'webp' => 'image/webp',
+    ];
+
+    /**
      * The concrete adapter rather than the Filesystem contract: `response()`,
      * `temporaryUrl()` and `temporaryUploadUrl()` all live on the adapter.
      */
@@ -154,9 +170,40 @@ class StorageService
         return $this->disk()->exists($path);
     }
 
-    public function readStreamResponse(string $path): StreamedResponse
+    /**
+     * Serve an object from the local disk.
+     *
+     * Against Supabase these files came from a *different* origin, so rendering one could
+     * never reach the app. Serving them from our own domain changes that: an uploaded
+     * .html or .svg rendered inline would execute script on the API's origin, and a signed
+     * download URL needs no credentials — so a tenant could upload a payload, mint a URL
+     * and send it to an admin, whose browser would run it against their own localStorage
+     * (where the SPA keeps its session). Hence:
+     *
+     *  - only a safelist of inert types is served inline, everything else downloads as
+     *    application/octet-stream (SVG included — it can carry script);
+     *  - `nosniff` stops the browser second-guessing the declared type;
+     *  - the sandbox CSP neutralises script even if something does get rendered.
+     *
+     * The safelist keeps the two things the product actually previews working: montage
+     * artwork as PDF, and images in MontageUpload's <img> preview.
+     *
+     * S3 is unaffected — those URLs point at the bucket's own origin.
+     */
+    public function download(string $path): StreamedResponse
     {
-        return $this->disk()->response($path);
+        $inlineType = self::INLINE_TYPES[strtolower(pathinfo($path, PATHINFO_EXTENSION))] ?? null;
+
+        return $this->disk()->response(
+            $path,
+            null,
+            [
+                'Content-Type' => $inlineType ?? 'application/octet-stream',
+                'X-Content-Type-Options' => 'nosniff',
+                'Content-Security-Policy' => "default-src 'none'; sandbox",
+            ],
+            $inlineType !== null ? 'inline' : 'attachment',
+        );
     }
 
     // ── helpers ──────────────────────────────────────────────────────────────

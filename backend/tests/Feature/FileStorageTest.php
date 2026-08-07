@@ -216,6 +216,91 @@ class FileStorageTest extends TestCase
         $this->get($signed)->assertStatus(403);
     }
 
+    // ── serving files from our own origin ────────────────────────────────────
+
+    public function test_an_uploaded_html_file_is_never_rendered_inline(): void
+    {
+        // The stored-XSS case that moving off Supabase introduced: a signed download URL
+        // needs no credentials, so a tenant could mint one for a payload and send it to an
+        // admin, whose browser would run it against the app's own origin and localStorage.
+        $this->makeTenant();
+        $auth = $this->authAs();
+
+        $path = $this->upload($auth, 'payload.html', '<script>alert(document.cookie)</script>');
+
+        $signed = $this->postJson('/api/v1/files/download-url', ['file_path' => $path], $auth)
+            ->assertOk()->json('signed_url');
+
+        $response = $this->get($signed);
+        $response->assertOk();
+        $response->assertHeader('Content-Type', 'application/octet-stream');
+        $this->assertStringStartsWith('attachment', $response->headers->get('Content-Disposition'));
+    }
+
+    public function test_svg_is_forced_to_download_because_it_can_carry_script(): void
+    {
+        $this->makeTenant();
+        $auth = $this->authAs();
+
+        $path = $this->upload($auth, 'logo.svg', '<svg xmlns="http://www.w3.org/2000/svg"><script/></svg>');
+
+        $signed = $this->postJson('/api/v1/files/download-url', ['file_path' => $path], $auth)
+            ->assertOk()->json('signed_url');
+
+        $response = $this->get($signed);
+        $response->assertHeader('Content-Type', 'application/octet-stream');
+        $this->assertStringStartsWith('attachment', $response->headers->get('Content-Disposition'));
+    }
+
+    public function test_the_formats_the_product_previews_still_render_inline(): void
+    {
+        // The safelist has to keep MontageUpload's <img> preview and PDF viewing working.
+        $this->makeTenant();
+        $auth = $this->authAs();
+
+        foreach (['montage.pdf' => 'application/pdf', 'art.png' => 'image/png', 'photo.JPEG' => 'image/jpeg'] as $name => $type) {
+            $path = $this->upload($auth, $name, 'BYTES');
+
+            $signed = $this->postJson('/api/v1/files/download-url', ['file_path' => $path], $auth)
+                ->assertOk()->json('signed_url');
+
+            $response = $this->get($signed);
+            $response->assertHeader('Content-Type', $type);
+            $this->assertStringStartsWith('inline', $response->headers->get('Content-Disposition'), $name);
+        }
+    }
+
+    public function test_every_download_carries_the_hardening_headers(): void
+    {
+        $this->makeTenant();
+        $auth = $this->authAs();
+        $path = $this->upload($auth, 'art.png', 'BYTES');
+
+        $signed = $this->postJson('/api/v1/files/download-url', ['file_path' => $path], $auth)
+            ->assertOk()->json('signed_url');
+
+        $this->get($signed)
+            ->assertHeader('X-Content-Type-Options', 'nosniff')
+            ->assertHeader('Content-Security-Policy', "default-src 'none'; sandbox");
+    }
+
+    public function test_a_disguised_extension_cannot_win_back_an_inline_render(): void
+    {
+        // Content-Type is pinned from the extension and nosniff blocks the browser from
+        // second-guessing it, so HTML bytes under a .png name stay an image/png download.
+        $this->makeTenant();
+        $auth = $this->authAs();
+
+        $path = $this->upload($auth, 'sneaky.png', '<html><script>alert(1)</script></html>');
+
+        $signed = $this->postJson('/api/v1/files/download-url', ['file_path' => $path], $auth)
+            ->assertOk()->json('signed_url');
+
+        $this->get($signed)
+            ->assertHeader('Content-Type', 'image/png')
+            ->assertHeader('X-Content-Type-Options', 'nosniff');
+    }
+
     public function test_downloading_a_missing_object_is_a_404(): void
     {
         $user = $this->makeTenant();

@@ -71,7 +71,7 @@ class FileController extends Controller
             abort(404);
         }
 
-        return $this->storage->readStreamResponse($path);
+        return $this->storage->download($path);
     }
 
     /**
