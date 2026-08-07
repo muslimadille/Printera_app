@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Employees\DeleteEmployeeRequest;
 use App\Http\Requests\Employees\StoreEmployeeRequest;
 use App\Http\Requests\Employees\UpdateEmployeeRequest;
+use App\Http\Requests\Employees\UpdateTabPermissionsRequest;
 use App\Http\Resources\AppUserResource;
 use App\Services\EmployeeService;
 use Illuminate\Http\JsonResponse;
@@ -73,14 +74,22 @@ class EmployeeController extends Controller
         return response()->json(['count' => $this->employees->quoteCount($employee)]);
     }
 
+    // GET /employees/{id}/tab-permissions  [BE-035]
     public function getTabPermissions(Request $request, string $id): JsonResponse
     {
-        return $this->todo('BE-035'); // GET /employees/{id}/tab-permissions
+        $employee = $this->employees->findOwnEmployee($this->currentUser($request), $id);
+
+        return response()->json(['permissions' => $this->employees->tabPermissions($employee)]);
     }
 
-    public function updateTabPermissions(Request $request, string $id): JsonResponse
+    // PUT /employees/{id}/tab-permissions  [BE-035]
+    public function updateTabPermissions(UpdateTabPermissionsRequest $request, string $id): JsonResponse
     {
-        return $this->todo('BE-035'); // PUT /employees/{id}/tab-permissions
+        $employee = $this->employees->findOwnEmployee($this->currentUser($request), $id);
+
+        $this->employees->upsertTabPermissions($employee, $request->permissions());
+
+        return response()->json(['success' => true]);
     }
 
     public function toggleViewQuotes(Request $request): JsonResponse

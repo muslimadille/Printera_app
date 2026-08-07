@@ -149,6 +149,63 @@ class EmployeeService
         return $employee->refresh();
     }
 
+    // ── BE-035 · tab permissions ─────────────────────────────────────────────
+
+    /**
+     * The employee's feature flags — index.ts:667-677. Only `tab_key` and `is_enabled` are
+     * exposed; the row id and created_at are internal.
+     *
+     * The reference issues an unordered select, so no particular order was ever
+     * guaranteed. Sorting by tab_key makes the response deterministic across drivers
+     * without breaking anything that relied on the old behavior, because nothing could.
+     *
+     * @return array<int,array{tab_key:string,is_enabled:bool}>
+     */
+    public function tabPermissions(AppUser $employee): array
+    {
+        return $employee->tabPermissions()
+            ->orderBy('tab_key')
+            ->get(['tab_key', 'is_enabled'])
+            ->map(fn (UserTabPermission $permission): array => [
+                'tab_key' => $permission->tab_key,
+                'is_enabled' => (bool) $permission->is_enabled,
+            ])
+            ->all();
+    }
+
+    /**
+     * Upsert each entry on (user_id, tab_key) — index.ts:679-691, which loops one upsert
+     * per entry rather than sending a batch.
+     *
+     * A missing `is_enabled` becomes true: the reference passes `undefined`, which
+     * supabase-js strips, leaving the column's `DEFAULT true` to apply.
+     *
+     * @param  array<int,mixed>  $permissions
+     * @return int number of entries written
+     */
+    public function upsertTabPermissions(AppUser $employee, array $permissions): int
+    {
+        $written = 0;
+
+        foreach ($permissions as $permission) {
+            if (! is_array($permission)
+                || ! isset($permission['tab_key'])
+                || ! is_string($permission['tab_key'])
+                || $permission['tab_key'] === '') {
+                continue;
+            }
+
+            $employee->tabPermissions()->updateOrCreate(
+                ['tab_key' => $permission['tab_key']],
+                ['is_enabled' => (bool) ($permission['is_enabled'] ?? true)],
+            );
+
+            $written++;
+        }
+
+        return $written;
+    }
+
     // ── BE-034 · quote count ─────────────────────────────────────────────────
 
     /**
