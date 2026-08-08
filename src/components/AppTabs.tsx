@@ -51,22 +51,9 @@ const NewMagazineCalculator = lazy(() => import('@/components/NewMagazineCalcula
 const MagazinesCalculator = lazy(() => import('@/components/MagazinesCalculator'));
 const MagazineSheetCalculator = lazy(() => import('@/components/MagazineSheetCalculator'));
 const BagCalculator = lazy(() => import('@/components/BagCalculator'));
-// === "علب" group — independent clones of the "قوالب" sub-calculators ===
-const BoxDieCutCalculator = lazy(() => import('@/components/boxes/BoxDieCutCalculator'));
-const BoxDieCutCalculator2 = lazy(() => import('@/components/boxes/BoxDieCutCalculator2'));
-const BoxDieCutCalculator3 = lazy(() => import('@/components/boxes/BoxDieCutCalculator3'));
-const BoxDieCutCalculator4 = lazy(() => import('@/components/boxes/BoxDieCutCalculator4'));
-const BoxDieCutCalculator5 = lazy(() => import('@/components/boxes/BoxDieCutCalculator5'));
-const BoxDieCutCalculatorMedicine1 = lazy(() => import('@/components/boxes/BoxDieCutCalculatorMedicine1'));
-const BoxDieCutCalculator10001 = lazy(() => import('@/components/boxes/BoxDieCutCalculator10001'));
-const BoxSvgAutoNestingCalculator = lazy(() => import('@/components/boxes/BoxSvgAutoNestingCalculator'));
-const BoxCarryingHandleBoxCalculator = lazy(() => import('@/components/boxes/BoxCarryingHandleBoxCalculator'));
-const BoxLidTuckBoxCalculator = lazy(() => import('@/components/boxes/BoxLidTuckBoxCalculator'));
-const D001Calculator = lazy(() => import('@/components/boxes/D001Calculator'));
+// === "علب" group ===
 const T0002Calculator = lazy(() => import('@/components/boxes/T0002Calculator'));
-const T00012Calculator = lazy(() => import('@/components/boxes/T00012Calculator'));
-const T0005Calculator = lazy(() => import('@/components/boxes/T0005Calculator'));
-const T0006Calculator = lazy(() => import('@/components/boxes/T0006Calculator'));
+const A60_20_01_01Calculator = lazy(() => import('@/components/boxes/A60_20_01_01Calculator'));
 
 
 const TabLoading = () => (
@@ -162,23 +149,9 @@ const AppTabs = ({ activeTab, onTabChange, isAdmin, currentUser, currentPassword
   const [montagSub, setMontagSub] = useState<'montag_itemcost' | 'montag_box10001'>(
     activeTab === 'montag_box10001' ? 'montag_box10001' : 'montag_itemcost'
   );
-  type BoxesSubKey = 'box_diecut' | 'box_diecut2' | 'box_diecut3' | 'box_diecut4' | 'box_diecut5' | 'box_medicinebox1' | 'box_box10001' | 'box_svgnest' | 'box_carryhandle' | 'box_lidtuck' | 'box_d001' | 'box_t0002' | 'box_t0005' | 'box_t0006' | 'box_t00012';
+  type BoxesSubKey = 'box_a60_20_01_01' | 'box_t0002';
   const [boxesSub, setBoxesSub] = useState<BoxesSubKey>(
-    activeTab === 'box_diecut2' ? 'box_diecut2'
-    : activeTab === 'box_diecut3' ? 'box_diecut3'
-    : activeTab === 'box_diecut4' ? 'box_diecut4'
-    : activeTab === 'box_diecut5' ? 'box_diecut5'
-    : activeTab === 'box_carryhandle' ? 'box_carryhandle'
-    : activeTab === 'box_lidtuck' ? 'box_lidtuck'
-    : activeTab === 'box_medicinebox1' ? 'box_medicinebox1'
-    : activeTab === 'box_box10001' ? 'box_box10001'
-    : activeTab === 'box_svgnest' ? 'box_svgnest'
-    : activeTab === 'box_d001' ? 'box_d001'
-    : activeTab === 'box_t0002' ? 'box_t0002'
-    : activeTab === 'box_t0005' ? 'box_t0005'
-    : activeTab === 'box_t0006' ? 'box_t0006'
-    : activeTab === 'box_t00012' ? 'box_t00012'
-    : 'box_diecut'
+    activeTab === 'box_a60_20_01_01' ? 'box_a60_20_01_01' : 'box_t0002'
   );
 
   // Keep visited set in sync so all Die Cut panels stay mounted once opened.
@@ -430,60 +403,21 @@ const AppTabs = ({ activeTab, onTabChange, isAdmin, currentUser, currentPassword
           {(() => {
             if (!isTabEnabled('boxes')) return null;
             type BSub = BoxesSubKey;
-            const isBoxesView = activeTab === 'boxes' || activeTab === 'box_diecut' || activeTab === 'box_diecut2' || activeTab === 'box_diecut3' || activeTab === 'box_diecut4' || activeTab === 'box_diecut5' || activeTab === 'box_medicinebox1' || activeTab === 'box_box10001' || activeTab === 'box_svgnest' || activeTab === 'box_carryhandle' || activeTab === 'box_lidtuck' || activeTab === 'box_d001' || activeTab === 'box_t0002' || activeTab === 'box_t0005' || activeTab === 'box_t0006' || activeTab === 'box_t00012' || activeTab === 'box_generic';
+            const isBoxesView = activeTab === 'boxes' || activeTab === 'box_a60_20_01_01' || activeTab === 'box_t0002';
             const effectiveBSub: BSub =
-              activeTab === 'box_diecut2' ? 'box_diecut2'
-              : activeTab === 'box_diecut3' ? 'box_diecut3'
-              : activeTab === 'box_diecut4' ? 'box_diecut4'
-              : activeTab === 'box_diecut5' ? 'box_diecut5'
-              : activeTab === 'box_carryhandle' ? 'box_carryhandle'
-              : activeTab === 'box_lidtuck' ? 'box_lidtuck'
-              : activeTab === 'box_medicinebox1' ? 'box_medicinebox1'
-              : activeTab === 'box_box10001' ? 'box_box10001'
-              : activeTab === 'box_svgnest' ? 'box_svgnest'
-              : activeTab === 'box_d001' ? 'box_d001'
+              activeTab === 'box_a60_20_01_01' ? 'box_a60_20_01_01'
               : activeTab === 'box_t0002' ? 'box_t0002'
-              : activeTab === 'box_t0005' ? 'box_t0005'
-              : activeTab === 'box_t0006' ? 'box_t0006'
-              : activeTab === 'box_t00012' ? 'box_t00012'
-              : activeTab === 'box_diecut' ? 'box_diecut'
               : (boxesSub as BSub);
             const bSubItems: { key: BSub; label: string }[] = [
-              { key: 'box_diecut', label: 'Die Cut' },
-              { key: 'box_diecut2', label: 'Die Cut 2' },
-              { key: 'box_diecut3', label: 'Die Cut 3' },
-              { key: 'box_diecut4', label: 'Die Cut 4' },
-              { key: 'box_diecut5', label: 'Die Cut 5' },
-              { key: 'box_carryhandle', label: 'Carrying Handle Box' },
-              { key: 'box_lidtuck', label: 'Lid Tuck Box' },
-              { key: 'box_medicinebox1', label: 'Medicine Box #1' },
-              { key: 'box_box10001', label: '10001' },
-              { key: 'box_svgnest', label: 'SVG Auto Nesting' },
-              { key: 'box_d001', label: 'D001' },
+              { key: 'box_a60_20_01_01', label: 'A60_20_01_01' },
               { key: 'box_t0002', label: 'T0002' },
-              { key: 'box_t00012', label: 'T00012' },
-              { key: 'box_t0005', label: 'T0005' },
-              { key: 'box_t0006', label: 'T0006' },
             ];
             const selectBSub = (k: BSub) => {
               setBoxesSub(k);
               onTabChange(k);
             };
-            const showBDiecut = shouldRenderTab('box_diecut');
-            const showBDiecut2 = shouldRenderTab('box_diecut2');
-            const showBDiecut3 = shouldRenderTab('box_diecut3');
-            const showBDiecut4 = shouldRenderTab('box_diecut4');
-            const showBDiecut5 = shouldRenderTab('box_diecut5');
-            const showBCarryHandle = shouldRenderTab('box_carryhandle');
-            const showBLidTuck = shouldRenderTab('box_lidtuck');
-            const showBMedicineBox1 = shouldRenderTab('box_medicinebox1');
-            const showBBox10001 = shouldRenderTab('box_box10001');
-            const showBSvgNest = shouldRenderTab('box_svgnest');
-            const showBD001 = shouldRenderTab('box_d001');
+            const showBA60_20_01_01 = shouldRenderTab('box_a60_20_01_01');
             const showBT0002 = shouldRenderTab('box_t0002');
-            const showBT00012 = shouldRenderTab('box_t00012');
-            const showBT0005 = shouldRenderTab('box_t0005');
-            const showBT0006 = shouldRenderTab('box_t0006');
             return (
               <div
                 role="tabpanel"
@@ -505,50 +439,11 @@ const AppTabs = ({ activeTab, onTabChange, isAdmin, currentUser, currentPassword
                     </button>
                   ))}
                 </div>
-                <div hidden={effectiveBSub !== 'box_diecut'} className={effectiveBSub !== 'box_diecut' ? 'hidden' : ''}>
-                  {showBDiecut ? <TabErrorBoundary tabKey="box_diecut"><BoxDieCutCalculator isAdmin={isAdmin} /></TabErrorBoundary> : null}
-                </div>
-                <div hidden={effectiveBSub !== 'box_diecut2'} className={effectiveBSub !== 'box_diecut2' ? 'hidden' : ''}>
-                  {showBDiecut2 ? <TabErrorBoundary tabKey="box_diecut2"><BoxDieCutCalculator2 /></TabErrorBoundary> : null}
-                </div>
-                <div hidden={effectiveBSub !== 'box_diecut3'} className={effectiveBSub !== 'box_diecut3' ? 'hidden' : ''}>
-                  {showBDiecut3 ? <TabErrorBoundary tabKey="box_diecut3"><BoxDieCutCalculator3 /></TabErrorBoundary> : null}
-                </div>
-                <div hidden={effectiveBSub !== 'box_diecut4'} className={effectiveBSub !== 'box_diecut4' ? 'hidden' : ''}>
-                  {showBDiecut4 ? <TabErrorBoundary tabKey="box_diecut4"><BoxDieCutCalculator4 /></TabErrorBoundary> : null}
-                </div>
-                <div hidden={effectiveBSub !== 'box_diecut5'} className={effectiveBSub !== 'box_diecut5' ? 'hidden' : ''}>
-                  {showBDiecut5 ? <TabErrorBoundary tabKey="box_diecut5"><BoxDieCutCalculator5 /></TabErrorBoundary> : null}
-                </div>
-                <div hidden={effectiveBSub !== 'box_carryhandle'} className={effectiveBSub !== 'box_carryhandle' ? 'hidden' : ''}>
-                  {showBCarryHandle ? <TabErrorBoundary tabKey="box_carryhandle"><BoxCarryingHandleBoxCalculator /></TabErrorBoundary> : null}
-                </div>
-                <div hidden={effectiveBSub !== 'box_lidtuck'} className={effectiveBSub !== 'box_lidtuck' ? 'hidden' : ''}>
-                  {showBLidTuck ? <TabErrorBoundary tabKey="box_lidtuck"><BoxLidTuckBoxCalculator /></TabErrorBoundary> : null}
-                </div>
-                <div hidden={effectiveBSub !== 'box_medicinebox1'} className={effectiveBSub !== 'box_medicinebox1' ? 'hidden' : ''}>
-                  {showBMedicineBox1 ? <TabErrorBoundary tabKey="box_medicinebox1"><BoxDieCutCalculatorMedicine1 isAdmin={isAdmin} /></TabErrorBoundary> : null}
-                </div>
-                <div hidden={effectiveBSub !== 'box_box10001'} className={effectiveBSub !== 'box_box10001' ? 'hidden' : ''}>
-                  {showBBox10001 ? <TabErrorBoundary tabKey="box_box10001"><BoxDieCutCalculator10001 isAdmin={isAdmin} /></TabErrorBoundary> : null}
-                </div>
-                <div hidden={effectiveBSub !== 'box_svgnest'} className={effectiveBSub !== 'box_svgnest' ? 'hidden' : ''}>
-                  {showBSvgNest ? <TabErrorBoundary tabKey="box_svgnest"><BoxSvgAutoNestingCalculator isAdmin={isAdmin} /></TabErrorBoundary> : null}
-                </div>
-                <div hidden={effectiveBSub !== 'box_d001'} className={effectiveBSub !== 'box_d001' ? 'hidden' : ''}>
-                  {showBD001 ? <TabErrorBoundary tabKey="box_d001"><D001Calculator isAdmin={isAdmin} /></TabErrorBoundary> : null}
+                <div hidden={effectiveBSub !== 'box_a60_20_01_01'} className={effectiveBSub !== 'box_a60_20_01_01' ? 'hidden' : ''}>
+                  {showBA60_20_01_01 ? <TabErrorBoundary tabKey="box_a60_20_01_01"><A60_20_01_01Calculator isAdmin={isAdmin} /></TabErrorBoundary> : null}
                 </div>
                 <div hidden={effectiveBSub !== 'box_t0002'} className={effectiveBSub !== 'box_t0002' ? 'hidden' : ''}>
                   {showBT0002 ? <TabErrorBoundary tabKey="box_t0002"><T0002Calculator isAdmin={isAdmin} /></TabErrorBoundary> : null}
-                </div>
-                <div hidden={effectiveBSub !== 'box_t0005'} className={effectiveBSub !== 'box_t0005' ? 'hidden' : ''}>
-                  {showBT0005 ? <TabErrorBoundary tabKey="box_t0005"><T0005Calculator isAdmin={isAdmin} /></TabErrorBoundary> : null}
-                </div>
-                <div hidden={effectiveBSub !== 'box_t0006'} className={effectiveBSub !== 'box_t0006' ? 'hidden' : ''}>
-                  {showBT0006 ? <TabErrorBoundary tabKey="box_t0006"><T0006Calculator isAdmin={isAdmin} /></TabErrorBoundary> : null}
-                </div>
-                <div hidden={effectiveBSub !== 'box_t00012'} className={effectiveBSub !== 'box_t00012' ? 'hidden' : ''}>
-                  {showBT00012 ? <TabErrorBoundary tabKey="box_t00012"><T00012Calculator isAdmin={isAdmin} /></TabErrorBoundary> : null}
                 </div>
 
                 </div>

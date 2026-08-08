@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
+import { toast } from 'sonner';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -116,7 +117,7 @@ const NumField = ({
   disabled?: boolean; step?: string; min?: string; unit?: 'mm' | 'cm' | 'in';
 }) => (
   <div>
-    <Label className="text-xs">{label} {unit && <span className="text-muted-foreground">({unit})</span>}</Label>
+    <Label className="text-xs">{label}</Label>
     <Input type="number" step={step} min={min}
       value={unit ? toDisplay(value, unit) : value}
       disabled={disabled}
@@ -126,23 +127,28 @@ const NumField = ({
 
 
 const D001Calculator = () => {
-  const { showNestingPreview, show3DPreview } = usePreviewSettings();
+  const { show2DPreview, showNestingPreview, show3DPreview } = usePreviewSettings('D001');
 
   
 
-  const [params, setParams] = useState<D001Params>(D001_DEFAULTS);
-  const [nesting, setNesting] = useState<D001NestingParams>(DEFAULT_NESTING);
+  const [draftParams, setDraftParams] = useState<D001Params>(D001_DEFAULTS);
+  const [appliedParams, setAppliedParams] = useState<D001Params>(D001_DEFAULTS);
+
+  const [draftNesting, setDraftNesting] = useState<D001NestingParams>(DEFAULT_NESTING);
+  const [appliedNesting, setAppliedNesting] = useState<D001NestingParams>(DEFAULT_NESTING);
+
   const [previewMode, setPreviewMode] = useState<PreviewMode>('template');
   const [showDimensions, setShowDimensions] = useState(true);
   const [dimUnit, setDimUnit] = useState<'mm' | 'cm' | 'in'>('mm');
   const [printOpen, setPrintOpen] = useState(false);
+
   const setN = <K extends keyof D001NestingParams>(k: K, v: D001NestingParams[K]) =>
-    setNesting(prev => ({ ...prev, [k]: v }));
+    setDraftNesting(prev => ({ ...prev, [k]: v }));
   const depthTongueTouched = useRef(false);
   const tongueTotalTouched = useRef(false);
 
   const set = <K extends keyof D001Params>(k: K, v: D001Params[K]) => {
-    setParams(prev => {
+    setDraftParams(prev => {
       const next = { ...prev, [k]: v };
       if (k === 'width' && !next.referenceMode && !depthTongueTouched.current) {
         next.depthTongue = defaultDepthTongueForWidth(num(String(v), prev.width));
@@ -155,18 +161,32 @@ const D001Calculator = () => {
     });
   };
 
-  const usable = useMemo(() => usableSheet(params), [params]);
-  const nestingResult = useMemo(() => computeD001Nesting(params, nesting), [params, nesting]);
+  const handleSave = () => {
+    setAppliedParams({ ...draftParams });
+    setAppliedNesting({ ...draftNesting });
+    toast.success('تم حفظ التعديلات وتطبيقها');
+  };
 
-  const geo = useMemo(() => buildD001Geometry(params), [params]);
+  const handleReset = () => {
+    setDraftParams({ ...D001_DEFAULTS });
+    setAppliedParams({ ...D001_DEFAULTS });
+    setDraftNesting({ ...DEFAULT_NESTING });
+    setAppliedNesting({ ...DEFAULT_NESTING });
+    toast.info('تم إعادة تعيين جميع الأبعاد للقيم الافتراضية');
+  };
+
+  const usable = useMemo(() => usableSheet(appliedParams), [appliedParams]);
+  const nestingResult = useMemo(() => computeD001Nesting(appliedParams, appliedNesting), [appliedParams, appliedNesting]);
+
+  const geo = useMemo(() => buildD001Geometry(appliedParams), [appliedParams]);
 
   const faceCoords = useMemo(() => {
-    const W = params.width;
-    const H = params.height;
-    const D = params.depth;
-    const Gf = params.glueFlap;
-    const Lid = params.lidTongue;
-    const DT = params.depthTongue;
+    const W = appliedParams.width;
+    const H = appliedParams.height;
+    const D = appliedParams.depth;
+    const Gf = appliedParams.glueFlap;
+    const Lid = appliedParams.lidTongue;
+    const DT = appliedParams.depthTongue;
     const Cov = D - 0.25;
     const d2 = D - 0.5;
 
@@ -183,7 +203,7 @@ const D001Calculator = () => {
     const seg4H = (Number.isFinite(DT) && DT > 0) ? DT : widthFallback;
     const halfD = D / 2;
     const autoTongueH = seg4H + 4 + halfD; // SEG5_LEG = 4
-    const userTongueH = params.depthTongueTotalHeight;
+    const userTongueH = appliedParams.depthTongueTotalHeight;
     const tongueTotalH = (Number.isFinite(userTongueH) && (userTongueH as number) > 0)
       ? (userTongueH as number) : autoTongueH;
 
@@ -218,7 +238,7 @@ const D001Calculator = () => {
         { x: Xd2, y: Yfb, w: d2, h: bf4 },
       ] as [Panel2DInfo, Panel2DInfo, Panel2DInfo, Panel2DInfo],
     };
-  }, [params]);
+  }, [appliedParams]);
 
   const distributionFootprint = useMemo(() => {
     if (nestingResult.fitStatus !== 'fits' || nestingResult.bestTotal <= 0) {
@@ -252,58 +272,58 @@ const D001Calculator = () => {
   }, [nestingResult]);
 
   const derived = useMemo(() => ({
-    faceHeight: D001_RULES.faceHeight(params.height),
-    depth1: D001_RULES.depth1(params.depth),
-    depth2: D001_RULES.depth2(params.depth),
-    coverVertical: D001_RULES.coverVertical(params.depth),
+    faceHeight: D001_RULES.faceHeight(appliedParams.height),
+    depth1: D001_RULES.depth1(appliedParams.depth),
+    depth2: D001_RULES.depth2(appliedParams.depth),
+    coverVertical: D001_RULES.coverVertical(appliedParams.depth),
     lidCurveHeight: D001_RULES.lidCurveHeight,
-  }), [params]);
+  }), [appliedParams]);
 
-  const refOn = !!params.referenceMode;
-
+  const dimsSvg = useMemo(
+    () => (showDimensions ? buildD001DimensionsSvg(appliedParams, dimUnit, 1) : ''),
+    [showDimensions, appliedParams, dimUnit],
+  );
 
   return (
     <>
       <TemplateEditorLayout
-        title="D001 — قالب ديناميكي"
-        hasReferenceMode={true}
-        referenceModeOn={refOn}
-        onReferenceModeChange={v => set('referenceMode', v)}
+        title="D001-H — علبة كيك بمقبض حمل"
         previewMode={previewMode}
         onPreviewModeChange={setPreviewMode}
+        hasTemplatePreview={show2DPreview}
         hasSheetPreview={showNestingPreview}
         has3DPreview={show3DPreview}
         showDimensions={showDimensions}
         onShowDimensionsChange={setShowDimensions}
         dimUnit={dimUnit}
         onDimUnitChange={setDimUnit}
+        onSave={handleSave}
+        onReset={handleReset}
         actionButtons={
           <>
-            <Button variant="outline" size="sm" onClick={() => setPrintOpen(true)}>
-              ملخص الطباعة
-            </Button>
-            <ExportSingleButton params={params} />
-            <ExportSheetButton params={params} nesting={nesting} result={nestingResult} />
+            <ExportSingleButton params={appliedParams} />
+            <ExportSheetButton params={appliedParams} nesting={appliedNesting} result={nestingResult} />
           </>
         }
-        referenceModeMessage={
-          `وضع المرجعية مفعّل: الأبعاد الافتراضية مقفلة للمعايرة (W=${D001_REFERENCE.width}، H=${D001_REFERENCE.height}، D=${D001_REFERENCE.depth}، Glue_Flap=${D001_REFERENCE.glueFlap}، Lid_Tongue=${D001_REFERENCE.lidTongue}، Dust_Flap=${D001_REFERENCE.dustFlap} مم).`
-        }
-        topPanels={null}
         previewArea={
           previewMode === 'template' ? (
-            <div className="w-full h-full flex flex-col">
-              <D001Preview params={params} fitContainer={false} showDebug={false} showDimensions={showDimensions} dimUnit={dimUnit} />
+            <div className="w-full h-full relative overflow-hidden">
+              <InteractiveSvgCanvas
+                segments={geo.segments}
+                svgWidth={geo.bbox.w}
+                svgHeight={geo.bbox.h}
+                dimensionsMarkup={dimsSvg}
+              />
             </div>
           ) : previewMode === 'sheet' ? (
-            <D001SheetNestingPreview params={params} nesting={nesting} result={nestingResult} />
+            <D001SheetNestingPreview params={appliedParams} nesting={appliedNesting} result={nestingResult} />
           ) : (
             <Box3DPreview
               boxType="D001"
-              lidTongue={params.lidTongue}
-              panelWidths={[params.width, params.depth, params.width, params.depth - 0.5]}
-              panelHeights={params.height}
-              glueFlapWidth={params.glueFlap}
+              lidTongue={appliedParams.lidTongue}
+              panelWidths={[appliedParams.width, appliedParams.depth, appliedParams.width, appliedParams.depth - 0.5]}
+              panelHeights={appliedParams.height}
+              glueFlapWidth={appliedParams.glueFlap}
               topFlapHeights={[
                 faceCoords.topFlaps[0].h,
                 faceCoords.topFlaps[1].h,
@@ -323,177 +343,93 @@ const D001Calculator = () => {
             />
           )
         }
-        floatingSummary={
-          <div className="absolute bottom-4 left-4 right-4 bg-white/95 backdrop-blur-md border border-brand-border rounded-xl p-4 shadow-lg flex items-center justify-around z-10 print:hidden">
-            <div className="text-center">
-              <div className="text-[11px] text-brand-muted mb-1 font-bold uppercase tracking-wider">إجمالي القطع</div>
-              <div className="text-2xl font-bold text-brand-navy leading-none">
-                {nestingResult.bestTotal} <span className="text-sm font-normal text-brand-muted">قطعة</span>
-              </div>
-            </div>
-            <div className="w-px h-10 bg-brand-border hidden sm:block"></div>
-            <div className="text-center hidden sm:block">
-              <div className="text-[11px] text-brand-muted mb-1 font-bold uppercase tracking-wider">المستغل</div>
-              <div className="text-xl font-bold text-brand-navy leading-none" dir="ltr">
-                {toDisplay(distributionFootprint.w, dimUnit).toFixed(0)} × {toDisplay(distributionFootprint.h, dimUnit).toFixed(0)} <span className="text-sm font-normal text-brand-muted">{dimUnit}</span>
-              </div>
-            </div>
-            <div className="w-px h-10 bg-brand-border"></div>
-            <div className="text-center">
-              <div className="text-[11px] text-brand-muted mb-1 font-bold uppercase tracking-wider">اتجاه التوزيع الأفضل</div>
-              <div className="text-lg font-bold text-brand-navy leading-none mt-1">
-                {nestingResult.bestOrientation === 'normal' ? 'بدون تدوير' : 'مدوّر 90°'}
-              </div>
-            </div>
-          </div>
-        }
         sidebarArea={
           <div className="space-y-6">
             <section>
               <h3 className="text-sm font-bold mb-3 text-brand-navy border-b border-brand-border pb-2">أبعاد القالب الأساسية</h3>
               <div className="grid grid-cols-3 gap-2">
-                <NumField label="العرض" value={params.width} disabled={refOn} unit={dimUnit}
+                <NumField label="العرض" value={draftParams.width} unit={dimUnit}
                   onChange={v => set('width', v)} />
-                <NumField label="الارتفاع" value={params.height} disabled={refOn} unit={dimUnit}
+                <NumField label="الارتفاع" value={draftParams.height} unit={dimUnit}
                   onChange={v => set('height', v)} />
-                <NumField label="العمق" value={params.depth} disabled={refOn} unit={dimUnit}
+                <NumField label="العمق" value={draftParams.depth} unit={dimUnit}
                   onChange={v => set('depth', v)} />
               </div>
             </section>
 
-            <section>
-              <h3 className="text-sm font-bold mb-3 text-brand-navy border-b border-brand-border pb-2 mt-4">تخصيص متقدم</h3>
+            <section className="space-y-3">
+              <h3 className="text-sm font-bold border-b border-brand-border pb-2 text-brand-navy">تخصيص متقدم</h3>
               <div className="grid grid-cols-3 gap-2">
-                <NumField label="لسان اللصق" value={params.glueFlap} disabled={refOn} unit={dimUnit}
+                <NumField label="لسان اللصق" value={draftParams.glueFlap} unit={dimUnit}
                   onChange={v => set('glueFlap', v)} />
-                <NumField label="لسان الغطاء" value={params.lidTongue} disabled={refOn} unit={dimUnit}
+                <NumField label="لسان الغطاء" value={draftParams.lidTongue} unit={dimUnit}
                   onChange={v => set('lidTongue', v)} />
                 <div>
-                  <div className="flex items-center justify-between">
-                    <Label className="text-xs">ارتفاع لسان العمق</Label>
-                    <button type="button" disabled={refOn}
-                      className="text-muted-foreground hover:text-foreground disabled:opacity-40"
-                      title="إعادة ضبط"
-                      onClick={() => {
-                        tongueTotalTouched.current = false;
-                        set('depthTongueTotalHeight', autoDepthTongueTotalHeight(params.depthTongue, params.depth));
-                      }}>
-                      <RotateCcw className="w-3 h-3" />
-                    </button>
-                  </div>
+                  <Label className="text-xs truncate mb-1 block" title="ارتفاع لسان العمق">ارتفاع لسان العمق</Label>
                   <Input type="number" step="0.01"
-                    value={toDisplay(params.depthTongueTotalHeight ?? autoDepthTongueTotalHeight(params.depthTongue, params.depth), dimUnit)}
-                    disabled={refOn}
+                    value={toDisplay(draftParams.depthTongueTotalHeight ?? autoDepthTongueTotalHeight(draftParams.depthTongue, draftParams.depth), dimUnit)}
                     onChange={e => {
                       tongueTotalTouched.current = true;
-                      set('depthTongueTotalHeight', toMm(num(e.target.value, toDisplay(params.depthTongueTotalHeight ?? autoDepthTongueTotalHeight(params.depthTongue, params.depth), dimUnit)), dimUnit));
+                      set('depthTongueTotalHeight', toMm(num(e.target.value, toDisplay(draftParams.depthTongueTotalHeight ?? autoDepthTongueTotalHeight(draftParams.depthTongue, draftParams.depth), dimUnit)), dimUnit));
                     }} />
                 </div>
               </div>
-              <div className="grid grid-cols-3 gap-2 mt-2">
-                <div>
-                  <Label className="text-xs">زاوية لسان اللصق</Label>
-                  <div className="grid grid-cols-2 gap-1">
-                    <Input type="number" step="0.1" min="0" max="89"
-                      placeholder="علوي"
-                      value={params.glueFlapTopAngle ?? 25} disabled={refOn}
-                      onChange={e => set('glueFlapTopAngle', num(e.target.value, 25))} />
-                    <Input type="number" step="0.1" min="0" max="89"
-                      placeholder="سفلي"
-                      value={params.glueFlapBottomAngle ?? 25} disabled={refOn}
-                      onChange={e => set('glueFlapBottomAngle', num(e.target.value, 25))} />
-                  </div>
-                  <div className="flex justify-between text-[10px] text-muted-foreground px-0.5">
-                    <span>علوي</span><span>سفلي</span>
-                  </div>
-                </div>
-                <NumField label="زاوية لسان العمق" value={params.depthTongueCornerRadius ?? 0}
-                  disabled={refOn} step="0.1" min="0" unit={dimUnit}
+
+              <div className="grid grid-cols-2 gap-2 pt-1">
+                <NumField label="زاوية لسان العمق" value={draftParams.depthTongueCornerRadius ?? 0}
+                  step="0.1" min="0" unit={dimUnit}
                   onChange={v => set('depthTongueCornerRadius', v)} />
                 <div>
-                  <div className="flex items-center justify-between">
-                    <Label className="text-xs">القفل</Label>
-                    <button type="button" disabled={refOn}
-                      className="text-muted-foreground hover:text-foreground disabled:opacity-40"
-                      title={`إعادة ضبط إلى ${toDisplay(defaultDepthTongueForWidth(params.width), dimUnit)}${dimUnit}`}
-                      onClick={() => {
-                        depthTongueTouched.current = false;
-                        set('depthTongue', defaultDepthTongueForWidth(params.width));
-                      }}>
-                      <RotateCcw className="w-3 h-3" />
-                    </button>
-                  </div>
-                  <Input type="number" step="0.01" value={toDisplay(params.depthTongue, dimUnit)}
-                    disabled={refOn}
+                  <Label className="text-xs truncate mb-1 block">القفل</Label>
+                  <Input type="number" step="0.01" value={toDisplay(draftParams.depthTongue, dimUnit)}
                     onChange={e => {
                       depthTongueTouched.current = true;
-                      set('depthTongue', toMm(num(e.target.value, toDisplay(params.depthTongue, dimUnit)), dimUnit));
+                      set('depthTongue', toMm(num(e.target.value, toDisplay(draftParams.depthTongue, dimUnit)), dimUnit));
                     }} />
+                </div>
+              </div>
+
+              <div className="pt-1">
+                <Label className="text-xs font-semibold block mb-1.5">زاوية لسان اللصق (°)</Label>
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="flex items-center gap-1.5 bg-slate-50 border rounded-md px-2.5 py-1">
+                    <span className="text-[11px] text-muted-foreground whitespace-nowrap">علوي:</span>
+                    <input type="number" step="0.1" min="0" max="89"
+                      className="w-full bg-transparent text-xs font-medium focus:outline-none text-left"
+                      dir="ltr"
+                      value={draftParams.glueFlapTopAngle ?? 25}
+                      onChange={e => set('glueFlapTopAngle', num(e.target.value, 25))} />
+                  </div>
+                  <div className="flex items-center gap-1.5 bg-slate-50 border rounded-md px-2.5 py-1">
+                    <span className="text-[11px] text-muted-foreground whitespace-nowrap">سفلي:</span>
+                    <input type="number" step="0.1" min="0" max="89"
+                      className="w-full bg-transparent text-xs font-medium focus:outline-none text-left"
+                      dir="ltr"
+                      value={draftParams.glueFlapBottomAngle ?? 25}
+                      onChange={e => set('glueFlapBottomAngle', num(e.target.value, 25))} />
+                  </div>
                 </div>
               </div>
             </section>
 
-            <section>
-              <h3 className="text-sm font-bold mb-3 text-brand-navy border-b border-brand-border pb-2 mt-4">إعدادات التعشيق الذكي (Smart Auto)</h3>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="flex flex-col gap-2">
-                  <div className="flex items-center justify-between h-8">
-                    <Label className="text-xs">التعشيق التلقائي</Label>
-                    <Switch id="d001-smart" checked={!!nesting.smartAuto} onCheckedChange={v => setN('smartAuto', v)} />
-                  </div>
-                  <div className="text-[10px] text-muted-foreground leading-tight">
-                    {nesting.smartAuto ? 'يحسب Pitch و Interlock تلقائياً' : 'يدوي (Interlock من المستخدم)'}
-                  </div>
-                </div>
-                <div className="flex flex-col gap-2">
-                  <div className="flex items-center justify-between h-8">
-                    <Label className="text-xs">السماح بالدوران</Label>
-                    <Switch id="d001-allow-rot" checked={nesting.allowRotation} onCheckedChange={v => setN('allowRotation', v)} />
-                  </div>
-                  <div className="text-[10px] text-muted-foreground leading-tight">
-                    {nesting.allowRotation ? 'مسموح' : 'غير مسموح'}
-                  </div>
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-2 mt-2">
-                <NumField label="التداخل الأفقي" value={nesting.horizontalInterlock} step="0.1" min="0" unit={dimUnit}
-                  disabled={!!nesting.smartAuto}
-                  onChange={v => setN('horizontalInterlock', v)} />
-                <NumField label="التداخل العمودي" value={nesting.verticalInterlock} step="0.1" min="0" unit={dimUnit}
-                  disabled={!!nesting.smartAuto}
-                  onChange={v => setN('verticalInterlock', v)} />
-              </div>
-              <div className="mt-2">
-                <Label className="text-xs mb-1 block">وضع الدوران (Rotation Mode)</Label>
-                <select
-                  className="w-full h-8 rounded-md border border-input bg-background px-2 text-sm"
-                  disabled={!nesting.allowRotation}
-                  value={nesting.rotationMode}
-                  onChange={e => setN('rotationMode', e.target.value as RotationMode)}
-                >
-                  <option value="normal">بدون تدوير (Normal)</option>
-                  <option value="rotated">مدوّر 90° (Rotated)</option>
-                  <option value="auto">تلقائي (Auto)</option>
-                </select>
-              </div>
-            </section>
+
 
             <section>
               <h3 className="text-sm font-bold mb-3 text-brand-navy border-b border-brand-border pb-2 mt-4">{"إعدادات الشيت"}</h3>
               <div className="grid grid-cols-3 gap-2">
-                <NumField label="عرض الشيت" value={params.sheetWidth} unit={dimUnit}
+                <NumField label="عرض الشيت" value={draftParams.sheetWidth} unit={dimUnit}
                   onChange={v => set('sheetWidth', v)} />
-                <NumField label="ارتفاع الشيت" value={params.sheetHeight} unit={dimUnit}
+                <NumField label="ارتفاع الشيت" value={draftParams.sheetHeight} unit={dimUnit}
                   onChange={v => set('sheetHeight', v)} />
-                <NumField label="القابض" value={params.gripper} unit={dimUnit}
+                <NumField label="القابض" value={draftParams.gripper} unit={dimUnit}
                   onChange={v => set('gripper', v)} />
               </div>
               <div className="grid grid-cols-3 gap-2 mt-2">
-                <NumField label="الهامش" value={params.sheetMargin} unit={dimUnit}
+                <NumField label="الهامش" value={draftParams.sheetMargin} unit={dimUnit}
                   onChange={v => set('sheetMargin', v)} />
-                <NumField label="التباعد الأفقي" value={nesting.horizontalGap} step="0.1" min="0" unit={dimUnit}
+                <NumField label="التباعد الأفقي" value={draftNesting.horizontalGap} step="0.1" min="0" unit={dimUnit}
                   onChange={v => setN('horizontalGap', v)} />
-                <NumField label="التباعد العمودي" value={nesting.verticalGap} step="0.1" min="0" unit={dimUnit}
+                <NumField label="التباعد العمودي" value={draftNesting.verticalGap} step="0.1" min="0" unit={dimUnit}
                   onChange={v => setN('verticalGap', v)} />
               </div>
               <div className="mt-3 text-[11px] text-muted-foreground bg-muted/20 p-2 rounded border border-brand-border/50 text-center">
@@ -507,8 +443,8 @@ const D001Calculator = () => {
       <D001PrintSummary
         open={printOpen}
         onOpenChange={setPrintOpen}
-        params={params}
-        nesting={nesting}
+        params={appliedParams}
+        nesting={appliedNesting}
         nestingResult={nestingResult}
         dimUnit={dimUnit}
         distributionFootprint={distributionFootprint}

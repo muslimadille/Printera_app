@@ -324,6 +324,7 @@ const SheetLayoutPreview = ({
                 onCountChange={handleEditedCount}
                 importedDieline={importedDieline}
                 onDielineImported={setImportedDieline}
+                initialEnabled={true}
               />
             )}
 
@@ -547,6 +548,9 @@ const ScenarioCard = ({
         ? 'bg-amber-500'
         : 'bg-destructive/70';
 
+  const padX = Math.max(dispW * 0.08, 2.5);
+  const padY = Math.max(dispH * 0.12, 3.5);
+
   return (
     <button
       type="button"
@@ -619,11 +623,11 @@ const ScenarioCard = ({
         )}
       </div>
 
-      <div className="flex justify-center bg-background rounded-md border border-border/60 p-2 overflow-hidden shadow-inner">
+      <div className="flex justify-center bg-background rounded-md border border-border/60 p-2 overflow-visible shadow-inner">
         <svg
           width={svgW}
           height={svgH}
-          viewBox={`-2 -3 ${dispW + 4} ${dispH + 5}`}
+          viewBox={`${-padX} ${-padY} ${dispW + padX * 2} ${dispH + padY * 2.4}`}
           className="block"
           style={{ maxWidth: '100%', height: 'auto' }}
         >
@@ -1010,12 +1014,15 @@ const BaseSheetCutDiagram = ({
   const b = fits(pressH, pressW);
   const layout = (a && b ? (a.total >= b.total ? a : b) : a || b) ?? null;
 
+  const padX = Math.max(dispW * 0.05, 2);
+  const padY = Math.max(dispH * 0.08, 2);
+
   return (
-    <div className="flex justify-center bg-background/70 rounded border border-border/40 p-1.5">
+    <div className="flex justify-center bg-background/70 rounded border border-border/40 p-1.5 overflow-visible">
       <svg
         width={svgW}
         height={svgH}
-        viewBox={`0 0 ${dispW} ${dispH}`}
+        viewBox={`${-padX} ${-padY} ${dispW + padX * 2} ${dispH + padY * 2.2}`}
         className="block"
         style={{ maxWidth: '100%', height: 'auto' }}
       >

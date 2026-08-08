@@ -24,11 +24,17 @@ interface Props {
   size?: 'sm' | 'default';
   /** Render as a smaller compact button (used inside scenario cards) */
   compact?: boolean;
-  /** When provided, every piece is exported as the dieline geometry */
+  /** Optional imported dieline — when present every piece is rendered using its geometry */
   dieline?: ParsedDieline | null;
+  /** Optional native template dieline paths for production export */
+  dielinePaths?: {
+    cutD: string;
+    creaseD: string;
+    bbox: { w: number; h: number };
+  } | null;
 }
 
-const SheetLayoutExportMenu = ({ sheetW, sheetH, pieces, baseName = 'sheet-layout', size = 'sm', compact = false, dieline = null }: Props) => {
+const SheetLayoutExportMenu = ({ sheetW, sheetH, pieces, baseName = 'sheet-layout', size = 'sm', compact = false, dieline = null, dielinePaths = null }: Props) => {
   const [includeNumbers, setIncludeNumbers] = useState(true);
   const [includeWaste, setIncludeWaste] = useState(false);
   const [includeBoundary, setIncludeBoundary] = useState(true);
@@ -51,6 +57,7 @@ const SheetLayoutExportMenu = ({ sheetW, sheetH, pieces, baseName = 'sheet-layou
           cleanMode,
           title: baseName,
           dieline,
+          dielinePaths,
         },
         baseName,
       );

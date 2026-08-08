@@ -226,6 +226,8 @@ export default function Dashboard() {
                     <Link 
                       key={t.id}
                       to={getEditLink(t)} 
+                      target="_blank"
+                      rel="noopener noreferrer"
                       className="hover-lift" 
                       style={{ background: '#fff', border: '1px solid var(--brand-border)', borderRadius: 'var(--radius-lg)', overflow: 'hidden', display: 'block', textDecoration: 'none', color: 'inherit' }}
                     >

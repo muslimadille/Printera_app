@@ -22,7 +22,7 @@ export interface Panel2DInfo {
 }
 
 interface Box3DPreviewProps {
-  boxType?: 'T0002' | 'T0005' | 'T0006' | 'D001' | 'T0008' | 'T0010';
+  boxType?: 'T0002' | 'T0005' | 'T0006' | 'D001' | 'T0008' | 'T0010' | 'A60_20_01_01';
   lidTongue?: number;
   panelWidths: [number, number, number, number];
   panelHeights: number;
@@ -55,6 +55,77 @@ function darkenHex(hex: string, percent: number): string {
 // ─────────────────────────────────────────────
 // تحويل منطقة SVG إلى Canvas Texture
 // ─────────────────────────────────────────────
+function drawCutAndCreaseLinesDirectly(
+  ctx: CanvasRenderingContext2D,
+  svgMarkup: string,
+  coord: Panel2DInfo,
+  effPPM: number
+) {
+  try {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(svgMarkup, 'image/svg+xml');
+    const elements = doc.querySelectorAll('line, path, polyline');
+
+    ctx.save();
+    ctx.translate(-coord.x * effPPM, -coord.y * effPPM);
+    ctx.scale(effPPM, effPPM);
+
+    elements.forEach(el => {
+      const dataId = el.getAttribute('data-id') || '';
+      const parentId = el.parentElement?.getAttribute('id') || '';
+      const isCrease = parentId.includes('CREASE') || dataId.includes('CREASE');
+
+      ctx.beginPath();
+      if (isCrease) {
+        ctx.strokeStyle = '#00A651'; // Green crease line
+        ctx.lineWidth = 1.2;          // 1.2mm stroke width
+        ctx.setLineDash([3.5, 2]);   // Dashed pattern
+      } else {
+        ctx.strokeStyle = '#ED1C24'; // Red cut line
+        ctx.lineWidth = 1.4;          // 1.4mm stroke width
+        ctx.setLineDash([]);         // Solid line
+      }
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+
+      if (el.tagName === 'line') {
+        const x1 = parseFloat(el.getAttribute('x1') || '0');
+        const y1 = parseFloat(el.getAttribute('y1') || '0');
+        const x2 = parseFloat(el.getAttribute('x2') || '0');
+        const y2 = parseFloat(el.getAttribute('y2') || '0');
+        ctx.moveTo(x1, y1);
+        ctx.lineTo(x2, y2);
+        ctx.stroke();
+      } else if (el.tagName === 'polyline') {
+        const ptsStr = el.getAttribute('points');
+        if (ptsStr) {
+          const pairs = ptsStr.trim().split(/\s+/);
+          pairs.forEach((p, idx) => {
+            const [x, y] = p.split(',').map(Number);
+            if (Number.isFinite(x) && Number.isFinite(y)) {
+              if (idx === 0) ctx.moveTo(x, y);
+              else ctx.lineTo(x, y);
+            }
+          });
+          ctx.stroke();
+        }
+      } else if (el.tagName === 'path') {
+        const d = el.getAttribute('d');
+        if (d) {
+          ctx.stroke(new Path2D(d));
+        }
+      }
+    });
+
+    ctx.restore();
+  } catch (e) {
+    console.error('Direct canvas line rendering error:', e);
+  }
+}
+
+// ─────────────────────────────────────────────
+// تحويل منطقة SVG إلى Canvas Texture
+// ─────────────────────────────────────────────
 function buildCropTexture(
   svgMarkup: string,
   svgW: number,
@@ -66,9 +137,7 @@ function buildCropTexture(
   if (!svgMarkup || coord.w <= 0 || coord.h <= 0) return null;
 
   // Use a fixed pixels-per-mm ratio for texture resolution.
-  // 3 px/mm gives clear cut/crease lines without wasting GPU memory.
-  // Clamp the final canvas to max 2048px on any side.
-  const TEX_PPM = 3;
+  const TEX_PPM = 3.5;
   const MAX_TEX = 2048;
   const rawCw = Math.round(coord.w * TEX_PPM);
   const rawCh = Math.round(coord.h * TEX_PPM);
@@ -77,7 +146,6 @@ function buildCropTexture(
   const ch = Math.max(1, Math.round(rawCh * texScale));
   if (cw < 1 || ch < 1) return null;
 
-  // effective px-per-mm after clamping
   const effPPM = TEX_PPM * texScale;
 
   const canvas = document.createElement('canvas');
@@ -93,30 +161,13 @@ function buildCropTexture(
   ctx.fillStyle = grad;
   ctx.fillRect(0, 0, cw, ch);
 
+  // رسم خطوط القص (أحمر) والطي (أخضر) مباشرة بشكل فوري ومتزامن
+  drawCutAndCreaseLinesDirectly(ctx, svgMarkup, coord, effPPM);
+
   const tex = new THREE.CanvasTexture(canvas);
   tex.colorSpace = THREE.SRGBColorSpace;
+  tex.needsUpdate = true;
 
-  // تنظيف SVG وإضافة viewBox مثبّت
-  const svgRenderW = svgW * effPPM;
-  const svgRenderH = svgH * effPPM;
-  const cleanedSvg = svgMarkup.replace(/<svg([^>]*)>/i, (_, attrs) => {
-    const stripped = attrs
-      .replace(/\bwidth\s*=\s*"[^"]*"/gi, '')
-      .replace(/\bheight\s*=\s*"[^"]*"/gi, '')
-      .replace(/\bviewBox\s*=\s*"[^"]*"/gi, '')
-      .replace(/\bstyle\s*=\s*"[^"]*"/gi, '');
-    return `<svg${stripped} xmlns="http://www.w3.org/2000/svg" width="${svgRenderW}" height="${svgRenderH}" viewBox="0 0 ${svgW} ${svgH}">`;
-  });
-
-  const blob = new Blob([cleanedSvg], { type: 'image/svg+xml' });
-  const url = URL.createObjectURL(blob);
-  const img = new Image();
-  img.onload = () => {
-    ctx.drawImage(img, -coord.x * effPPM, -coord.y * effPPM, svgRenderW, svgRenderH);
-    tex.needsUpdate = true;
-    URL.revokeObjectURL(url);
-  };
-  img.src = url;
   return tex;
 }
 
@@ -331,11 +382,11 @@ const Box3DPreview: React.FC<Box3DPreviewProps> = ({
 
     // ── Scene & Background ──
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x0f172a);
-    scene.fog = new THREE.Fog(0x0f172a, 80, 200);
+    scene.background = new THREE.Color(0xffffff);
+    scene.fog = new THREE.Fog(0xffffff, 80, 250);
 
     // ── Grid ──
-    const grid = new THREE.GridHelper(80, 30, 0x1e293b, 0x1e293b);
+    const grid = new THREE.GridHelper(100, 40, 0xe2e8f0, 0xf1f5f9);
     grid.position.y = -(ph / 2 + Math.max(...bf) + 3);
     scene.add(grid);
 
@@ -404,13 +455,37 @@ const Box3DPreview: React.FC<Box3DPreviewProps> = ({
     //  Panel 4 يُطوى بعد Panel 3
     //  ══════════════════════════════════════════
 
+    let texTf1Cover: THREE.CanvasTexture | null = null;
+    let texTf1Tongue: THREE.CanvasTexture | null = null;
     let texTf3Cover: THREE.CanvasTexture | null = null;
     let texTf3Tongue: THREE.CanvasTexture | null = null;
     let texBf1Cover: THREE.CanvasTexture | null = null;
     let texBf1Tongue: THREE.CanvasTexture | null = null;
 
-    const splitTf3 = boxType !== 'T0005' && boxType !== 'T0006' && !!(lidTongue && lidTongue > 0 && tf[2] > lidTongue * S + 0.001);
-    const splitBf1 = boxType !== 'T0005' && boxType !== 'T0006' && !!(lidTongue && lidTongue > 0 && bf[0] > lidTongue * S + 0.001);
+    const splitTf1 = boxType === 'A60_20_01_01' && !!(lidTongue && lidTongue > 0 && tf[0] > lidTongue * S + 0.001);
+    const splitTf3 = boxType !== 'A60_20_01_01' && boxType !== 'T0005' && boxType !== 'T0006' && !!(lidTongue && lidTongue > 0 && tf[2] > lidTongue * S + 0.001);
+    const splitBf1 = boxType !== 'A60_20_01_01' && boxType !== 'T0005' && boxType !== 'T0006' && !!(lidTongue && lidTongue > 0 && bf[0] > lidTongue * S + 0.001);
+
+    if (splitTf1) {
+      const tf1Coord = faceCoords.topFlaps[0];
+      const lidS = (lidTongue as number);
+      const coordTf1Cover = {
+        x: tf1Coord.x,
+        y: tf1Coord.y + lidS,
+        w: tf1Coord.w,
+        h: tf1Coord.h - lidS,
+      };
+      const coordTf1Tongue = {
+        x: tf1Coord.x,
+        y: tf1Coord.y,
+        w: tf1Coord.w,
+        h: lidS,
+        polygon: tf1Coord.polygon,
+      };
+
+      texTf1Cover = buildCropTexture(svgMarkup, svgWidth, svgHeight, coordTf1Cover, S, '#e8dcc0');
+      texTf1Tongue = buildCropTexture(svgMarkup, svgWidth, svgHeight, coordTf1Tongue, S, '#e8dcc0');
+    }
 
     if (splitTf3) {
       // Top Cover & Tongue
@@ -492,10 +567,39 @@ const Box3DPreview: React.FC<Box3DPreviewProps> = ({
     p1Pivot.add(tf1Pivot);
     const tf1Inner = new THREE.Group();
     tf1Pivot.add(tf1Inner);
+
+    let tf1TongueG: THREE.Group | undefined = undefined;
+
     if (hasHeight(tf[0])) {
-      const tf1Mesh = buildPanel(pw[0], tf[0], texList?.top[0] ?? null, faceCoords.topFlaps[0], S);
-      tf1Mesh.position.y = tf[0] / 2;
-      tf1Inner.add(tf1Mesh);
+      if (splitTf1) {
+        const lidS = (lidTongue as number) * S;
+        const covS = tf[0] - lidS;
+
+        // 1. Cover panel
+        const coverMesh = buildPanel(pw[0], covS, texTf1Cover, undefined, S);
+        coverMesh.position.y = covS / 2;
+        tf1Inner.add(coverMesh);
+
+        // 2. Tongue pivot & panel
+        tf1TongueG = new THREE.Group();
+        tf1TongueG.position.y = covS;
+        tf1Inner.add(tf1TongueG);
+
+        const filteredPolygon = faceCoords.topFlaps[0].polygon?.filter(pt => pt[1] <= faceCoords.topFlaps[0].y + (lidTongue as number) + 0.01);
+
+        const tongueMesh = buildPanel(pw[0], lidS, texTf1Tongue, {
+          ...faceCoords.topFlaps[0],
+          y: faceCoords.topFlaps[0].y,
+          h: (lidTongue as number),
+          polygon: filteredPolygon,
+        }, S);
+        tongueMesh.position.y = lidS / 2;
+        tf1TongueG.add(tongueMesh);
+      } else {
+        const tf1Mesh = buildPanel(pw[0], tf[0], texList?.top[0] ?? null, faceCoords.topFlaps[0], S);
+        tf1Mesh.position.y = tf[0] / 2;
+        tf1Inner.add(tf1Mesh);
+      }
     }
 
     const bf1Pivot = new THREE.Group();
@@ -648,6 +752,7 @@ const Box3DPreview: React.FC<Box3DPreviewProps> = ({
       gluePivot: gluePivotG,
       tf1: tf1Inner, tf2: tf2Pivot, tf3: tf3Inner, tf4: tf4Inner,
       bf1: bf1Inner, bf2: bf2Pivot, bf3: bf3Inner, bf4: bf4Inner,
+      tf1Tongue: tf1TongueG,
       tf3Tongue: tf3TongueG,
       bf1Tongue: bf1TongueG,
       tf3LeftEar: tf3LeftEarG,
@@ -724,7 +829,21 @@ const Box3DPreview: React.FC<Box3DPreviewProps> = ({
     refs.p4.rotation.y = angle1;
     refs.gluePivot.rotation.y = -angle1;
 
-    if (boxType === 'T0005' || boxType === 'T0006') {
+    if (boxType === 'A60_20_01_01') {
+      // Top dust flaps (tf2 over Side 1, tf4 over Side 2) rotate inwards
+      refs.tf2.rotation.x = -angle2;
+      refs.tf4.rotation.x = -angle2;
+
+      // Top Lid Cover (tf1 over Front Panel 1) rotates inward
+      refs.tf1.rotation.x = -angle4;
+      if (refs.tf1Tongue) refs.tf1Tongue.rotation.x = -angle3;
+
+      // Auto-Lock Bottom Flaps (bf1, bf2, bf3, bf4) rotate inward 90 deg into crash lock bottom floor
+      refs.bf1.rotation.x = angle4;
+      refs.bf2.rotation.x = angle2;
+      refs.bf3.rotation.x = angle4;
+      refs.bf4.rotation.x = angle2;
+    } else if (boxType === 'T0005' || boxType === 'T0006') {
       // Dust Flaps (tf2, tf4, bf2, bf4) -> rotate inwards (angle2)
       refs.tf2.rotation.x = -angle2;
       refs.tf4.rotation.x = -angle2;
@@ -752,7 +871,8 @@ const Box3DPreview: React.FC<Box3DPreviewProps> = ({
       refs.bf1.rotation.x = angle4;
     }
 
-    // Locking Tongues (tf3Tongue, bf1Tongue) -> rotate inwards relative to covers
+    // Locking Tongues (tf1Tongue, tf3Tongue, bf1Tongue) -> rotate inwards relative to covers
+    if (refs.tf1Tongue) refs.tf1Tongue.rotation.x = -angle3;
     if (refs.tf3Tongue) refs.tf3Tongue.rotation.x = -angle3;
     if (refs.bf1Tongue) refs.bf1Tongue.rotation.x = angle3;
 
@@ -781,117 +901,81 @@ const Box3DPreview: React.FC<Box3DPreviewProps> = ({
     : 'قيد الطي';
 
   return (
-    <div className="space-y-3" style={{ width: '100%' }}>
-      {/* ── Viewport ── */}
+    <div className="w-full h-full flex flex-col justify-between p-3 gap-3">
+      {/* ── Viewport (Stretches to fill 100% of height) ── */}
       <div
         ref={mountRef}
-        className="relative w-full rounded-xl overflow-hidden border border-slate-800 select-none"
-        style={{ height: 'clamp(400px, 60vh, 700px)', background: '#0f172a' }}
+        className="relative w-full flex-1 min-h-[350px] rounded-xl overflow-hidden border border-slate-200 select-none shadow-xs"
+        style={{ background: '#ffffff' }}
       >
         {/* شريط معلومات علوي يسار */}
         <div className="absolute top-3 left-3 z-10 pointer-events-none">
-          <span className="text-[10px] font-mono text-slate-400 bg-slate-950/80 px-2 py-1 rounded border border-slate-800">
+          <span className="text-[10px] font-mono text-slate-600 bg-white/90 shadow-sm px-2.5 py-1 rounded-md border border-slate-200">
             🖱 اسحب للدوران • العجلة للتكبير
           </span>
         </div>
 
-        {/* أزرار تحكم — يمين */}
-        <div className="absolute top-3 right-3 z-10 flex items-center gap-2">
-          <Button
-            size="sm"
-            variant="secondary"
-            className="h-8 bg-slate-900/90 text-white border border-slate-700 hover:bg-slate-800 text-xs gap-1.5"
-            onClick={() => setAutoRotate(v => !v)}
-          >
-            {autoRotate
-              ? <><Pause className="w-3.5 h-3.5" />إيقاف الدوران</>
-              : <><Play className="w-3.5 h-3.5" />تشغيل الدوران</>}
-          </Button>
-          <Button
-            size="sm"
-            variant="secondary"
-            className="h-8 bg-slate-900/90 text-white border border-slate-700 hover:bg-slate-800 text-xs gap-1.5"
-            onClick={resetCamera}
-          >
-            <RotateCcw className="w-3.5 h-3.5" />
-            إعادة ضبط العرض
-          </Button>
-        </div>
-
         {/* مؤشر حالة الطي — أسفل يسار */}
         <div className="absolute bottom-3 left-3 z-10 pointer-events-none">
-          <span className="text-[10px] font-mono text-slate-400 bg-slate-950/80 px-2 py-1 rounded border border-slate-800">
+          <span className="text-[10px] font-medium text-slate-600 bg-white/95 backdrop-blur-sm px-2.5 py-1 rounded-md border border-slate-200 shadow-sm">
             {foldLabel}
           </span>
         </div>
       </div>
 
-      {/* ── شريط التحكم بالطي ── */}
-      <div className="rounded-xl border bg-muted/20 p-4 space-y-3">
-        <div className="flex flex-col gap-2">
-          <div className="flex items-center justify-between text-sm">
-            <Label className="font-bold flex items-center gap-1.5">
-              <span>نسبة طي العلبة</span>
-              <span className="text-primary tabular-nums font-mono">({foldPercent}%)</span>
-            </Label>
-            <span className="text-xs text-muted-foreground">{foldLabel}</span>
-          </div>
+      {/* ── شريط التحكم المدمج بذكاء (Ultra-Compact 1-Row Control Bar at Bottom) ── */}
+      <div className="rounded-xl border border-slate-200/80 bg-slate-50/80 p-2.5 px-4 flex flex-wrap items-center justify-between gap-3 shadow-2xs mt-auto">
+        {/* 1. السلايدر ونسبة المئوية */}
+        <div className="flex items-center gap-3 flex-1 min-w-[180px]">
           <Slider
             value={[foldPercent]}
             onValueChange={([v]) => setFoldPercent(v)}
             min={0}
             max={100}
             step={1}
-            className="py-1"
+            className="flex-1 py-1"
           />
+          <span className="text-xs font-mono font-bold text-slate-900 bg-white border border-slate-200/80 px-2 py-0.5 rounded-md shadow-2xs min-w-[42px] text-center">
+            {foldPercent}%
+          </span>
         </div>
 
-        {/* أزرار سريعة + تكبير */}
-        <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
-          <span className="text-xs text-muted-foreground ml-0">وصول سريع:</span>
+        {/* 2. تابات الوصول السريع (كبسولات مدمجة) */}
+        <div className="inline-flex items-center bg-slate-200/60 p-0.5 rounded-full border border-slate-300/40">
           {([0, 50, 100] as const).map(v => (
             <button
               key={v}
               type="button"
-              className={`text-xs px-2.5 py-0.5 rounded-md border transition-colors ${
+              className={`text-xs font-bold px-3 py-1 rounded-full transition-all duration-150 whitespace-nowrap ${
                 foldPercent === v
-                  ? 'bg-primary text-primary-foreground border-primary'
-                  : 'bg-background hover:bg-muted border-input'
+                  ? 'bg-slate-900 text-white shadow-2xs'
+                  : 'text-slate-600 hover:text-slate-900 bg-transparent'
               }`}
               onClick={() => setFoldPercent(v)}
             >
-              {v === 0 ? 'مسطح' : v === 50 ? 'نصف مطوي' : 'مغلق'}
+              {v === 0 ? 'مفرود' : v === 50 ? 'نصف طي' : 'مغلق'}
             </button>
           ))}
-
-          <div className="flex items-center gap-1 mr-auto">
-            <span className="text-xs text-muted-foreground">تكبير:</span>
-            {[{ label: '−', factor: 1.15 }, { label: '+', factor: 0.87 }].map(({ label, factor }) => (
-              <button
-                key={label}
-                type="button"
-                className="w-6 h-6 rounded border bg-background hover:bg-muted flex items-center justify-center font-bold text-xs"
-                onClick={() => {
-                  const cam = cameraRef.current;
-                  if (cam) { cam.position.multiplyScalar(factor); cam.updateProjectionMatrix(); }
-                }}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
         </div>
 
-        {/* وسيلة إيضاح */}
-        <div className="flex items-center gap-4 text-xs text-muted-foreground border-t border-slate-100 dark:border-slate-800 pt-2">
-          <div className="flex items-center gap-1">
-            <span className="inline-block w-3 h-0.5 bg-red-500" />
-            <span>خطوط القص</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <span className="inline-block w-3 h-0.5 border-t border-dashed border-emerald-500" />
-            <span>خطوط الطي</span>
-          </div>
+        {/* 3. أزرار الدوران وإعادة الضبط بالأيقونات الصغيرة والحشو المريح */}
+        <div className="flex items-center gap-1.5 shrink-0">
+          <Button
+            type="button"
+            title={autoRotate ? "إيقاف الدوران" : "تشغيل الدوران"}
+            onClick={() => setAutoRotate(v => !v)}
+            className="w-8 h-8 p-2 bg-slate-900 text-white hover:bg-slate-800 rounded-lg flex items-center justify-center shadow-2xs border border-slate-800 shrink-0 cursor-pointer"
+          >
+            {autoRotate ? <Pause className="w-3 h-3 shrink-0" /> : <Play className="w-3 h-3 shrink-0" />}
+          </Button>
+          <Button
+            type="button"
+            title="إعادة ضبط العرض"
+            onClick={resetCamera}
+            className="w-8 h-8 p-2 bg-slate-900 text-white hover:bg-slate-800 rounded-lg flex items-center justify-center shadow-2xs border border-slate-800 shrink-0 cursor-pointer"
+          >
+            <RotateCcw className="w-3 h-3 shrink-0" />
+          </Button>
         </div>
       </div>
     </div>

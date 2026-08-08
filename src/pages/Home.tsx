@@ -4,6 +4,8 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import TemplateCard, { Template } from '@/components/TemplateCard';
 import { supabase } from '@/integrations/supabase/client';
+import { useAppContent } from '@/hooks/useAppContent';
+import { useAppTemplates } from '@/hooks/useAppTemplates';
 
 const FALLBACK_TEMPLATES: Template[] = [
   {
@@ -146,21 +148,11 @@ function FaqSection() {
 }
 
 export default function Home() {
-  const [mostUsedTemplates, setMostUsedTemplates] = useState<Template[]>(FALLBACK_TEMPLATES);
-
-  useEffect(() => {
-    async function fetchHomeData() {
-      try {
-        const tempRes = await supabase.from('app_templates').select('*');
-        if (tempRes.data && tempRes.data.length > 0) {
-          setMostUsedTemplates(tempRes.data.slice(0, 9));
-        }
-      } catch (err) {
-        console.error("Failed to fetch templates from Supabase, using standard templates", err);
-      }
-    }
-    fetchHomeData();
-  }, []);
+  const { stepsSection } = useAppContent();
+  const { templates: appTemplates } = useAppTemplates();
+  const mostUsedTemplates = (appTemplates && appTemplates.length > 0 ? appTemplates : FALLBACK_TEMPLATES)
+    .filter(t => t.status !== 'inactive')
+    .slice(0, 9);
 
   return (
     <div dir="rtl" style={{ minHeight: '100vh', background: '#FFFFFF', color: '#0F172A', fontFamily: "'Cairo', sans-serif" }}>
@@ -329,119 +321,72 @@ export default function Home() {
       </section>
 
       {/* 3 Steps Section ("فقط 3 خطوات") */}
-      <section 
-        style={{ 
-          background: '#F6F4EF', 
-          padding: '60px 24px 80px', 
-          borderTop: '1px solid #E2E8F0' 
-        }}
-      >
-        <div style={{ maxWidth: '860px', margin: '0 auto', textAlign: 'center' }}>
-          {/* Section Header */}
-          <h2 
-            style={{ 
-              fontSize: '32px', 
-              fontWeight: 800, 
-              color: '#0F172A', 
-              margin: '0 0 50px 0'
-            }}
-          >
-            فقط 3 خطوات
-          </h2>
+      {stepsSection.show && (
+        <section 
+          style={{ 
+            background: '#F6F4EF', 
+            padding: '60px 24px 80px', 
+            borderTop: '1px solid #E2E8F0' 
+          }}
+        >
+          <div style={{ maxWidth: '860px', margin: '0 auto', textAlign: 'center' }}>
+            {/* Section Header */}
+            <h2 
+              style={{ 
+                fontSize: '32px', 
+                fontWeight: 800, 
+                color: '#0F172A', 
+                margin: '0 0 50px 0'
+              }}
+            >
+              {stepsSection.title}
+            </h2>
 
-          {/* 3 Steps Row */}
-          <div className="three-steps-grid">
-            {/* Step 1 */}
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '14px' }}>
-              <div 
-                style={{ 
-                  width: '50px', 
-                  height: '50px', 
-                  borderRadius: '50%', 
-                  border: '2px solid #007BFF', 
-                  background: '#FFFFFF',
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  justifyContent: 'center', 
-                  color: '#007BFF', 
-                  fontSize: '22px',
-                  fontWeight: 800,
-                  boxShadow: '0 2px 8px rgba(0, 123, 255, 0.08)'
-                }}
-              >
-                1
-              </div>
-              <span style={{ fontSize: '16px', fontWeight: 700, color: '#1E293B' }}>
-                أختر شكل القالب
-              </span>
-            </div>
-
-            {/* Step 2 */}
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '14px' }}>
-              <div 
-                style={{ 
-                  width: '50px', 
-                  height: '50px', 
-                  borderRadius: '50%', 
-                  border: '2px solid #007BFF', 
-                  background: '#FFFFFF',
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  justifyContent: 'center', 
-                  color: '#007BFF', 
-                  fontSize: '22px',
-                  fontWeight: 800,
-                  boxShadow: '0 2px 8px rgba(0, 123, 255, 0.08)'
-                }}
-              >
-                2
-              </div>
-              <span style={{ fontSize: '16px', fontWeight: 700, color: '#1E293B' }}>
-                أدخل الأبعاد
-              </span>
-            </div>
-
-            {/* Step 3 */}
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '14px' }}>
-              <div 
-                style={{ 
-                  width: '50px', 
-                  height: '50px', 
-                  borderRadius: '50%', 
-                  border: '2px solid #007BFF', 
-                  background: '#FFFFFF',
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  justifyContent: 'center', 
-                  color: '#007BFF', 
-                  fontSize: '22px',
-                  fontWeight: 800,
-                  boxShadow: '0 2px 8px rgba(0, 123, 255, 0.08)'
-                }}
-              >
-                3
-              </div>
-              <span style={{ fontSize: '16px', fontWeight: 700, color: '#1E293B' }}>
-                أرفع الملف
-              </span>
+            {/* 3 Steps Row */}
+            <div className="three-steps-grid">
+              {[stepsSection.step1, stepsSection.step2, stepsSection.step3].map((step, idx) => (
+                <div key={idx} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '14px' }}>
+                  <div 
+                    style={{ 
+                      width: '50px', 
+                      height: '50px', 
+                      borderRadius: '50%', 
+                      border: '2px solid #007BFF', 
+                      background: '#FFFFFF',
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      justifyContent: 'center', 
+                      color: '#007BFF', 
+                      fontSize: '22px',
+                      fontWeight: 800,
+                      boxShadow: '0 2px 8px rgba(0, 123, 255, 0.08)'
+                    }}
+                  >
+                    {step.iconClass ? <i className={step.iconClass}></i> : step.numberOrIcon}
+                  </div>
+                  <span style={{ fontSize: '16px', fontWeight: 700, color: '#1E293B' }}>
+                    {step.text}
+                  </span>
+                </div>
+              ))}
             </div>
           </div>
-        </div>
 
-        <style>{`
-          .three-steps-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 32px;
-          }
-          @media (max-width: 640px) {
+          <style>{`
             .three-steps-grid {
-              grid-template-columns: 1fr;
-              gap: 36px;
+              display: grid;
+              grid-template-columns: repeat(3, 1fr);
+              gap: 32px;
             }
-          }
-        `}</style>
-      </section>
+            @media (max-width: 640px) {
+              .three-steps-grid {
+                grid-template-columns: 1fr;
+                gap: 36px;
+              }
+            }
+          `}</style>
+        </section>
+      )}
 
       {/* FAQ Section */}
       <FaqSection />

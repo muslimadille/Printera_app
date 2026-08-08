@@ -108,7 +108,7 @@ const SheetPreview = ({
 };
 
 const CarryingHandleBoxCalculator = () => {
-  const { showNestingPreview, show3DPreview } = usePreviewSettings();
+  const { show2DPreview, showNestingPreview, show3DPreview } = usePreviewSettings('BoxCarryingHandleBox');
 
   const [inputs, setInputs] = useState<CarryHandleInputs>({ ...DEFAULT_CARRY_INPUTS });
   const [zonesOpen, setZonesOpen] = useState(false);
@@ -169,37 +169,39 @@ const CarryingHandleBoxCalculator = () => {
 
   return (
     <div className="space-y-4 sm:space-y-6">
-      <Card className="border-primary/20 bg-gradient-to-br from-card via-card to-primary/5">
-        <CardContent className="p-4 sm:p-5">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div className="flex items-center gap-3">
-              <div className="p-2.5 rounded-xl bg-primary/15 text-primary">
-                <Box className="w-5 h-5" />
+      {false && (
+        <Card className="border-primary/20 bg-gradient-to-br from-card via-card to-primary/5">
+          <CardContent className="p-4 sm:p-5">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 rounded-xl bg-primary/15 text-primary">
+                  <Box className="w-5 h-5" />
+                </div>
+                <div>
+                  <h2 className="text-base sm:text-lg font-bold text-foreground">
+                    Carrying Handle Box — Parametric
+                  </h2>
+                  <p className="text-[11px] sm:text-xs text-muted-foreground">
+                    Excel-driven geometry · Auto sheet orientation · Preview = Export
+                  </p>
+                </div>
               </div>
-              <div>
-                <h2 className="text-base sm:text-lg font-bold text-foreground">
-                  Carrying Handle Box — Parametric
-                </h2>
-                <p className="text-[11px] sm:text-xs text-muted-foreground">
-                  Excel-driven geometry · Auto sheet orientation · Preview = Export
-                </p>
+              <div className="flex flex-wrap items-center gap-2">
+                <CarryingHandleBoxMappingDialog />
+                <CarryingHandleBoxDebugDialog inputs={inputs} />
+                <Button size="sm" variant="outline" onClick={() => setFilled(v => !v)}
+                  title={filled ? 'تحويل إلى Production Dieline' : 'تحويل إلى Debug Components'}>
+                  {filled ? 'Production Dieline' : 'Debug Components'}
+                </Button>
+                <Button size="sm" onClick={() => setExportDialog(true)} className="gap-1.5">
+                  <Download className="w-3.5 h-3.5" />
+                  تصدير للإنتاج
+                </Button>
               </div>
             </div>
-            <div className="flex flex-wrap items-center gap-2">
-              <CarryingHandleBoxMappingDialog />
-              <CarryingHandleBoxDebugDialog inputs={inputs} />
-              <Button size="sm" variant="outline" onClick={() => setFilled(v => !v)}
-                title={filled ? 'تحويل إلى Production Dieline' : 'تحويل إلى Debug Components'}>
-                {filled ? 'Production Dieline' : 'Debug Components'}
-              </Button>
-              <Button size="sm" onClick={() => setExportDialog(true)} className="gap-1.5">
-                <Download className="w-3.5 h-3.5" />
-                تصدير للإنتاج
-              </Button>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <div className="lg:col-span-1 space-y-4">

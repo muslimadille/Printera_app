@@ -2,18 +2,8 @@ import { useEffect } from 'react';
 import { useParams, useSearchParams, Link } from 'react-router-dom';
 
 const TEMPLATE_META: Record<string, { title: string; categoryLabel: string; desc: string; svg: string }> = {
-  'T00012': { title: 'علبة بريدية بغطاء ملتف', categoryLabel: 'تغليف تجزئة', desc: 'علبة بريدية مغلقة بالكامل مع غطاء ملتف، مناسبة للشحن المباشر للعميل.', svg: '/templates/preview/A10_20_03_01.svg' },
+  'A60_20_01_01': { title: 'علبة ذاتية القفل (ECMA)', categoryLabel: 'علب قابلة للطي', desc: 'علبة كرتون بقاع أوتوماتيكي سريع الغلق (Crash Lock / 2-Point Gluing)', svg: '/templates/preview/A60_20_01_01.svg' },
   'T0002': { title: 'علبة مستقيمة الإغلاق', categoryLabel: 'طي وصواني', desc: 'التصميم الأساسي لعلب الطي الكرتونية، إغلاق علوي وسفلي بسيط بدون لصق.', svg: '/templates/preview/A10_10_03_03.svg' },
-  'T0005': { title: 'صندوق غطاء مفتوح بقفل', categoryLabel: 'طي وصواني', desc: 'غطاء علوي مفتوح مع لسان قفل ولسان غبار جانبي لثبات إضافي.', svg: '/templates/preview/A10_20_02_02.svg' },
-  'T0006': { title: 'علبة قفل مزدوج الجدار', categoryLabel: 'غطاء وقاعدة', desc: 'جدار مزدوج للمتانة، غطاء وقاعدة منفصلان بنفس آلية القفل.', svg: '/templates/preview/A10_75_03_03.svg' },
-  'D001-H': { title: 'علبة كيك بمقبض حمل', categoryLabel: 'تغليف تجزئة', desc: 'علبة كلاسيكية بمقبض حمل مدمج، مثالية للمخبوزات والهدايا الصغيرة.', svg: '/templates/preview/A10_10_02_02_11.svg' },
-  'MED1': { title: 'علبة دواء صغيرة', categoryLabel: 'طي وصواني', desc: 'قالب دقيق للعلب الصغيرة، مضبوط لأبعاد الشرائط والأمبولات الدوائية.', svg: '/templates/preview/A20_01_02_00.svg' },
-  'SELFLOCK': { title: 'علبة ذاتية القفل', categoryLabel: 'طي وصواني', desc: 'قفل من جهة واحدة بدون لاصق، تصميم شبيه بعلب البيتزا سريعة التركيب.', svg: '/templates/preview/A20_01_03_00.svg' },
-  'LIDBASE': { title: 'علبة غطاء وقاعدة منفصلة', categoryLabel: 'غطاء وقاعدة', desc: 'قطعتان منفصلتان تمامًا، مظهر فاخر يناسب علب الهدايا والمنتجات المميزة.', svg: '/templates/preview/A10_40_03_03.svg' },
-  'TUBE1': { title: 'علبة أسطوانية بغطاء علوي', categoryLabel: 'علب أسطوانية', desc: 'هيكل أسطواني بغطاء علوي منفصل، مناسب للمنتجات الدائرية والعطور.', svg: '/templates/preview/A10_80_02_02.svg' },
-  'SLIDE1': { title: 'علبة سحب درج', categoryLabel: 'علب سحب', desc: 'درج داخلي ينزلق داخل غلاف خارجي، تجربة فتح فاخرة للمنتجات المميزة.', svg: '/templates/preview/A11_11_03_03.svg' },
-  'HEX1': { title: 'علبة سداسية الشكل', categoryLabel: 'أشكال غير مستطيلة', desc: 'هيكل سداسي غير تقليدي يبرز المنتج على الرف بشكل مختلف عن المعتاد.', svg: '/templates/preview/A10_99_03_03.svg' },
-  'HD1': { title: 'صينية تعبئة ثقيلة', categoryLabel: 'تغليف ثقيل', desc: 'صينية مقواة بجدارين لتحمل الأوزان الثقيلة أثناء الشحن والتخزين.', svg: '/templates/preview/A10_70_03_00.svg' },
 };
 
 const UNIT_FACTORS = { mm: 1, cm: 10, in: 25.4 };
@@ -200,39 +190,7 @@ export default function PrintTemplate() {
         </p>
       </div>
 
-      {/* ===== Rotation & Repetition ===== */}
-      <div style={{ marginBottom: '18px' }}>
-        <h2 style={{ fontSize: '16px', margin: '0 0 10px', borderBottom: '2px solid #1e293b', paddingBottom: '6px', fontWeight: 700 }}>خيارات التدوير</h2>
-        <table style={styleTable}>
-          <tbody>
-            <tr>
-              <td style={{ ...styleTd, width: '60%' }}>السماح بتدوير التصميم 90°</td>
-              <td style={styleTd}>{allowRotation ? 'مفعّل' : 'غير مفعّل'}</td>
-            </tr>
-            <tr>
-              <td style={styleTd}>وضع التدوير</td>
-              <td style={styleTd}>{rotationLabels[rotationMode] || rotationMode}</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
 
-      {/* ===== Nesting Summary ===== */}
-      <div style={{ marginBottom: '18px' }}>
-        <h2 style={{ fontSize: '16px', margin: '0 0 10px', borderBottom: '2px solid #1e293b', paddingBottom: '6px', fontWeight: 700 }}>ملخص التوزيع</h2>
-        <table style={styleTable}>
-          <tbody>
-            <tr>
-              <td style={{ ...styleTd, width: '60%' }}>إجمالي القطع على الشيت</td>
-              <td style={styleTd}>{cols * rows}</td>
-            </tr>
-            <tr>
-              <td style={styleTd}>مقاس التوزيع (صفوف × أعمدة)</td>
-              <td style={styleTd}>{rows} × {cols}</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
 
       <div className="print:hidden" style={{ textAlign: 'center', marginTop: '30px' }}>
         <button 

@@ -22,15 +22,15 @@ export function buildT0005DimensionsSvg(p: T0005Params, unit: DimUnit = 'mm', sc
 
   const C = '#2563eb';
   
-  const baseFS = 3.5;  // font size in mm
-  const baseAH = 1.6;  // arrow head size in mm
-  const baseSW = 0.35; // stroke width in mm
-  const baseRectStroke = 0.2;
+  const baseFS = 4.2;  // font size in mm
+  const baseAH = 1.8;  // arrow head size in mm
+  const baseSW = 0.4; // stroke width in mm
+  const baseRectStroke = 0.3;
 
   const s = scale > 0 ? scale : 1;
-  const SW = baseSW / s;
-  const AH = baseAH / s;
-  const FS = baseFS / s;
+  const SW = baseSW * s;
+  const AH = baseAH * s;
+  const FS = baseFS * s;
 
   const arrowL = (x: number, y: number) =>
     `<path d="M${x} ${y} l${AH} ${-AH / 2} l0 ${AH} z" fill="${C}"/>`;
@@ -78,6 +78,47 @@ export function buildT0005DimensionsSvg(p: T0005Params, unit: DimUnit = 'mm', sc
   out += dimH(Xf1, Xd1, Yft + H * 0.28, fmt(W));
   out += dimH(Xd1, Xf2, Yft + H * 0.55, fmt(D));
   out += dimV((Xf2 + Xd2) / 2, Yft, Yfb, fmt(H));
+
+  // Outer Total Overall Dimensions (المقاس الكلي للقالب)
+  const TotalW = Gf + 2 * W + 2 * D - 0.5;
+  const Lt = p.lidTongue;
+  const TotalH = Yfb + Lt + 20.0;
+
+  const C_TOTAL = '#64748b';       // Slate grey line & tick color
+  const C_TOTAL_TEXT = '#1e293b';  // Dark charcoal slate text color
+  const SW_TOT = 0.35 * s;
+  const FS_TOT = 4.2 * s;
+  const offset = 14 * s;
+
+  const yTotal = TotalH + offset;
+  const xTotal = TotalW + offset;
+
+  // Extension lines
+  const extW = 
+    `<line x1="0" y1="${TotalH + 2 * s}" x2="0" y2="${yTotal + 4 * s}" stroke="${C_TOTAL}" stroke-width="${SW_TOT}"/>` +
+    `<line x1="${TotalW}" y1="${TotalH + 2 * s}" x2="${TotalW}" y2="${yTotal + 4 * s}" stroke="${C_TOTAL}" stroke-width="${SW_TOT}"/>`;
+
+  const extH = 
+    `<line x1="${TotalW + 2 * s}" y1="0" x2="${xTotal + 4 * s}" y2="0" stroke="${C_TOTAL}" stroke-width="${SW_TOT}"/>` +
+    `<line x1="${TotalW + 2 * s}" y1="${TotalH}" x2="${xTotal + 4 * s}" y2="${TotalH}" stroke="${C_TOTAL}" stroke-width="${SW_TOT}"/>`;
+
+  const dimLineW = 
+    `<line x1="0" y1="${yTotal}" x2="${TotalW}" y2="${yTotal}" stroke="${C_TOTAL}" stroke-width="${SW_TOT}"/>` +
+    `<line x1="0" y1="${yTotal - 2 * s}" x2="0" y2="${yTotal + 2 * s}" stroke="${C_TOTAL}" stroke-width="${SW_TOT}"/>` +
+    `<line x1="${TotalW}" y1="${yTotal - 2 * s}" x2="${TotalW}" y2="${yTotal + 2 * s}" stroke="${C_TOTAL}" stroke-width="${SW_TOT}"/>` +
+    `<text x="${TotalW / 2}" y="${yTotal + FS_TOT * 0.95}" font-family="Arial, sans-serif" font-size="${FS_TOT}" font-weight="600" ` +
+    `fill="${C_TOTAL_TEXT}" text-anchor="middle" dominant-baseline="hanging" direction="ltr" unicode-bidi="isolate">${fmt(TotalW)}</text>`;
+
+  const textX = xTotal + 5 * s;
+  const textY = TotalH / 2;
+  const dimLineH = 
+    `<line x1="${xTotal}" y1="0" x2="${xTotal}" y2="${TotalH}" stroke="${C_TOTAL}" stroke-width="${SW_TOT}"/>` +
+    `<line x1="${xTotal - 2 * s}" y1="0" x2="${xTotal + 2 * s}" y2="0" stroke="${C_TOTAL}" stroke-width="${SW_TOT}"/>` +
+    `<line x1="${xTotal - 2 * s}" y1="${TotalH}" x2="${xTotal + 2 * s}" y2="${TotalH}" stroke="${C_TOTAL}" stroke-width="${SW_TOT}"/>` +
+    `<text x="${textX}" y="${textY}" transform="rotate(90, ${textX}, ${textY})" font-family="Arial, sans-serif" font-size="${FS_TOT}" font-weight="600" ` +
+    `fill="${C_TOTAL_TEXT}" text-anchor="middle" dominant-baseline="middle" direction="ltr" unicode-bidi="isolate">${fmt(TotalH)}</text>`;
+
+  out += `<g class="overall-dimensions">${extW}${extH}${dimLineW}${dimLineH}</g>`;
 
   return `<g class="t0005-dimensions" pointer-events="none">${out}</g>`;
 }

@@ -61,7 +61,7 @@ const NumField = ({
   disabled?: boolean; step?: string; min?: string; unit?: 'mm' | 'cm' | 'in';
 }) => (
   <div>
-    <Label className="text-xs">{label} {unit && <span className="text-muted-foreground">({unit})</span>}</Label>
+    <Label className="text-xs">{label}</Label>
     <Input type="number" step={step} min={min}
       value={unit ? toDisplay(value, unit) : value}
       disabled={disabled}
@@ -70,15 +70,22 @@ const NumField = ({
 );
 
 const T0002Calculator = ({ isAdmin = false }: { isAdmin?: boolean }) => {
-  const { showNestingPreview, show3DPreview } = usePreviewSettings();
+  const { show2DPreview, showNestingPreview, show3DPreview } = usePreviewSettings('T0002');
 
   const hiddenCls = isAdmin ? '' : 'hidden';
 
-  const [params, setParams] = useState<T0002Params>(T0002_DEFAULTS);
-  const [nesting, setNesting] = useState<T0002NestingParams>(DEFAULT_NESTING);
+  // Draft params (for sidebar input controls)
+  const [draftParams, setDraftParams] = useState<T0002Params>(T0002_DEFAULTS);
+  const [draftNesting, setDraftNesting] = useState<T0002NestingParams>(DEFAULT_NESTING);
+
+  // Applied params (for 2D canvas, geometry, 3D preview, nesting layout & exports)
+  const [appliedParams, setAppliedParams] = useState<T0002Params>(T0002_DEFAULTS);
+  const [appliedNesting, setAppliedNesting] = useState<T0002NestingParams>(DEFAULT_NESTING);
+
   const [previewMode, setPreviewMode] = useState<'template' | 'sheet' | 'three'>('template');
   const [showDimensions, setShowDimensions] = useState(true);
   const [dimUnit, setDimUnit] = useState<'mm' | 'cm' | 'in'>('mm');
+  const [dimScale, setDimScale] = useState(1);
   const [printOpen, setPrintOpen] = useState(false);
 
   // Segment overrides state for interactive line adjustments
@@ -87,14 +94,12 @@ const T0002Calculator = ({ isAdmin = false }: { isAdmin?: boolean }) => {
     segments: null,
   });
 
-  const setN = <K extends keyof T0002NestingParams>(k: K, v: T0002NestingParams[K]) =>
-    setNesting(prev => ({ ...prev, [k]: v }));
-
   const depthTongueTouched = useRef(false);
   const tongueTotalTouched = useRef(false);
 
-  const set = <K extends keyof T0002Params>(k: K, v: T0002Params[K]) => {
-    setParams(prev => {
+  // Updates ONLY draft state (sidebar inputs), DOES NOT re-render template canvas
+  const setDraft = <K extends keyof T0002Params>(k: K, v: T0002Params[K]) => {
+    setDraftParams(prev => {
       const next = { ...prev, [k]: v };
       if (k === 'width' && !next.referenceMode && !depthTongueTouched.current) {
         next.depthTongue = defaultDepthTongueForWidth(num(String(v), prev.width));
@@ -105,72 +110,56 @@ const T0002Calculator = ({ isAdmin = false }: { isAdmin?: boolean }) => {
       }
       return next;
     });
-    // Clear overrides when params are updated by inputs
+  };
+
+  const setDraftN = <K extends keyof T0002NestingParams>(k: K, v: T0002NestingParams[K]) =>
+    setDraftNesting(prev => ({ ...prev, [k]: v }));
+
+  // Applies draft changes to the actual template canvas & 3D model
+  const handleSave = () => {
+    setAppliedParams(draftParams);
+    setAppliedNesting(draftNesting);
     setSegmentOverrides({ svg: null, segments: null });
   };
 
-  const reset = () => {
-    setParams({ ...T0002_DEFAULTS });
-    setNesting({ ...DEFAULT_NESTING });
+  // Resets both draft and applied params back to default values
+  const handleReset = () => {
+    setDraftParams(T0002_DEFAULTS);
+    setAppliedParams(T0002_DEFAULTS);
+    setDraftNesting(DEFAULT_NESTING);
+    setAppliedNesting(DEFAULT_NESTING);
     setSegmentOverrides({ svg: null, segments: null });
+    setDimScale(1);
     depthTongueTouched.current = false;
     tongueTotalTouched.current = false;
   };
 
-  const usable = useMemo(() => usableSheet(params), [params]);
-  const nestingResult = useMemo(() => computeT0002Nesting(params, nesting), [params, nesting]);
+  const usable = useMemo(() => usableSheet(appliedParams), [appliedParams]);
 
-  const baseGeo = useMemo(() => buildT0002Geometry(params), [params]);
-
-  // Derived geometry using segment overrides if active
   const geo = useMemo<T0002Geometry>(() => {
-    if (segmentOverrides.svg && segmentOverrides.segments) {
-      const segments = segmentOverrides.segments;
-      let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
-      segments.forEach(seg => {
-        if (seg.geometry === 'line') {
-          minX = Math.min(minX, seg.start.x, seg.end.x);
-          maxX = Math.max(maxX, seg.start.x, seg.end.x);
-          minY = Math.min(minY, seg.start.y, seg.end.y);
-          maxY = Math.max(maxY, seg.start.y, seg.end.y);
-        } else if (seg.geometry === 'polyline' && seg.points) {
-          seg.points.forEach(pt => {
-            minX = Math.min(minX, pt.x);
-            maxX = Math.max(maxX, pt.x);
-            minY = Math.min(minY, pt.y);
-            maxY = Math.max(maxY, pt.y);
-          });
-        } else {
-          minX = Math.min(minX, seg.start.x, seg.end.x);
-          maxX = Math.max(maxX, seg.start.x, seg.end.x);
-          minY = Math.min(minY, seg.start.y, seg.end.y);
-          maxY = Math.max(maxY, seg.start.y, seg.end.y);
-        }
-      });
-      const w = Number.isFinite(maxX - minX) ? (maxX - minX) : baseGeo.bbox.w;
-      const h = Number.isFinite(maxY - minY) ? (maxY - minY) : baseGeo.bbox.h;
+    const raw = buildT0002Geometry(appliedParams);
+    if (segmentOverrides.svg) {
       return {
-        ...baseGeo,
+        ...raw,
         svg: segmentOverrides.svg,
-        segments: segmentOverrides.segments,
-        bbox: { w, h },
-        derived: {
-          ...baseGeo.derived,
-          width: w,
-          height: h
-        }
+        segments: segmentOverrides.segments || raw.segments,
       };
     }
-    return baseGeo;
-  }, [baseGeo, segmentOverrides]);
+    return raw;
+  }, [appliedParams, segmentOverrides]);
+
+  const nestingResult = useMemo(
+    () => computeT0002Nesting(appliedParams, appliedNesting, geo.bbox.w, geo.bbox.h),
+    [appliedParams, appliedNesting, geo.bbox.w, geo.bbox.h],
+  );
 
   const faceCoords = useMemo(() => {
-    const W = params.width;
-    const H = params.height;
-    const D = params.depth;
-    const Gf = params.glueFlap;
-    const Lid = params.lidTongue;
-    const DT = params.depthTongue;
+    const W = appliedParams.width;
+    const H = appliedParams.height;
+    const D = appliedParams.depth;
+    const Gf = appliedParams.glueFlap;
+    const Lid = appliedParams.lidTongue;
+    const DT = appliedParams.depthTongue;
     const Cov = D - 0.25;
     const d2 = D - 0.5;
 
@@ -194,10 +183,10 @@ const T0002Calculator = ({ isAdmin = false }: { isAdmin?: boolean }) => {
     const CREASE_OFFSET = 0.5;
     const CURL_DX = 7.7297;
 
-    const topAngle = (Number.isFinite(params.glueFlapTopAngle) && (params.glueFlapTopAngle as number) >= 0)
-      ? (params.glueFlapTopAngle as number) : GLUE_FLAP_ANGLE_DEG;
-    const botAngle = (Number.isFinite(params.glueFlapBottomAngle) && (params.glueFlapBottomAngle as number) >= 0)
-      ? (params.glueFlapBottomAngle as number) : GLUE_FLAP_ANGLE_DEG;
+    const topAngle = (Number.isFinite(appliedParams.glueFlapTopAngle) && (appliedParams.glueFlapTopAngle as number) >= 0)
+      ? (appliedParams.glueFlapTopAngle as number) : GLUE_FLAP_ANGLE_DEG;
+    const botAngle = (Number.isFinite(appliedParams.glueFlapBottomAngle) && (appliedParams.glueFlapBottomAngle as number) >= 0)
+      ? (appliedParams.glueFlapBottomAngle as number) : GLUE_FLAP_ANGLE_DEG;
     const gDyTop = Gf * Math.tan((topAngle * Math.PI) / 180);
     const gDyBot = Gf * Math.tan((botAngle * Math.PI) / 180);
 
@@ -211,7 +200,7 @@ const T0002Calculator = ({ isAdmin = false }: { isAdmin?: boolean }) => {
     const seg4H = (Number.isFinite(DT) && DT > 0) ? DT : widthFallback;
     const halfD = D / 2;
     const autoTongueH = seg4H + SEG5_LEG + halfD;
-    const userTongueH = params.depthTongueTotalHeight;
+    const userTongueH = appliedParams.depthTongueTotalHeight;
     const tongueTotalH = (Number.isFinite(userTongueH) && (userTongueH as number) > 0)
       ? (userTongueH as number)
       : autoTongueH;
@@ -382,7 +371,7 @@ const T0002Calculator = ({ isAdmin = false }: { isAdmin?: boolean }) => {
         },
       ] as [Panel2DInfo, Panel2DInfo, Panel2DInfo, Panel2DInfo],
     };
-  }, [params]);
+  }, [appliedParams]);
 
   const distributionFootprint = useMemo(() => {
     if (nestingResult.fitStatus !== 'fits' || nestingResult.bestTotal <= 0) {
@@ -407,7 +396,6 @@ const T0002Calculator = ({ isAdmin = false }: { isAdmin?: boolean }) => {
         minX = Math.min(minX, x);
         maxX = Math.max(maxX, x + cellW);
         minY = Math.min(minY, y);
-        maxY = Math.max(maxY, y + cellH);
       }
     }
 
@@ -415,135 +403,80 @@ const T0002Calculator = ({ isAdmin = false }: { isAdmin?: boolean }) => {
     return { w: maxX - minX, h: maxY - minY };
   }, [nestingResult]);
 
-  const derived = useMemo(() => ({
-    faceHeight: T0002_RULES.faceHeight(params.height),
-    depth1: T0002_RULES.depth1(params.depth),
-    depth2: T0002_RULES.depth2(params.depth),
-    coverVertical: T0002_RULES.coverVertical(params.depth),
-    lidCurveHeight: T0002_RULES.lidCurveHeight,
-  }), [params]);
-
-  const refOn = !!params.referenceMode;
-
   const dimsSvg = useMemo(
-    () => (showDimensions ? buildT0002DimensionsSvg(params, dimUnit, 1) : ''),
-    [showDimensions, params, dimUnit],
+    () => (showDimensions ? buildT0002DimensionsSvg(appliedParams, dimUnit, dimScale) : ''),
+    [showDimensions, appliedParams, dimUnit, dimScale],
   );
+
+  const derived = useMemo(() => ({
+    faceHeight: T0002_RULES.faceHeight(appliedParams.height),
+    depth1: T0002_RULES.depth1(appliedParams.depth),
+    depth2: T0002_RULES.depth2(appliedParams.depth),
+    coverVertical: T0002_RULES.coverVertical(appliedParams.depth),
+    lidCurveHeight: T0002_RULES.lidCurveHeight,
+  }), [appliedParams]);
 
   return (
     <>
       <TemplateEditorLayout
         title="T0002 — علبة مستقيمة الإغلاق (Straight Tuck-End Box)"
-        hasReferenceMode={true}
-        referenceModeOn={refOn}
-        onReferenceModeChange={v => set('referenceMode', v)}
         previewMode={previewMode}
         onPreviewModeChange={setPreviewMode}
+        hasTemplatePreview={show2DPreview}
         hasSheetPreview={showNestingPreview}
         has3DPreview={show3DPreview}
         showDimensions={showDimensions}
         onShowDimensionsChange={setShowDimensions}
         dimUnit={dimUnit}
         onDimUnitChange={setDimUnit}
-        topPanels={
-          <>
-            {/* Derived dimensions (WIP / admin view) */}
-      <Card className={hiddenCls}>
-        <CardHeader>
-          <CardTitle className="text-lg">الأبعاد المشتقة</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 text-sm">
-            <div>Face_Height = H + 0.5 = <b>{derived.faceHeight.toFixed(2)}</b></div>
-            <div>Depth_1 = D = <b>{derived.depth1.toFixed(2)}</b></div>
-            <div>Depth_2 = D − 0.5 = <b>{derived.depth2.toFixed(2)}</b></div>
-            <div>Cover_Vertical = D − 0.25 = <b>{derived.coverVertical.toFixed(2)}</b></div>
-            <div>Lid_Curve_Height = <b>{derived.lidCurveHeight}</b></div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Smart Auto Nesting controls */}
-      <Card className={hiddenCls}>
-        <CardHeader>
-          <CardTitle className="text-lg">إعدادات التوزيع الذكي</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-            <div className="sm:col-span-2 flex flex-col gap-2">
-              <Label>التعشيق الذكي Smart Auto</Label>
-              <div className="flex items-center gap-2 h-10">
-                <Switch id="t0002-smart" checked={!!nesting.smartAuto}
-                  onCheckedChange={v => setN('smartAuto', v)} />
-                <Label htmlFor="t0002-smart" className="text-sm font-normal">
-                  {nesting.smartAuto ? 'يحسب Pitch و Interlock تلقائياً' : 'يدوي (Interlock من المستخدم)'}
-                </Label>
-              </div>
-            </div>
-            <div>
-              <Label>التداخل الأفقي ({dimUnit})</Label>
-              <Input type="number" step="0.1" min="0" value={toDisplay(nesting.horizontalInterlock, dimUnit)}
-                disabled={!!nesting.smartAuto}
-                onChange={e => setN('horizontalInterlock', toMm(num(e.target.value, toDisplay(nesting.horizontalInterlock, dimUnit)), dimUnit))} />
-            </div>
-            <div>
-              <Label>التداخل العمودي ({dimUnit})</Label>
-              <Input type="number" step="0.1" min="0" value={toDisplay(nesting.verticalInterlock, dimUnit)}
-                disabled={!!nesting.smartAuto}
-                onChange={e => setN('verticalInterlock', toMm(num(e.target.value, toDisplay(nesting.verticalInterlock, dimUnit)), dimUnit))} />
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-          </>
-        }
+        dimScale={dimScale}
+        onDimScaleChange={setDimScale}
+        onSave={handleSave}
+        onReset={handleReset}
         actionButtons={
           <>
-            <Button variant="outline" size="sm" onClick={() => setPrintOpen(true)}>
-              ملخص الطباعة
-            </Button>
-            <ExportSingleButton params={params} geo={geo} />
-            <ExportSheetButton params={params} nesting={nesting} result={nestingResult} />
+            <ExportSingleButton params={appliedParams} geo={geo} />
+            {showNestingPreview && (
+              <ExportSheetButton params={appliedParams} nesting={appliedNesting} result={nestingResult} />
+            )}
           </>
         }
         previewArea={
           <>
             {previewMode === 'template' ? (
-                <div className="space-y-2">
-                  <div className="text-xs text-muted-foreground">
-                    القطع والخطوط الخارجية: <b>{geo.segments.length}</b>
-                    {' · '}مقاس القالب: <b>{geo.bbox.w.toFixed(2)} × {geo.bbox.h.toFixed(2)} مم</b>
-                  </div>
+                <div className="w-full h-full relative overflow-hidden">
                   <InteractiveSvgCanvas
                     segments={geo.segments}
                     svgWidth={geo.bbox.w}
                     svgHeight={geo.bbox.h}
                     dimensionsMarkup={dimsSvg}
+                    showDimensions={showDimensions}
+                    onShowDimensionsChange={setShowDimensions}
                     onChange={(newSvg, newSegs) => {
                       setSegmentOverrides({ svg: newSvg, segments: newSegs });
                     }}
                   />
                 </div>
               ) : previewMode === 'sheet' ? (
-                <T0002SheetNestingPreview params={params} nesting={nesting} result={nestingResult} />
+                <T0002SheetNestingPreview params={appliedParams} nesting={appliedNesting} result={nestingResult} />
               ) : (
                 <Box3DPreview
                   boxType="T0002"
-                  lidTongue={params.lidTongue}
-                  panelWidths={[params.width, params.depth, params.width, params.depth - 0.5]}
-                  panelHeights={params.height}
-                  glueFlapWidth={params.glueFlap}
+                  lidTongue={appliedParams.lidTongue}
+                  panelWidths={[appliedParams.width, appliedParams.depth, appliedParams.width, appliedParams.depth - 0.5]}
+                  panelHeights={appliedParams.height}
+                  glueFlapWidth={appliedParams.glueFlap}
                   topFlapHeights={[
                     faceCoords.topFlaps[0].h,
                     faceCoords.topFlaps[1].h,
                     faceCoords.topFlaps[2].h,
-                    faceCoords.topFlaps[3].h
+                    faceCoords.topFlaps[3].h,
                   ]}
                   bottomFlapHeights={[
                     faceCoords.bottomFlaps[0].h,
                     faceCoords.bottomFlaps[1].h,
                     faceCoords.bottomFlaps[2].h,
-                    faceCoords.bottomFlaps[3].h
+                    faceCoords.bottomFlaps[3].h,
                   ]}
                   svgMarkup={geo.svg}
                   svgWidth={geo.bbox.w}
@@ -555,156 +488,109 @@ const T0002Calculator = ({ isAdmin = false }: { isAdmin?: boolean }) => {
         }
         sidebarArea={
           <>
-            {/* أبعاد القالب */}
-              <section>
+              <section className="pt-3 pb-3 border-b border-slate-100">
                 <h3 className="text-sm font-bold mb-2">أبعاد العلبة</h3>
                 <div className="grid grid-cols-3 gap-2">
-                  <NumField label="العرض" value={params.width} disabled={refOn} unit={dimUnit} onChange={v => set('width', v)} />
-                  <NumField label="الارتفاع" value={params.height} disabled={refOn} unit={dimUnit} onChange={v => set('height', v)} />
-                  <NumField label="العمق" value={params.depth} disabled={refOn} unit={dimUnit} onChange={v => set('depth', v)} />
+                  <NumField label="العرض" value={draftParams.width} defaultValue={T0002_DEFAULTS.width} unit={dimUnit} onChange={v => setDraft('width', v)} />
+                  <NumField label="الارتفاع" value={draftParams.height} defaultValue={T0002_DEFAULTS.height} unit={dimUnit} onChange={v => setDraft('height', v)} />
+                  <NumField label="العمق" value={draftParams.depth} defaultValue={T0002_DEFAULTS.depth} unit={dimUnit} onChange={v => setDraft('depth', v)} />
                 </div>
               </section>
 
-              {/* تخصيص متقدم */}
-              <section>
+              <section className="pt-2 pb-3 border-b border-slate-100 space-y-2">
                 <h3 className="text-sm font-bold mb-2">تخصيص متقدم</h3>
+                
                 <div className="grid grid-cols-3 gap-2">
-                  <NumField label="لسان اللصق" value={params.glueFlap} disabled={refOn} unit={dimUnit} onChange={v => set('glueFlap', v)} />
-                  <NumField label="لسان الغطاء" value={params.lidTongue} disabled={refOn} unit={dimUnit} onChange={v => set('lidTongue', v)} />
+                  <NumField label="لسان اللصق" value={draftParams.glueFlap} defaultValue={T0002_DEFAULTS.glueFlap} unit={dimUnit} onChange={v => setDraft('glueFlap', v)} />
+                  <NumField label="لسان الغطاء" value={draftParams.lidTongue} defaultValue={T0002_DEFAULTS.lidTongue} unit={dimUnit} onChange={v => setDraft('lidTongue', v)} />
                   <div>
-                    <div className="flex items-center justify-between">
-                      <Label className="text-xs">ارتفاع لسان العمق</Label>
-                      <button type="button" disabled={refOn}
-                        className="text-muted-foreground hover:text-foreground disabled:opacity-40"
-                        title="إعادة ضبط"
-                        onClick={() => {
-                          tongueTotalTouched.current = false;
-                          set('depthTongueTotalHeight', autoDepthTongueTotalHeight(params.depthTongue, params.depth));
-                        }}>
-                        <RotateCcw className="w-3 h-3" />
-                      </button>
-                    </div>
+                    <Label className="text-xs truncate mb-1 block" title="ارتفاع لسان العمق">ارتفاع لسان العمق</Label>
                     <Input type="number" step="0.01"
-                      value={toDisplay(params.depthTongueTotalHeight ?? autoDepthTongueTotalHeight(params.depthTongue, params.depth), dimUnit)}
-                      disabled={refOn}
+                      value={toDisplay(draftParams.depthTongueTotalHeight ?? autoDepthTongueTotalHeight(draftParams.depthTongue, draftParams.depth), dimUnit)}
                       onChange={e => {
                         tongueTotalTouched.current = true;
-                        set('depthTongueTotalHeight', toMm(num(e.target.value, toDisplay(params.depthTongueTotalHeight ?? autoDepthTongueTotalHeight(params.depthTongue, params.depth), dimUnit)), dimUnit));
+                        setDraft('depthTongueTotalHeight', toMm(num(e.target.value, toDisplay(draftParams.depthTongueTotalHeight ?? autoDepthTongueTotalHeight(draftParams.depthTongue, draftParams.depth), dimUnit)), dimUnit));
                       }} />
                   </div>
                 </div>
-                <div className="grid grid-cols-3 gap-2 mt-2">
+
+                <div className="grid grid-cols-2 gap-2 pt-1">
+                  <NumField label="زاوية لسان العمق" value={draftParams.depthTongueCornerRadius ?? 0} defaultValue={0}
+                    step="0.1" min="0" unit={dimUnit}
+                    onChange={v => setDraft('depthTongueCornerRadius', v)} />
+                    
                   <div>
-                    <Label className="text-xs">زاوية لسان اللصق</Label>
-                    <div className="grid grid-cols-2 gap-1">
-                      <Input type="number" step="0.1" min="0" max="89" placeholder="علوي"
-                        value={params.glueFlapTopAngle ?? 25} disabled={refOn}
-                        onChange={e => set('glueFlapTopAngle', num(e.target.value, 25))} />
-                      <Input type="number" step="0.1" min="0" max="89" placeholder="سفلي"
-                        value={params.glueFlapBottomAngle ?? 25} disabled={refOn}
-                        onChange={e => set('glueFlapBottomAngle', num(e.target.value, 25))} />
-                    </div>
-                    <div className="flex justify-between text-[10px] text-muted-foreground px-0.5">
-                      <span>علوي</span><span>سفلي</span>
-                    </div>
-                  </div>
-                  <NumField label="زاوية لسان العمق" value={params.depthTongueCornerRadius ?? 0}
-                    disabled={refOn} step="0.1" min="0" unit={dimUnit}
-                    onChange={v => set('depthTongueCornerRadius', v)} />
-                  <div>
-                    <div className="flex items-center justify-between">
-                      <Label className="text-xs">القفل</Label>
-                      <button type="button" disabled={refOn}
-                        className="text-muted-foreground hover:text-foreground disabled:opacity-40"
-                        title={`إعادة ضبط إلى ${toDisplay(defaultDepthTongueForWidth(params.width), dimUnit)}${dimUnit}`}
-                        onClick={() => {
-                          depthTongueTouched.current = false;
-                          set('depthTongue', defaultDepthTongueForWidth(params.width));
-                        }}>
-                        <RotateCcw className="w-3 h-3" />
-                      </button>
-                    </div>
-                    <Input type="number" step="0.01" value={toDisplay(params.depthTongue, dimUnit)}
-                      disabled={refOn}
+                    <Label className="text-xs truncate mb-1 block">القفل</Label>
+                    <Input type="number" step="0.01" value={toDisplay(draftParams.depthTongue, dimUnit)}
                       onChange={e => {
                         depthTongueTouched.current = true;
-                        set('depthTongue', toMm(num(e.target.value, toDisplay(params.depthTongue, dimUnit)), dimUnit));
+                        setDraft('depthTongue', toMm(num(e.target.value, toDisplay(draftParams.depthTongue, dimUnit)), dimUnit));
                       }} />
                   </div>
                 </div>
-              </section>
 
-              {/* إعدادات الشيت */}
-              <section>
-                <h3 className="text-sm font-bold mb-2">إعدادات الشيت</h3>
-                <div className="grid grid-cols-3 gap-2">
-                  <NumField label="عرض الشيت" value={params.sheetWidth} unit={dimUnit} onChange={v => set('sheetWidth', v)} />
-                  <NumField label="ارتفاع الشيت" value={params.sheetHeight} unit={dimUnit} onChange={v => set('sheetHeight', v)} />
-                  <NumField label="القابض" value={params.gripper} unit={dimUnit} onChange={v => set('gripper', v)} />
-                </div>
-                <div className="grid grid-cols-3 gap-2 mt-2">
-                  <NumField label="الهامش" value={params.sheetMargin} unit={dimUnit} onChange={v => set('sheetMargin', v)} />
-                  <NumField label="التباعد الأفقي" value={nesting.horizontalGap} step="0.1" min="0" unit={dimUnit} onChange={v => setN('horizontalGap', v)} />
-                  <NumField label="التباعد العمودي" value={nesting.verticalGap} step="0.1" min="0" unit={dimUnit} onChange={v => setN('verticalGap', v)} />
-                </div>
-                <div className="mt-2 text-[11px] text-muted-foreground space-y-0.5">
-                  <div>الصافي: {usable.width.toFixed(2)} × {usable.height.toFixed(2)} مم</div>
-                </div>
-              </section>
-
-              {/* خيارات التدوير */}
-              <section className="space-y-3">
-                <h3 className="text-sm font-bold border-b pb-1">خيارات التدوير والتكرار</h3>
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="t0002-allow-rot" className="text-xs">السماح بتدوير التصميم 90°</Label>
-                    <Switch id="t0002-allow-rot" checked={nesting.allowRotation} onCheckedChange={v => setN('allowRotation', v)} />
+                <div className="pt-1">
+                  <div className="flex items-center justify-between gap-1 mb-1.5">
+                    <Label className="text-xs font-semibold">زاوية لسان اللصق (°)</Label>
+                    {(draftParams.glueFlapTopAngle !== 25 || draftParams.glueFlapBottomAngle !== 25) && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setDraft('glueFlapTopAngle', 25);
+                          setDraft('glueFlapBottomAngle', 25);
+                        }}
+                        className="text-slate-400 hover:text-slate-700 disabled:opacity-30 p-0.5 rounded hover:bg-slate-100 transition-colors"
+                        title="إعادة ضبط زوايا لسان اللصق إلى 25°"
+                      >
+                        <RotateCcw className="w-3 h-3" />
+                      </button>
+                    )}
                   </div>
-                  {nesting.allowRotation && (
-                    <div className="flex items-center justify-between gap-2">
-                      <Label htmlFor="t0002-rot-mode" className="text-xs">وضع التدوير</Label>
-                      <select id="t0002-rot-mode" className="h-8 rounded-md border border-input bg-background px-2 text-sm"
-                        value={nesting.rotationMode} onChange={e => setN('rotationMode', e.target.value as RotationMode)}>
-                        <option value="auto">تلقائي (الأفضل)</option>
-                        <option value="normal">بدون تدوير (0°)</option>
-                        <option value="rotated">تدوير فقط (90°)</option>
-                      </select>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="flex items-center gap-1.5 bg-slate-50 border rounded-md px-2.5 py-1">
+                      <span className="text-[11px] text-muted-foreground whitespace-nowrap">علوي:</span>
+                      <input type="number" step="0.1" min="0" max="89"
+                        className="w-full bg-transparent text-xs font-medium focus:outline-none text-left"
+                        dir="ltr"
+                        value={draftParams.glueFlapTopAngle ?? 25}
+                        onChange={e => setDraft('glueFlapTopAngle', num(e.target.value, 25))} />
                     </div>
-                  )}
+                    <div className="flex items-center gap-1.5 bg-slate-50 border rounded-md px-2.5 py-1">
+                      <span className="text-[11px] text-muted-foreground whitespace-nowrap">سفلي:</span>
+                      <input type="number" step="0.1" min="0" max="89"
+                        className="w-full bg-transparent text-xs font-medium focus:outline-none text-left"
+                        dir="ltr"
+                        value={draftParams.glueFlapBottomAngle ?? 25}
+                        onChange={e => setDraft('glueFlapBottomAngle', num(e.target.value, 25))} />
+                    </div>
+                  </div>
                 </div>
               </section>
 
-              {/* ملخص التوزيع */}
-              <section className="pt-3 border-t">
-                <h3 className="text-sm font-bold mb-2">ملخص التوزيع</h3>
-                <div className="grid grid-cols-1 gap-1 text-sm">
-                  <div>الإجمالي: <b>{nestingResult.bestTotal}</b></div>
-                  <div>مقاس التوزيع: <b>{toDisplay(distributionFootprint.w, dimUnit)} × {toDisplay(distributionFootprint.h, dimUnit)} {dimUnit}</b></div>
-                </div>
-              </section>
+              {showNestingPreview && previewMode === 'sheet' && (
+                <section className="pt-2 pb-3 border-b border-slate-100">
+                  <h3 className="text-sm font-bold mb-2">إعدادات الشيت</h3>
+                  <div className="grid grid-cols-3 gap-2">
+                    <NumField label="عرض الشيت" value={draftParams.sheetWidth} defaultValue={T0002_DEFAULTS.sheetWidth} unit={dimUnit} onChange={v => setDraft('sheetWidth', v)} />
+                    <NumField label="ارتفاع الشيت" value={draftParams.sheetHeight} defaultValue={T0002_DEFAULTS.sheetHeight} unit={dimUnit} onChange={v => setDraft('sheetHeight', v)} />
+                    <NumField label="القابض" value={draftParams.gripper} defaultValue={T0002_DEFAULTS.gripper} unit={dimUnit} onChange={v => setDraft('gripper', v)} />
+                  </div>
+                  <div className="grid grid-cols-3 gap-2 mt-2">
+                    <NumField label="الهامش" value={draftParams.sheetMargin} defaultValue={T0002_DEFAULTS.sheetMargin} unit={dimUnit} onChange={v => setDraft('sheetMargin', v)} />
+                    <NumField label="التباعد الأفقي" value={draftNesting.horizontalGap} defaultValue={DEFAULT_NESTING.horizontalGap} step="0.1" min="0" unit={dimUnit} onChange={v => setDraftN('horizontalGap', v)} />
+                    <NumField label="التباعد العمودي" value={draftNesting.verticalGap} defaultValue={DEFAULT_NESTING.verticalGap} step="0.1" min="0" unit={dimUnit} onChange={v => setDraftN('verticalGap', v)} />
+                  </div>
+                  <div className="mt-2 text-[11px] text-muted-foreground space-y-0.5">
+                    <div>الصافي: {usable.width.toFixed(2)} × {usable.height.toFixed(2)} مم</div>
+                  </div>
+                </section>
+              )}
 
-              {/* إعادة الضبط */}
-              <div className="flex justify-end gap-2 border-t pt-3">
-                <Button variant="ghost" size="sm" onClick={reset} className="text-muted-foreground hover:text-foreground">
-                  <RotateCcw className="w-3.5 h-3.5 ml-1" />
-                  إعادة تعيين
-                </Button>
-              </div>
           </>
         }
       />
-
-      <T0002PrintSummary
-        open={printOpen}
-        onOpenChange={setPrintOpen}
-        params={params}
-        nesting={nesting}
-        nestingResult={nestingResult}
-        dimUnit={dimUnit}
-        distributionFootprint={distributionFootprint}
-        derived={derived}
-      />
-    </>  );
+    </>
+  );
 };
 
 const ExportSingleButton = ({ params, geo }: { params: T0002Params; geo: T0002Geometry }) => {

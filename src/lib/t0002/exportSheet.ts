@@ -27,6 +27,10 @@ function renderSeg(s: Segment): string {
     const pts = s.points.map(p => `${p.x},${p.y}`).join(' ');
     return `<polyline points="${pts}" data-id="${s.svgId}"/>`;
   }
+  if (s.geometry === 'arc' && (s as any).arc) {
+    const arc = (s as any).arc;
+    return `<path d="M${s.start.x},${s.start.y} A${arc.rx},${arc.ry} ${arc.xar} ${arc.laf} ${arc.sf} ${s.end.x},${s.end.y}" data-id="${s.svgId}"/>`;
+  }
   if (s.start.x === s.end.x && s.start.y === s.end.y) return '';
   return `<line x1="${s.start.x}" y1="${s.start.y}" x2="${s.end.x}" y2="${s.end.y}" data-id="${s.svgId}"/>`;
 }
@@ -106,11 +110,11 @@ export function buildT0002SheetLayoutSvg(
     `<svg xmlns="http://www.w3.org/2000/svg" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" version="1.1" width="${sheetW}mm" height="${sheetH}mm" viewBox="0 0 ${sheetW} ${sheetH}">`,
   );
 
-  out.push(`  <g id="CREASE" inkscape:label="CREASE" fill="none" stroke="${CREASE_COLOR}" stroke-miterlimit="10">`);
+  out.push(`  <g id="CREASE" inkscape:label="CREASE" fill="none" stroke="${CREASE_COLOR}" stroke-width="0.35" stroke-miterlimit="10">`);
   if (creasePieces.length) out.push(creasePieces.join('\n'));
   out.push(`  </g>`);
 
-  out.push(`  <g id="CUT" inkscape:label="CUT" fill="none" stroke="${CUT_COLOR}" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10">`);
+  out.push(`  <g id="CUT" inkscape:label="CUT" fill="none" stroke="${CUT_COLOR}" stroke-width="0.45" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10">`);
   if (cutPieces.length) out.push(cutPieces.join('\n'));
   out.push(`  </g>`);
 

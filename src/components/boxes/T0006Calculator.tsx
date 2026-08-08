@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
+import { toast } from 'sonner';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -47,7 +48,7 @@ const NumField = ({
   disabled?: boolean; step?: string; min?: string; unit?: 'mm' | 'cm' | 'in';
 }) => (
   <div>
-    <Label className="text-xs">{label} {unit && <span className="text-muted-foreground">({unit})</span>}</Label>
+    <Label className="text-xs">{label}</Label>
     <Input type="number" step={step} min={min}
       value={unit ? toDisplay(value, unit) : value}
       disabled={disabled}
@@ -56,11 +57,13 @@ const NumField = ({
 );
 
 const T0006Calculator = ({ isAdmin = false }: { isAdmin?: boolean }) => {
-  const { showNestingPreview, show3DPreview } = usePreviewSettings();
+  const { show2DPreview, showNestingPreview, show3DPreview } = usePreviewSettings('T0006');
 
   const hiddenCls = isAdmin ? '' : 'hidden';
 
-  const [params, setParams] = useState<T0006Params>(T0006_DEFAULTS);
+  const [draftParams, setDraftParams] = useState<T0006Params>(T0006_DEFAULTS);
+  const [appliedParams, setAppliedParams] = useState<T0006Params>(T0006_DEFAULTS);
+
   const [previewMode, setPreviewMode] = useState<'template' | 'sheet' | 'three'>('template');
   const [showDimensions, setShowDimensions] = useState(true);
   const [dimUnit, setDimUnit] = useState<'mm' | 'cm' | 'in'>('mm');
@@ -72,17 +75,25 @@ const T0006Calculator = ({ isAdmin = false }: { isAdmin?: boolean }) => {
   });
 
   const set = <K extends keyof T0006Params>(k: K, v: T0006Params[K]) => {
-    setParams(prev => ({ ...prev, [k]: v }));
+    setDraftParams(prev => ({ ...prev, [k]: v }));
   };
 
-  const reset = () => {
-    setParams({ ...T0006_DEFAULTS });
+  const handleSave = () => {
+    setAppliedParams({ ...draftParams });
     setSegmentOverrides({ svg: null, segments: null });
+    toast.success('تم حفظ التعديلات وتطبيقها');
   };
 
-  const usable = useMemo(() => usableSheet(params), [params]);
+  const handleReset = () => {
+    setDraftParams({ ...T0006_DEFAULTS });
+    setAppliedParams({ ...T0006_DEFAULTS });
+    setSegmentOverrides({ svg: null, segments: null });
+    toast.info('تم إعادة تعيين جميع الأبعاد للقيم الافتراضية');
+  };
 
-  const baseGeo = useMemo(() => buildT0006Geometry(params), [params]);
+  const usable = useMemo(() => usableSheet(appliedParams), [appliedParams]);
+
+  const baseGeo = useMemo(() => buildT0006Geometry(appliedParams), [appliedParams]);
 
   const geo = useMemo<T0006Geometry>(() => {
     if (segmentOverrides.svg && segmentOverrides.segments) {
@@ -299,15 +310,15 @@ const T0006Calculator = ({ isAdmin = false }: { isAdmin?: boolean }) => {
         },
       ] as [Panel2DInfo, Panel2DInfo, Panel2DInfo, Panel2DInfo],
     };
-  }, [params]);
+  }, [appliedParams]);
 
-  const nestingResult = useMemo(() => calculateT0006Nesting(params, geo), [params, geo]);
+  const nestingResult = useMemo(() => calculateT0006Nesting(appliedParams, geo), [appliedParams, geo]);
 
   const downloadDielineSvg = () => {
     const blob = new Blob([geo.svg], { type: 'image/svg+xml' });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
-    link.download = `T0006_Dieline_${params.width}x${params.height}x${params.depth}.svg`;
+    link.download = `T0006_Dieline_${appliedParams.width}x${appliedParams.height}x${appliedParams.depth}.svg`;
     link.click();
   };
 
@@ -319,8 +330,6 @@ const T0006Calculator = ({ isAdmin = false }: { isAdmin?: boolean }) => {
     exportT0006SheetPdf(geo, nestingResult);
   };
 
-  const refOn = !!params.referenceMode;
-
   const dimsSvg = useMemo(
     () => (showDimensions ? buildT0006DimensionsOverlay(geo) : ''),
     [showDimensions, geo],
@@ -330,32 +339,21 @@ const T0006Calculator = ({ isAdmin = false }: { isAdmin?: boolean }) => {
     <>
       <TemplateEditorLayout
         title="T0006 — قفل مزدوج العلب (Double Wall Box)"
-        hasReferenceMode={true}
-        referenceModeOn={refOn}
-        onReferenceModeChange={v => set('referenceMode', v)}
         previewMode={previewMode}
         onPreviewModeChange={setPreviewMode}
+        hasTemplatePreview={show2DPreview}
         hasSheetPreview={showNestingPreview}
         has3DPreview={show3DPreview}
         showDimensions={showDimensions}
         onShowDimensionsChange={setShowDimensions}
         dimUnit={dimUnit}
         onDimUnitChange={setDimUnit}
-        actionButtons={
-          <>
-            <Button variant="outline" size="sm" onClick={() => setPrintOpen(true)}>
-              ملخص الطباعة
-            </Button>
-          </>
-        }
+        onSave={handleSave}
+        onReset={handleReset}
         previewArea={
           <>
             {previewMode === 'template' ? (
-                <div className="space-y-2">
-                  <div className="text-xs text-muted-foreground">
-                    القطع والخطوط الخارجية: <b>{geo.segments.length}</b>
-                    {' · '}مقاس القالب: <b>{geo.bbox.w.toFixed(2)} × {geo.bbox.h.toFixed(2)} مم</b>
-                  </div>
+                <div className="w-full h-full relative overflow-hidden">
                   <InteractiveSvgCanvas
                     segments={geo.segments}
                     svgWidth={geo.bbox.w}
@@ -367,16 +365,16 @@ const T0006Calculator = ({ isAdmin = false }: { isAdmin?: boolean }) => {
                   />
                 </div>
               ) : previewMode === 'sheet' ? (
-                <T0006SheetNestingPreview params={params} result={nestingResult} />
+                <T0006SheetNestingPreview params={appliedParams} result={nestingResult} />
               ) : (
                 <Box3DPreview
                   boxType="T0006"
-                  lidTongue={params.lidTongue}
-                  panelWidths={[params.width, params.depth, params.width, params.depth]}
-                  panelHeights={params.height}
-                  glueFlapWidth={params.glueFlap}
-                  topFlapHeights={[params.lidTongue, params.dustFlap, params.lidTongue, params.dustFlap]}
-                  bottomFlapHeights={[params.lidTongue, params.dustFlap, params.lidTongue, params.dustFlap]}
+                  lidTongue={appliedParams.lidTongue}
+                  panelWidths={[appliedParams.width, appliedParams.depth, appliedParams.width, appliedParams.depth]}
+                  panelHeights={appliedParams.height}
+                  glueFlapWidth={appliedParams.glueFlap}
+                  topFlapHeights={[appliedParams.lidTongue, appliedParams.dustFlap, appliedParams.lidTongue, appliedParams.dustFlap]}
+                  bottomFlapHeights={[appliedParams.lidTongue, appliedParams.dustFlap, appliedParams.lidTongue, appliedParams.dustFlap]}
                   svgMarkup={geo.svg}
                   svgWidth={geo.bbox.w}
                   svgHeight={geo.bbox.h}
@@ -390,51 +388,36 @@ const T0006Calculator = ({ isAdmin = false }: { isAdmin?: boolean }) => {
             <section>
                 <h3 className="text-sm font-bold mb-2">أبعاد العلبة</h3>
                 <div className="grid grid-cols-3 gap-2">
-                  <NumField label="العرض" value={params.width} disabled={refOn} unit={dimUnit} onChange={v => set('width', v)} />
-                  <NumField label="الارتفاع" value={params.height} disabled={refOn} unit={dimUnit} onChange={v => set('height', v)} />
-                  <NumField label="العمق" value={params.depth} disabled={refOn} unit={dimUnit} onChange={v => set('depth', v)} />
+                  <NumField label="العرض" value={draftParams.width} unit={dimUnit} onChange={v => set('width', v)} />
+                  <NumField label="الارتفاع" value={draftParams.height} unit={dimUnit} onChange={v => set('height', v)} />
+                  <NumField label="العمق" value={draftParams.depth} unit={dimUnit} onChange={v => set('depth', v)} />
                 </div>
               </section>
 
-              <section>
-                <h3 className="text-sm font-bold mb-2">تخصيص متقدم</h3>
+              <section className="space-y-3">
+                <h3 className="text-sm font-bold border-b pb-1">تخصيص متقدم</h3>
                 <div className="grid grid-cols-3 gap-2">
-                  <NumField label="لسان اللصق" value={params.glueFlap} disabled={refOn} unit={dimUnit} onChange={v => set('glueFlap', v)} />
-                  <NumField label="اللسان" value={params.lidTongue} disabled={refOn} unit={dimUnit} onChange={v => set('lidTongue', v)} />
-                  <NumField label="ألسنة الغبار" value={params.dustFlap} disabled={refOn} unit={dimUnit} onChange={v => set('dustFlap', v)} />
+                  <NumField label="لسان اللصق" value={draftParams.glueFlap} unit={dimUnit} onChange={v => set('glueFlap', v)} />
+                  <NumField label="اللسان" value={draftParams.lidTongue} unit={dimUnit} onChange={v => set('lidTongue', v)} />
+                  <NumField label="ألسنة الغبار" value={draftParams.dustFlap} unit={dimUnit} onChange={v => set('dustFlap', v)} />
                 </div>
               </section>
 
               <section>
                 <h3 className="text-sm font-bold mb-2">إعدادات الشيت</h3>
                 <div className="grid grid-cols-2 gap-2">
-                  <NumField label="عرض الشيت" value={params.sheetWidth} unit={dimUnit} onChange={v => set('sheetWidth', v)} />
-                  <NumField label="ارتفاع الشيت" value={params.sheetHeight} unit={dimUnit} onChange={v => set('sheetHeight', v)} />
+                  <NumField label="عرض الشيت" value={draftParams.sheetWidth} unit={dimUnit} onChange={v => set('sheetWidth', v)} />
+                  <NumField label="ارتفاع الشيت" value={draftParams.sheetHeight} unit={dimUnit} onChange={v => set('sheetHeight', v)} />
                 </div>
                 <div className="grid grid-cols-2 gap-2 mt-2">
-                  <NumField label="الهامش" value={params.sheetMargin} unit={dimUnit} onChange={v => set('sheetMargin', v)} />
-                  <NumField label="القابض" value={params.gripper} unit={dimUnit} onChange={v => set('gripper', v)} />
+                  <NumField label="الهامش" value={draftParams.sheetMargin} unit={dimUnit} onChange={v => set('sheetMargin', v)} />
+                  <NumField label="القابض" value={draftParams.gripper} unit={dimUnit} onChange={v => set('gripper', v)} />
                 </div>
                 <div className="mt-2 text-[11px] text-muted-foreground space-y-0.5">
                   <div>الصافي: {usable.width.toFixed(2)} × {usable.height.toFixed(2)} مم</div>
                 </div>
               </section>
 
-              <section className="pt-3 border-t">
-                <h3 className="text-sm font-bold mb-2">ملخص التوزيع</h3>
-                <div className="grid grid-cols-1 gap-1 text-sm">
-                  <div>الإجمالي: <b>{nestingResult.total}</b></div>
-                  <div>الكفاءة: <b>{(nestingResult.efficiency * 100).toFixed(1)}%</b></div>
-                  <div>المستغل: <b>{nestingResult.widthUsed.toFixed(0)} × {nestingResult.heightUsed.toFixed(0)} مم</b></div>
-                </div>
-              </section>
-
-              <div className="flex justify-end gap-2 border-t pt-3">
-                <Button variant="ghost" size="sm" onClick={reset} className="text-muted-foreground hover:text-foreground">
-                  <RotateCcw className="w-3.5 h-3.5 ml-1" />
-                  إعادة تعيين
-                </Button>
-              </div>
           </>
         }
       />
@@ -442,17 +425,17 @@ const T0006Calculator = ({ isAdmin = false }: { isAdmin?: boolean }) => {
       <T0006PrintSummary
         open={printOpen}
         onOpenChange={setPrintOpen}
-        params={params}
+        params={appliedParams}
         nestingResult={nestingResult}
         dimUnit={dimUnit}
         derived={{
-          W: params.width,
-          H: params.height,
-          D: params.depth,
-          Gf: params.glueFlap,
-          Lt: params.lidTongue,
-          Df: params.dustFlap,
-          d2: params.depth - 0.5,
+          W: appliedParams.width,
+          H: appliedParams.height,
+          D: appliedParams.depth,
+          Gf: appliedParams.glueFlap,
+          Lt: appliedParams.lidTongue,
+          Df: appliedParams.dustFlap,
+          d2: appliedParams.depth - 0.5,
         }}
       />
     </>  );

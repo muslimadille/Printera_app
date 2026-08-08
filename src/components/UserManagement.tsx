@@ -119,8 +119,14 @@ const UserManagement = ({ currentUser, currentPassword }: UserManagementProps) =
 
   const fetchUsers = async () => {
     setLoading(true);
-    try { setUsers(await listUsers(currentUser.username, currentPassword)); } catch (err: any) { toast.error(err.message); }
-    finally { setLoading(false); }
+    try {
+      const data = await listUsers(currentUser.username, currentPassword);
+      setUsers(data || []);
+    } catch (err: any) {
+      toast.error(err.message || 'تعذر تحميل قائمة المستخدمين من السيرفر');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const fetchAnalytics = useCallback(async () => {
@@ -194,7 +200,7 @@ const UserManagement = ({ currentUser, currentPassword }: UserManagementProps) =
   const confirmDelete = async () => {
     if (!deleteTarget) return;
     try {
-      await deleteUser(currentUser.username, currentPassword, deleteTarget.id);
+      await deleteUser(currentUser.username, currentPassword, deleteTarget.id, deleteTarget.username);
       toast.success('تم حذف المستخدم');
       fetchUsers();
     } catch (err: any) { toast.error(err.message); }

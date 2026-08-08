@@ -25,7 +25,7 @@ export function buildT0006DimensionsOverlay(geo: T0006Geometry): string {
   };
 
   const text = (x: number, y: number, val: string) => {
-    return `<text x="${x.toFixed(3)}" y="${y.toFixed(3)}" fill="#3b82f6" font-size="3.5" font-family="monospace" text-anchor="middle" dominant-baseline="middle" font-weight="bold">${val}</text>`;
+    return `<text x="${x.toFixed(3)}" y="${y.toFixed(3)}" fill="#3b82f6" font-size="4.2" font-family="Arial, sans-serif" text-anchor="middle" dominant-baseline="middle" font-weight="bold">${val}</text>`;
   };
 
   const dimX = (x1: number, x2: number, y: number, label: string) => {
@@ -46,10 +46,49 @@ export function buildT0006DimensionsOverlay(geo: T0006Geometry): string {
     `;
   };
 
+  const TotalW = Gf + 2 * W + 2 * D - 0.5;
+  const TotalH = geo.bbox.h;
+
+  const C_TOTAL = '#64748b';       // Slate grey line & tick color
+  const C_TOTAL_TEXT = '#1e293b';  // Dark charcoal slate text color
+  const SW_TOT = 0.35;
+  const FS_TOT = 4.2;
+  const offset = 14;
+
+  const yTotal = TotalH + offset;
+  const xTotal = TotalW + offset;
+
+  // Extension lines
+  const extW = 
+    `<line x1="0" y1="${TotalH + 2}" x2="0" y2="${yTotal + 4}" stroke="${C_TOTAL}" stroke-width="${SW_TOT}"/>` +
+    `<line x1="${TotalW.toFixed(2)}" y1="${TotalH + 2}" x2="${TotalW.toFixed(2)}" y2="${yTotal + 4}" stroke="${C_TOTAL}" stroke-width="${SW_TOT}"/>`;
+
+  const extH = 
+    `<line x1="${TotalW + 2}" y1="0" x2="${xTotal + 4}" y2="0" stroke="${C_TOTAL}" stroke-width="${SW_TOT}"/>` +
+    `<line x1="${TotalW + 2}" y1="${TotalH.toFixed(2)}" x2="${xTotal + 4}" y2="${TotalH.toFixed(2)}" stroke="${C_TOTAL}" stroke-width="${SW_TOT}"/>`;
+
+  const dimLineW = 
+    `<line x1="0" y1="${yTotal}" x2="${TotalW.toFixed(2)}" y2="${yTotal}" stroke="${C_TOTAL}" stroke-width="${SW_TOT}"/>` +
+    `<line x1="0" y1="${yTotal - 2}" x2="0" y2="${yTotal + 2}" stroke="${C_TOTAL}" stroke-width="${SW_TOT}"/>` +
+    `<line x1="${TotalW.toFixed(2)}" y1="${yTotal - 2}" x2="${TotalW.toFixed(2)}" y2="${yTotal + 2}" stroke="${C_TOTAL}" stroke-width="${SW_TOT}"/>` +
+    `<text x="${(TotalW / 2).toFixed(2)}" y="${(yTotal + FS_TOT * 0.95).toFixed(2)}" font-family="Arial, sans-serif" font-size="${FS_TOT}" font-weight="600" ` +
+    `fill="${C_TOTAL_TEXT}" text-anchor="middle" dominant-baseline="hanging" direction="ltr" unicode-bidi="isolate">${TotalW.toFixed(1)} mm</text>`;
+
+  const textX = xTotal + 5;
+  const textY = TotalH / 2;
+  const dimLineH = 
+    `<line x1="${xTotal}" y1="0" x2="${xTotal}" y2="${TotalH.toFixed(2)}" stroke="${C_TOTAL}" stroke-width="${SW_TOT}"/>` +
+    `<line x1="${xTotal - 2}" y1="0" x2="${xTotal + 2}" y2="0" stroke="${C_TOTAL}" stroke-width="${SW_TOT}"/>` +
+    `<line x1="${xTotal - 2}" y1="${TotalH.toFixed(2)}" x2="${xTotal + 2}" y2="${TotalH.toFixed(2)}" stroke="${C_TOTAL}" stroke-width="${SW_TOT}"/>` +
+    `<text x="${textX.toFixed(2)}" y="${textY.toFixed(2)}" transform="rotate(90, ${textX.toFixed(2)}, ${textY.toFixed(2)})" font-family="Arial, sans-serif" font-size="${FS_TOT}" font-weight="600" ` +
+    `fill="${C_TOTAL_TEXT}" text-anchor="middle" dominant-baseline="middle" direction="ltr" unicode-bidi="isolate">${TotalH.toFixed(1)} mm</text>`;
+
   return `
     <!-- Product dimensions W, H, D in mm -->
     ${dimX(Xf1, Xd1, dy, `${W.toFixed(0)} mm`)}
     ${dimX(Xd1, Xf2, dy, `${D.toFixed(0)} mm`)}
     ${dimY(Xd2 - W / 2, Yft, Yfb, `${H.toFixed(0)} mm`)}
+    <!-- Outer Total Dimensions -->
+    ${extW}${extH}${dimLineW}${dimLineH}
   `;
 }

@@ -210,11 +210,11 @@ const MailerBox3DPreview: React.FC<MailerBox3DPreviewProps> = ({
     mountRef.current.appendChild(renderer.domElement);
 
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x0f172a);
-    scene.fog = new THREE.Fog(0x0f172a, 80, 200);
+    scene.background = new THREE.Color(0xffffff);
+    scene.fog = new THREE.Fog(0xffffff, 80, 200);
     sceneRef.current = scene;
 
-    const grid = new THREE.GridHelper(80, 30, 0x1e293b, 0x1e293b);
+    const grid = new THREE.GridHelper(80, 30, 0xe2e8f0, 0xf1f5f9);
     grid.position.y = -1;
     scene.add(grid);
 
@@ -400,55 +400,79 @@ const MailerBox3DPreview: React.FC<MailerBox3DPreviewProps> = ({
   const foldLabel = foldProgress === 0 ? 'مفرود مسطح (2D)' : foldProgress === 100 ? 'علبة مغلقة بالكامل' : 'قيد الطي';
 
   return (
-    <div className="space-y-3">
+    <div className="w-full h-full flex flex-col justify-between p-3 gap-3">
+      {/* ── Viewport ── */}
       <div
         ref={mountRef}
-        className="relative w-full rounded-xl overflow-hidden border border-slate-800 select-none"
-        style={{ height: 480, background: '#0f172a' }}
+        className="relative w-full flex-1 min-h-[350px] rounded-xl overflow-hidden border border-slate-200 select-none shadow-xs"
+        style={{ background: '#ffffff' }}
       >
         <div className="absolute top-3 left-3 z-10 pointer-events-none">
-          <span className="text-[10px] font-mono text-slate-400 bg-slate-950/80 px-2 py-1 rounded border border-slate-800">
+          <span className="text-[10px] font-mono text-slate-600 bg-white/90 shadow-sm px-2.5 py-1 rounded-md border border-slate-200">
             🖱 اسحب للدوران • العجلة للتكبير
           </span>
         </div>
 
-        <div className="absolute top-3 right-3 z-10 flex items-center gap-2">
-          <Button
-            variant="secondary"
-            size="sm"
-            className="h-7 text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700"
-            onClick={() => setAutoRotate(!autoRotate)}
-          >
-            {autoRotate ? <Pause className="w-3.5 h-3.5 ml-1" /> : <Play className="w-3.5 h-3.5 ml-1" />}
-            {autoRotate ? 'إيقاف' : 'دوران تلقائي'}
-          </Button>
-          <Button
-            variant="secondary"
-            size="icon"
-            className="h-7 w-7 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700"
-            onClick={resetCamera}
-            title="إعادة ضبط الكاميرا"
-          >
-            <RotateCcw className="w-3.5 h-3.5" />
-          </Button>
+        <div className="absolute bottom-3 left-3 z-10 pointer-events-none">
+          <span className="text-[10px] font-medium text-slate-600 bg-white/95 backdrop-blur-sm px-2.5 py-1 rounded-md border border-slate-200 shadow-sm">
+            {foldLabel}
+          </span>
+        </div>
+      </div>
+
+      {/* ── شريط التحكم المدمج بذكاء (Ultra-Compact 1-Row Control Bar) ── */}
+      <div className="rounded-xl border border-slate-200/80 bg-slate-50/80 p-2.5 px-4 flex flex-wrap items-center justify-between gap-3 shadow-2xs mt-auto">
+        {/* 1. السلايدر ونسبة المئوية */}
+        <div className="flex items-center gap-3 flex-1 min-w-[180px]">
+          <Slider
+            value={[foldProgress]}
+            onValueChange={([v]) => setFoldProgress(v)}
+            min={0}
+            max={100}
+            step={1}
+            className="flex-1 py-1"
+          />
+          <span className="text-xs font-mono font-bold text-slate-900 bg-white border border-slate-200/80 px-2 py-0.5 rounded-md shadow-2xs min-w-[42px] text-center">
+            {foldProgress}%
+          </span>
         </div>
 
-        <div className="absolute bottom-4 left-4 right-4 z-10">
-          <div className="bg-slate-900/80 backdrop-blur border border-slate-800 rounded-lg p-3 flex flex-col gap-2">
-            <div className="flex items-center justify-between">
-              <Label className="text-xs font-medium text-slate-300">مستوى الطي</Label>
-              <span className="text-[10px] font-mono text-emerald-400 bg-emerald-400/10 px-1.5 py-0.5 rounded">
-                {foldProgress}% — {foldLabel}
-              </span>
-            </div>
-            <Slider
-              value={[foldProgress]}
-              max={100}
-              step={1}
-              onValueChange={v => setFoldProgress(v[0])}
-              className="cursor-pointer"
-            />
-          </div>
+        {/* 2. تابات الوصول السريع (كبسولات مدمجة) */}
+        <div className="inline-flex items-center bg-slate-200/60 p-0.5 rounded-full border border-slate-300/40">
+          {([0, 50, 100] as const).map(v => (
+            <button
+              key={v}
+              type="button"
+              className={`text-xs font-bold px-3 py-1 rounded-full transition-all duration-150 whitespace-nowrap ${
+                foldProgress === v
+                  ? 'bg-slate-900 text-white shadow-2xs'
+                  : 'text-slate-600 hover:text-slate-900 bg-transparent'
+              }`}
+              onClick={() => setFoldProgress(v)}
+            >
+              {v === 0 ? 'مفرود' : v === 50 ? 'نصف طي' : 'مغلق'}
+            </button>
+          ))}
+        </div>
+
+        {/* 3. أزرار الدوران وإعادة الضبط بالأيقونات فقط */}
+        <div className="flex items-center gap-1.5 shrink-0">
+          <Button
+            type="button"
+            title={autoRotate ? "إيقاف الدوران" : "تشغيل الدوران"}
+            onClick={() => setAutoRotate(v => !v)}
+            className="w-8 h-8 p-2 bg-slate-900 text-white hover:bg-slate-800 rounded-lg flex items-center justify-center shadow-2xs border border-slate-800 shrink-0 cursor-pointer"
+          >
+            {autoRotate ? <Pause className="w-3 h-3 shrink-0" /> : <Play className="w-3 h-3 shrink-0" />}
+          </Button>
+          <Button
+            type="button"
+            title="إعادة ضبط العرض"
+            onClick={resetCamera}
+            className="w-8 h-8 p-2 bg-slate-900 text-white hover:bg-slate-800 rounded-lg flex items-center justify-center shadow-2xs border border-slate-800 shrink-0 cursor-pointer"
+          >
+            <RotateCcw className="w-3.5 h-3.5 shrink-0" />
+          </Button>
         </div>
       </div>
     </div>

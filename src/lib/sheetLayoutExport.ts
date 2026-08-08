@@ -43,6 +43,12 @@ export interface ExportOptions {
   cleanMode?: boolean;
   /** Optional imported dieline — when present each piece is rendered using its geometry */
   dieline?: ParsedDieline | null;
+  /** Optional native template vector dieline paths for production export */
+  dielinePaths?: {
+    cutD: string;
+    creaseD: string;
+    bbox: { w: number; h: number };
+  } | null;
 }
 
 /* ───────────────── Unit helpers ───────────────── */
@@ -139,23 +145,27 @@ function svgElementsToPathOps(dieline: ParsedDieline): { ops: string; vbW: numbe
   return { ops: lines.join('\n'), vbW, vbH };
 }
 
-/** Tiny SVG path-data → PostScript converter (M/L/H/V/Z, both cases) */
+/** SVG path-data → PostScript converter (M/L/H/V/C/S/Q/A/Z, both cases) */
 function pathDataToPS(d: string): string {
   const tokens = d.match(/[a-zA-Z]|-?\d*\.?\d+(?:e[+-]?\d+)?/gi);
   if (!tokens) return '';
   const out: string[] = [];
   let i = 0, cmd = '', x = 0, y = 0, sx = 0, sy = 0;
+  let lastControlX = 0, lastControlY = 0;
   let started = false;
-  const num = () => parseFloat(tokens[i++]);
+  const num = () => parseFloat(tokens[i++] || '0');
   const isCmd = (t: string) => /^[a-zA-Z]$/.test(t);
+
   while (i < tokens.length) {
     const t = tokens[i];
     if (isCmd(t)) { cmd = t; i++; }
+
     if (cmd === 'M' || cmd === 'm') {
       const nx = num(), ny = num();
       x = cmd === 'M' ? nx : x + nx;
       y = cmd === 'M' ? ny : y + ny;
       sx = x; sy = y;
+      lastControlX = x; lastControlY = y;
       if (!started) { out.push('newpath'); started = true; }
       out.push(`${x.toFixed(4)} ${y.toFixed(4)} moveto`);
       cmd = cmd === 'M' ? 'L' : 'l';
@@ -163,20 +173,62 @@ function pathDataToPS(d: string): string {
       const nx = num(), ny = num();
       x = cmd === 'L' ? nx : x + nx;
       y = cmd === 'L' ? ny : y + ny;
+      lastControlX = x; lastControlY = y;
       out.push(`${x.toFixed(4)} ${y.toFixed(4)} lineto`);
     } else if (cmd === 'H' || cmd === 'h') {
       const nx = num();
       x = cmd === 'H' ? nx : x + nx;
+      lastControlX = x; lastControlY = y;
       out.push(`${x.toFixed(4)} ${y.toFixed(4)} lineto`);
     } else if (cmd === 'V' || cmd === 'v') {
       const ny = num();
       y = cmd === 'V' ? ny : y + ny;
+      lastControlX = x; lastControlY = y;
       out.push(`${x.toFixed(4)} ${y.toFixed(4)} lineto`);
+    } else if (cmd === 'C' || cmd === 'c') {
+      const x1 = cmd === 'C' ? num() : x + num();
+      const y1 = cmd === 'C' ? num() : y + num();
+      const x2 = cmd === 'C' ? num() : x + num();
+      const y2 = cmd === 'C' ? num() : y + num();
+      const x3 = cmd === 'C' ? num() : x + num();
+      const y3 = cmd === 'C' ? num() : y + num();
+      out.push(`${x1.toFixed(4)} ${y1.toFixed(4)} ${x2.toFixed(4)} ${y2.toFixed(4)} ${x3.toFixed(4)} ${y3.toFixed(4)} curveto`);
+      lastControlX = x2; lastControlY = y2;
+      x = x3; y = y3;
+    } else if (cmd === 'S' || cmd === 's') {
+      const x1 = 2 * x - lastControlX;
+      const y1 = 2 * y - lastControlY;
+      const x2 = cmd === 'S' ? num() : x + num();
+      const y2 = cmd === 'S' ? num() : y + num();
+      const x3 = cmd === 'S' ? num() : x + num();
+      const y3 = cmd === 'S' ? num() : y + num();
+      out.push(`${x1.toFixed(4)} ${y1.toFixed(4)} ${x2.toFixed(4)} ${y2.toFixed(4)} ${x3.toFixed(4)} ${y3.toFixed(4)} curveto`);
+      lastControlX = x2; lastControlY = y2;
+      x = x3; y = y3;
+    } else if (cmd === 'Q' || cmd === 'q') {
+      const qx = cmd === 'Q' ? num() : x + num();
+      const qy = cmd === 'Q' ? num() : y + num();
+      const qx2 = cmd === 'Q' ? num() : x + num();
+      const qy2 = cmd === 'Q' ? num() : y + num();
+      const cx1 = x + (2 / 3) * (qx - x);
+      const cy1 = y + (2 / 3) * (qy - y);
+      const cx2 = qx2 + (2 / 3) * (qx - qx2);
+      const cy2 = qy2 + (2 / 3) * (qy - qy2);
+      out.push(`${cx1.toFixed(4)} ${cy1.toFixed(4)} ${cx2.toFixed(4)} ${cy2.toFixed(4)} ${qx2.toFixed(4)} ${qy2.toFixed(4)} curveto`);
+      lastControlX = qx; lastControlY = qy;
+      x = qx2; y = qy2;
+    } else if (cmd === 'A' || cmd === 'a') {
+      num(); num(); num(); num(); num();
+      const ex = cmd === 'A' ? num() : x + num();
+      const ey = cmd === 'A' ? num() : y + num();
+      out.push(`${ex.toFixed(4)} ${ey.toFixed(4)} lineto`);
+      x = ex; y = ey;
+      lastControlX = x; lastControlY = y;
     } else if (cmd === 'Z' || cmd === 'z') {
       out.push('closepath');
       x = sx; y = sy;
+      lastControlX = x; lastControlY = y;
     } else {
-      // Unsupported command (curves) — skip args defensively
       i++;
     }
   }
@@ -234,6 +286,18 @@ export function buildSVG(opts: ExportOptions): string {
       const ix = cx - innerW / 2;
       const iy = cy - innerH / 2;
       const transform = angle ? ` transform="rotate(${angle} ${cx.toFixed(4)} ${cy.toFixed(4)})"` : '';
+      if (opts.dielinePaths && opts.dielinePaths.cutD) {
+        const bboxW = opts.dielinePaths.bbox.w;
+        const bboxH = opts.dielinePaths.bbox.h;
+        const mmCx = bboxW / 2;
+        const mmCy = bboxH / 2;
+        const transform = `transform="translate(${cx.toFixed(4)} ${cy.toFixed(4)}) rotate(${angle}) ${p.mirrored ? 'scale(-1 1) ' : ''}translate(${-mmCx.toFixed(4)} ${-mmCy.toFixed(4)})"`;
+        const creasePart = opts.dielinePaths.creaseD
+          ? `      <path d="${opts.dielinePaths.creaseD}" fill="none" stroke="#00A651" stroke-width="0.35" stroke-dasharray="2 1" />\n`
+          : '';
+        const cutPart = `      <path d="${opts.dielinePaths.cutD}" fill="none" stroke="#ED1C24" stroke-width="0.45" stroke-linecap="round" stroke-linejoin="round" />`;
+        return `    <g id="piece-${p.index}" ${transform}>\n${creasePart}${cutPart}\n    </g>`;
+      }
       if (dieline) {
         const inner = dielineSvgFragment(dieline, ix, iy, innerW, innerH, `piece-${p.index}`);
         return angle ? `    <g${transform}>\n${inner}\n    </g>` : inner;
@@ -464,6 +528,33 @@ export function buildPDF(opts: ExportOptions): Uint8Array {
     stream.push('Q');
   }
 
+function psToPDF(ps: string): string {
+  return ps
+    .replace(/newpath/g, '')
+    .replace(/(-?\d+(?:\.\d+)?) (-?\d+(?:\.\d+)?) moveto/g, '$1 $2 m')
+    .replace(/(-?\d+(?:\.\d+)?) (-?\d+(?:\.\d+)?) lineto/g, '$1 $2 l')
+    .replace(/(-?\d+(?:\.\d+)?) (-?\d+(?:\.\d+)?) (-?\d+(?:\.\d+)?) (-?\d+(?:\.\d+)?) (-?\d+(?:\.\d+)?) (-?\d+(?:\.\d+)?) curveto/g, '$1 $2 $3 $4 $5 $6 c')
+    .replace(/closepath stroke/g, 'h S')
+    .replace(/closepath/g, 'h')
+    .replace(/\bstroke\b/g, 'S');
+}
+
+  // Build dieline PDF path operators for native template dielinePaths
+  let nativeCutOps = '';
+  let nativeCreaseOps = '';
+  let nativeBboxW = 0;
+  let nativeBboxH = 0;
+  if (opts.dielinePaths && opts.dielinePaths.cutD) {
+    const cutPs = pathDataToPS(opts.dielinePaths.cutD);
+    nativeCutOps = psToPDF(cutPs);
+    if (opts.dielinePaths.creaseD) {
+      const creasePs = pathDataToPS(opts.dielinePaths.creaseD);
+      nativeCreaseOps = psToPDF(creasePs);
+    }
+    nativeBboxW = opts.dielinePaths.bbox.w;
+    nativeBboxH = opts.dielinePaths.bbox.h;
+  }
+
   // Pieces (or dielines)
   stream.push('q 0 0 0 RG 0.25 w');
   pieces.forEach((p) => {
@@ -472,7 +563,35 @@ export function buildPDF(opts: ExportOptions): Uint8Array {
     const wPiecePt = p.w * CM_TO_PT;
     const hPiecePt = p.h * CM_TO_PT;
     const turns = ((((p.rotation ?? (p.rotated ? 1 : 0)) as number) % 4) + 4) % 4;
-    if (dielinePDF && dielinePDF.vbW > 0 && dielinePDF.vbH > 0) {
+
+    if (nativeCutOps && nativeBboxW > 0 && nativeBboxH > 0) {
+      const mmCx = nativeBboxW / 2;
+      const mmCy = nativeBboxH / 2;
+      const cxPt = (p.x + p.w / 2) * CM_TO_PT;
+      const cyPt = (sheetH - p.y - p.h / 2) * CM_TO_PT;
+      const angleRad = -turns * Math.PI / 2;
+      const scale = MM_TO_PT;
+      const cos = Math.cos(angleRad) * scale;
+      const sin = Math.sin(angleRad) * scale;
+      const mirror = p.mirrored ? -1 : 1;
+      const a = cos * mirror;
+      const b = sin * mirror;
+      const c = sin;
+      const d = -cos;
+      const tx = -mmCx;
+      const ty = -mmCy;
+      const e = cxPt + a * tx + c * ty;
+      const f = cyPt + b * tx + d * ty;
+      stream.push('q');
+      stream.push(`${a.toFixed(6)} ${b.toFixed(6)} ${c.toFixed(6)} ${d.toFixed(6)} ${e.toFixed(4)} ${f.toFixed(4)} cm`);
+      if (nativeCreaseOps) {
+        stream.push('0 0.65 0.32 RG [2 1] 0 d 1.0 w');
+        stream.push(nativeCreaseOps);
+      }
+      stream.push('0.93 0.02 0.07 RG [] 0 d 1.4 w');
+      stream.push(nativeCutOps);
+      stream.push('Q');
+    } else if (dielinePDF && dielinePDF.vbW > 0 && dielinePDF.vbH > 0) {
       // Inner (un-rotated) dieline extents — swapped on quarter turns so that
       // rotating around the piece center fills the (already swapped) slot.
       const innerWPt = (turns % 2 === 1) ? hPiecePt : wPiecePt;

@@ -99,11 +99,11 @@ export function buildT00012SheetLayoutSvg(
     `<svg xmlns="http://www.w3.org/2000/svg" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" version="1.1" width="${sheetW}mm" height="${sheetH}mm" viewBox="0 0 ${sheetW} ${sheetH}">`,
   );
 
-  out.push(`  <g id="CREASE" inkscape:label="CREASE" fill="none" stroke="${CREASE_COLOR}" stroke-miterlimit="10">`);
+  out.push(`  <g id="CREASE" inkscape:label="CREASE" fill="none" stroke="${CREASE_COLOR}" stroke-width="0.35" stroke-miterlimit="10">`);
   if (creasePieces.length) out.push(creasePieces.join('\n'));
   out.push(`  </g>`);
 
-  out.push(`  <g id="CUT" inkscape:label="CUT" fill="none" stroke="${CUT_COLOR}" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10">`);
+  out.push(`  <g id="CUT" inkscape:label="CUT" fill="none" stroke="${CUT_COLOR}" stroke-width="0.45" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10">`);
   if (cutPieces.length) out.push(cutPieces.join('\n'));
   out.push(`  </g>`);
 

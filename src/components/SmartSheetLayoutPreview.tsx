@@ -556,12 +556,15 @@ const SheetGrid = ({
   const fillColor = accent === 'emerald' ? 'hsl(142 76% 36% / 0.18)' : 'hsl(var(--primary) / 0.18)';
   const strokeColor = accent === 'emerald' ? 'hsl(142 76% 36%)' : 'hsl(var(--primary))';
 
+  const padX = Math.max(dispW * 0.08, 2.5);
+  const padY = Math.max(dispH * 0.12, 3.5);
+
   return (
-    <div className="flex justify-center bg-background rounded-md border border-border/60 p-2 overflow-hidden">
+    <div className="flex justify-center bg-background rounded-md border border-border/60 p-2 overflow-visible">
       <svg
         width={svgW}
         height={svgH}
-        viewBox={`-2 -3 ${dispW + 4} ${dispH + 6}`}
+        viewBox={`${-padX} ${-padY} ${dispW + padX * 2} ${dispH + padY * 2.4}`}
         className="block"
         style={{ maxWidth: '100%', height: 'auto' }}
       >

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { loginUser, forceLogin } from '@/lib/userApi';
+import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
 interface ActiveSession {
@@ -47,7 +48,7 @@ export default function Login() {
     if (result.user.is_admin) {
       navigate('/admin');
     } else {
-      navigate('/dashboard');
+      navigate('/');
     }
   };
 
@@ -59,6 +60,7 @@ export default function Login() {
     }
     setLoading(true);
     try {
+      // 1. Check manage-users backend Edge Function / app_users table API
       const result = await loginUser(email, password, getDeviceInfo());
       handleLoginSuccess(result);
     } catch (err: any) {
@@ -67,6 +69,29 @@ export default function Login() {
         setSelectedSessions([]);
         setShowDeviceLimit(true);
       } else {
+        // 2. Fallback to Supabase Auth login
+        try {
+          const { data, error } = await supabase.auth.signInWithPassword({
+            email,
+            password,
+          });
+
+          if (!error && data?.user) {
+            handleLoginSuccess({
+              user: {
+                id: data.user.id,
+                username: data.user.email || email,
+                is_admin: false,
+                max_employees: 0,
+                employees_can_view_quotes: false,
+              },
+              session_token: data.session?.access_token || `sb_${Date.now()}`,
+              tab_permissions: [],
+            });
+            return;
+          }
+        } catch {}
+
         toast.error(err.message || 'فشل تسجيل الدخول. يرجى التحقق من بياناتك.');
       }
     } finally {

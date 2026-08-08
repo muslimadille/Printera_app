@@ -3,8 +3,8 @@ import { useSearchParams } from 'react-router-dom';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import TemplateCard from '@/components/TemplateCard';
-
 import { supabase } from '@/integrations/supabase/client';
+import { useAppTemplates } from '@/hooks/useAppTemplates';
 
 // Templates are now fetched purely from the backend
 
@@ -19,9 +19,8 @@ export default function TemplatesLibrary() {
   const [searchParams] = useSearchParams();
   const [query, setQuery] = useState(() => searchParams.get('q') || '');
   const [activeCat, setActiveCat] = useState(() => searchParams.get('cat') || 'all');
-  const [templates, setTemplates] = useState<any[]>([]);
+  const { templates, isLoading } = useAppTemplates();
   const [categories, setCategories] = useState<any[]>([{ id: 'all', label: 'الكل' }]);
-  const [isLoading, setIsLoading] = useState(true);
 
   // Re-sync when navigated here again with different search-bar/category params
   useEffect(() => {
@@ -29,33 +28,24 @@ export default function TemplatesLibrary() {
     setActiveCat(searchParams.get('cat') || 'all');
   }, [searchParams]);
 
-  // Fetch data from backend
+  // Fetch categories from backend
   useEffect(() => {
-    async function fetchData() {
-      setIsLoading(true);
+    async function fetchCategories() {
       try {
-        const [catRes, tempRes] = await Promise.all([
-          supabase.from('app_categories').select('*'),
-          supabase.from('app_templates').select('*')
-        ]);
-        
+        const catRes = await supabase.from('app_categories').select('*');
         if (catRes.data && catRes.data.length > 0) {
           setCategories([{ id: 'all', label: 'الكل' }, ...catRes.data]);
         }
-        if (tempRes.data && tempRes.data.length > 0) {
-          setTemplates(tempRes.data);
-        }
       } catch (err) {
-        console.error("Failed to fetch templates/categories from backend, using static fallback", err);
-      } finally {
-        setIsLoading(false);
+        console.error("Failed to fetch categories from backend", err);
       }
     }
-    fetchData();
+    fetchCategories();
   }, []);
 
   const q = query.trim().toLowerCase();
   const filteredTemplates = templates.filter((t) => {
+    if (t.status === 'inactive') return false;
     const matchesCat = activeCat === 'all' || t.category === activeCat;
     const matchesQuery = !q || t.title.toLowerCase().includes(q) || (t.tags && t.tags.some((tg: string) => tg.toLowerCase().includes(q)));
     return matchesCat && matchesQuery;

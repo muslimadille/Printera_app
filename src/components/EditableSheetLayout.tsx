@@ -1,6 +1,6 @@
 import { forwardRef, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Edit3, RotateCw, Undo2, Redo2, Plus, Trash2, Check, Move, History, FileUp, ZoomIn, ZoomOut, Maximize2, AlertTriangle, Copy, Sparkles } from 'lucide-react';
+import { Edit3, RotateCw, Undo2, Redo2, Plus, Trash2, Check, Move, History, FileUp, ZoomIn, ZoomOut, Maximize2, AlertTriangle, Copy, Sparkles, FlipHorizontal, Lock, Unlock, Grid } from 'lucide-react';
 import type { LayoutPiece } from '@/lib/sheetLayoutOptimizer';
 import SheetLayoutExportMenu from './SheetLayoutExportMenu';
 import AutoNestDialog from './AutoNestDialog';
@@ -41,6 +41,10 @@ interface EditableSheetLayoutProps {
   optimalPieces: LayoutPiece[];
   /** Called whenever the user changes the layout — passes the live count */
   onCountChange?: (count: number, pieces: LayoutPiece[]) => void;
+  /** Optional initial enabled state for editing (defaults to true) */
+  initialEnabled?: boolean;
+  /** Callback when user finishes/exits edit mode */
+  onExitEdit?: () => void;
   /** Optional imported dieline; when present the user can stamp it into the sheet */
   importedDieline?: ParsedDieline | null;
   /** Called when a new dieline is imported from inside this editor */
@@ -64,6 +68,12 @@ interface EditableSheetLayoutProps {
    *                 "مونتاج قالب" tab only.
    */
   engineVariant?: 'basic' | 'advanced';
+  /** Optional native template dieline paths for drawing exact 2D box dielines */
+  dielinePaths?: {
+    cutD: string;
+    creaseD: string;
+    bbox: { w: number; h: number };
+  } | null;
 }
 
 interface EditablePiece extends LayoutPiece {
@@ -144,6 +154,7 @@ const EditableSheetLayout = forwardRef<EditableSheetLayoutHandle, EditableSheetL
   onDielineSelected,
   onDielineRemoved,
   engineVariant = 'basic',
+  dielinePaths,
 }, ref) => {
   const [enabled, setEnabled] = useState(false);
   const [autoNestOpen, setAutoNestOpen] = useState(false);
@@ -233,15 +244,40 @@ const EditableSheetLayout = forwardRef<EditableSheetLayoutHandle, EditableSheetL
     });
   };
 
-  // Reset internal state when the optimal layout (or product/sheet) changes
-  useEffect(() => {
-    setPieces(optimalPieces.map((p) => ({ ...p })));
-    clearSelection();
-    setHistory([]);
-    setFuture([]);
+const safeToFixed = (val: any, decimals: number = 2): string => {
+  const n = Number(val);
+  return Number.isFinite(n) ? n.toFixed(decimals) : '0';
+};
+
+  const optimalKey = useMemo(() => {
+    if (!Array.isArray(optimalPieces)) return `${sheetW}_${sheetH}_${productW}_${productH}_0`;
+    return `${sheetW}_${sheetH}_${productW}_${productH}_${optimalPieces.length}_` + optimalPieces.map(p => `${safeToFixed(p?.x)},${safeToFixed(p?.y)},${safeToFixed(p?.w)},${safeToFixed(p?.h)}`).join(';');
   }, [optimalPieces, sheetW, sheetH, productW, productH]);
 
-  // Keyboard shortcuts (Ctrl/Cmd+Z = undo, Ctrl/Cmd+Y or Ctrl/Cmd+Shift+Z = redo)
+  const prevKeyRef = useRef(optimalKey);
+
+  // Reset internal state ONLY when the actual layout parameters or piece layout key change
+  useEffect(() => {
+    if (prevKeyRef.current !== optimalKey) {
+      prevKeyRef.current = optimalKey;
+      setPieces(optimalPieces.map((p) => ({ ...p })));
+      clearSelection();
+      setHistory([]);
+      setFuture([]);
+    }
+  }, [optimalKey, optimalPieces]);
+
+  // Lock uniform spacing state (from settings)
+  const [lockSpacing, setLockSpacing] = useState(false);
+  const [gapX, setGapX] = useState<number>(gap);
+  const [gapY, setGapY] = useState<number>(gap);
+
+  useEffect(() => {
+    setGapX(gap);
+    setGapY(gap);
+  }, [gap]);
+
+  // Keyboard shortcuts (Ctrl/Cmd+Z = undo, Ctrl/Cmd+Y = redo, Ctrl/Cmd+D = duplicate, Ctrl/Cmd+M = mirror)
   useEffect(() => {
     if (!enabled) return;
     const handler = (e: KeyboardEvent) => {
@@ -254,6 +290,7 @@ const EditableSheetLayout = forwardRef<EditableSheetLayoutHandle, EditableSheetL
       if (key === 'z' && !e.shiftKey) { e.preventDefault(); undo(); }
       else if ((key === 'z' && e.shiftKey) || key === 'y') { e.preventDefault(); redo(); }
       else if (key === 'd') { e.preventDefault(); duplicateSelected(); }
+      else if (key === 'm') { e.preventDefault(); mirrorSelected(); }
       else if (key === 'a') {
         e.preventDefault();
         setSelectedIdxs(new Set(pieces.map((_, i) => i)));
@@ -277,8 +314,8 @@ const EditableSheetLayout = forwardRef<EditableSheetLayoutHandle, EditableSheetL
   const piecesRef = useRef<EditablePiece[]>(pieces);
   useEffect(() => { piecesRef.current = pieces; }, [pieces]);
 
-  const sigOf = (arr: EditablePiece[]) => arr
-    .map((p) => `${p.x.toFixed(4)},${p.y.toFixed(4)},${p.w.toFixed(4)},${p.h.toFixed(4)},${turnsOf(p)}`)
+  const sigOf = (arr: EditablePiece[]) => (Array.isArray(arr) ? arr : [])
+    .map((p) => `${safeToFixed(p?.x, 4)},${safeToFixed(p?.y, 4)},${safeToFixed(p?.w, 4)},${safeToFixed(p?.h, 4)},${turnsOf(p)}`)
     .join('|');
 
   useEffect(() => {
@@ -626,18 +663,16 @@ const EditableSheetLayout = forwardRef<EditableSheetLayoutHandle, EditableSheetL
   };
 
   const rotateSelected = () => {
-    if (selectedIdxs.size === 0) return;
+    if (pieces.length === 0) return;
     pushHistory(pieces);
-    setPieces((prev) =>
-      prev.map((cur, i) => {
-        if (!selectedIdxs.has(i)) return cur;
+    setPieces((prev) => {
+      const targetIndices = selectedIdxs.size > 0 ? selectedIdxs : new Set(prev.map((_, i) => i));
+      return prev.map((cur, i) => {
+        if (!targetIndices.has(i)) return cur;
         const curTurns = turnsOf(cur);
         const nextTurns = ((curTurns + 1) % 4) as 0 | 1 | 2 | 3;
-        const swap = nextTurns % 2 === 1;
-        const baseW = curTurns % 2 === 0 ? cur.w : cur.h;
-        const baseH = curTurns % 2 === 0 ? cur.h : cur.w;
-        const newW = swap ? baseH : baseW;
-        const newH = swap ? baseW : baseH;
+        const newW = cur.h;
+        const newH = cur.w;
         const cx = cur.x + cur.w / 2;
         const cy = cur.y + cur.h / 2;
         return {
@@ -646,11 +681,57 @@ const EditableSheetLayout = forwardRef<EditableSheetLayoutHandle, EditableSheetL
           y: cy - newH / 2,
           w: newW,
           h: newH,
-          rotated: swap,
+          rotated: nextTurns % 2 === 1,
           rotation: nextTurns,
+        };
+      });
+    });
+  };
+
+  const mirrorSelected = () => {
+    if (pieces.length === 0) return;
+    pushHistory(pieces);
+    setPieces((prev) => {
+      const targetIndices = selectedIdxs.size > 0 ? selectedIdxs : new Set(prev.map((_, i) => i));
+      return prev.map((cur, i) => {
+        if (!targetIndices.has(i)) return cur;
+        return {
+          ...cur,
+          mirrored: !cur.mirrored,
+        };
+      });
+    });
+    toast({
+      title: 'انعكاس أفقياً (ميرور)',
+      description: `تم تعكيس اتجاه ${selectedIdxs.size} قطعة أفقياً.`,
+    });
+  };
+
+  const applyUniformSpacing = (customGapX?: number, customGapY?: number) => {
+    const gx = customGapX ?? gapX;
+    const gy = customGapY ?? gapY;
+    if (pieces.length === 0) return;
+    pushHistory(pieces);
+
+    const pW = pieces[0].w;
+    const pH = pieces[0].h;
+    const cols = Math.max(1, Math.floor((sheetW + gx) / (pW + gx)));
+
+    setPieces((prev) =>
+      prev.map((p, i) => {
+        const c = i % cols;
+        const r = Math.floor(i / cols);
+        return {
+          ...p,
+          x: snap(c * (p.w + gx), grid),
+          y: snap(r * (p.h + gy), grid),
         };
       }),
     );
+    toast({
+      title: 'تثبيت وتنسيق المسافات بين القوالب',
+      description: `تم إعادة ضبط المسافات بين جميع القوالب بتباعد (${gx} سم × ${gy} سم).`,
+    });
   };
 
   const deleteSelected = () => {
@@ -792,12 +873,14 @@ const EditableSheetLayout = forwardRef<EditableSheetLayoutHandle, EditableSheetL
     }
     setEnabled(false);
     clearSelection();
+    onExitEdit?.();
   };
 
   const exitEdit = () => {
     setEnabled(false);
     clearSelection();
     setPendingExit(false);
+    onExitEdit?.();
   };
 
   const isModified =
@@ -844,7 +927,7 @@ const EditableSheetLayout = forwardRef<EditableSheetLayoutHandle, EditableSheetL
                         : 'bg-muted text-muted-foreground border-border hover:bg-muted/70 cursor-pointer'
                     }`}
                     onClick={() => !active && onDielineSelected?.(dl)}
-                    title={`${dl.width.toFixed(1)}×${dl.height.toFixed(1)} سم`}
+                    title={`${safeToFixed(dl?.width, 1)}×${safeToFixed(dl?.height, 1)} سم`}
                   >
                     {dl.fileName}
                     {onDielineRemoved && (
@@ -862,7 +945,7 @@ const EditableSheetLayout = forwardRef<EditableSheetLayoutHandle, EditableSheetL
           )}
           {importedDieline && (!dielineLibrary || dielineLibrary.length === 0) && (
             <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-700 border border-emerald-500/30">
-              قالب: {importedDieline.fileName} ({importedDieline.width.toFixed(1)}×{importedDieline.height.toFixed(1)})
+              قالب: {importedDieline.fileName} ({safeToFixed(importedDieline?.width, 1)}×{safeToFixed(importedDieline?.height, 1)})
             </span>
           )}
           <SheetLayoutExportMenu
@@ -871,6 +954,7 @@ const EditableSheetLayout = forwardRef<EditableSheetLayoutHandle, EditableSheetL
             pieces={pieces}
             baseName={`layout-${sheetW}x${sheetH}-${pieces.length}pcs`}
             dieline={importedDieline}
+            dielinePaths={dielinePaths}
             compact
           />
           {!enabled ? (
@@ -912,7 +996,7 @@ const EditableSheetLayout = forwardRef<EditableSheetLayoutHandle, EditableSheetL
               className="h-6 w-16 rounded border border-input bg-background px-1.5 text-xs"
             />
             <span className="text-muted-foreground">•</span>
-            <span className="text-muted-foreground">الاستغلال: {usagePercent.toFixed(1)}%</span>
+            <span className="text-muted-foreground">الاستغلال: {safeToFixed(usagePercent, 1)}%</span>
             <div className="flex items-center gap-1 mr-auto flex-wrap">
               <Button
                 size="sm"
@@ -942,17 +1026,31 @@ const EditableSheetLayout = forwardRef<EditableSheetLayoutHandle, EditableSheetL
               <Button
                 size="sm"
                 variant="outline"
-                className="h-6 px-2 text-[10px] gap-1"
+                className="h-6 px-2 text-[10px] gap-1 font-semibold border-blue-200 text-blue-700 hover:bg-blue-50"
                 onClick={rotateSelected}
-                disabled={selectedIdxs.size === 0}
-                title="تدوير 90° (تتراكم: 0° → 90° → 180° → 270° → 0°)"
+                disabled={pieces.length === 0}
+                title="تدوير 90° متتالية مع كل ضغطة (0° → 90° → 180° → 270°)"
               >
                 <RotateCw className="w-3 h-3" />
-                تدوير
-                {selectedIdx !== null && (
-                  <span className="text-muted-foreground">
-                    ({turnsOf(pieces[selectedIdx]) * 90}°)
+                تدوير 90°
+                {pieces.length > 0 && (
+                  <span className="text-blue-600 font-bold bg-blue-100 px-1 rounded font-sans">
+                    {turnsOf(pieces[selectedIdx ?? 0]) * 90}°
                   </span>
+                )}
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-6 px-2 text-[10px] gap-1 font-semibold border-slate-200 text-slate-700 hover:bg-slate-50"
+                onClick={mirrorSelected}
+                disabled={pieces.length === 0}
+                title="ميرور / انعكاس أفقي للقالب (Ctrl+M)"
+              >
+                <FlipHorizontal className="w-3 h-3" />
+                ميرور
+                {pieces.length > 0 && pieces[selectedIdx ?? 0]?.mirrored && (
+                  <span className="text-emerald-600 font-bold font-sans">✓</span>
                 )}
               </Button>
               <Button
@@ -1005,8 +1103,73 @@ const EditableSheetLayout = forwardRef<EditableSheetLayoutHandle, EditableSheetL
             </div>
           </div>
 
+          {/* Controls bar: Lock Uniform Spacing & Gaps */}
+          <div className="flex items-center gap-3 p-2 rounded-lg bg-background border border-border/60 text-[10px] flex-wrap">
+            <div className="flex items-center gap-1.5 font-semibold text-foreground">
+              <Button
+                size="sm"
+                variant={lockSpacing ? 'default' : 'outline'}
+                className={`h-6 px-2 text-[10px] gap-1 ${lockSpacing ? 'bg-primary text-primary-foreground' : ''}`}
+                onClick={() => {
+                  const nextLock = !lockSpacing;
+                  setLockSpacing(nextLock);
+                  if (nextLock) applyUniformSpacing();
+                }}
+                title="تثبيت القواعد والمسافات بين القوالب من الإعدادات"
+              >
+                {lockSpacing ? <Lock className="w-3 h-3 text-emerald-400" /> : <Unlock className="w-3 h-3" />}
+                {lockSpacing ? 'المسافات مثبتة' : 'تثبيت المسافات'}
+              </Button>
+            </div>
+
+            <div className="flex items-center gap-1.5">
+              <label className="text-muted-foreground whitespace-nowrap">التباعد الأفقي (سم):</label>
+              <input
+                type="number"
+                min={0}
+                max={20}
+                step={0.1}
+                value={gapX}
+                onChange={(e) => {
+                  const val = Math.max(0, Number(e.target.value) || 0);
+                  setGapX(val);
+                  if (lockSpacing) applyUniformSpacing(val, gapY);
+                }}
+                className="h-6 w-14 rounded border border-input bg-background px-1 text-xs text-center"
+              />
+            </div>
+
+            <div className="flex items-center gap-1.5">
+              <label className="text-muted-foreground whitespace-nowrap">التباعد العمودي (سم):</label>
+              <input
+                type="number"
+                min={0}
+                max={20}
+                step={0.1}
+                value={gapY}
+                onChange={(e) => {
+                  const val = Math.max(0, Number(e.target.value) || 0);
+                  setGapY(val);
+                  if (lockSpacing) applyUniformSpacing(gapX, val);
+                }}
+                className="h-6 w-14 rounded border border-input bg-background px-1 text-xs text-center"
+              />
+            </div>
+
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-6 px-2 text-[10px] gap-1 mr-auto"
+              onClick={() => applyUniformSpacing()}
+              title="إعادة توزيع جميع القوالب بمسافات منتظمة فوراً"
+            >
+              <Grid className="w-3 h-3" />
+              تنسيق المسافات
+            </Button>
+          </div>
+
           <p className="text-[10px] text-muted-foreground flex items-center gap-1 flex-wrap">
-            <Move className="w-3 h-3" /> اسحب لتحريك • Shift/Ctrl+نقر لتحديد متعدد • السحب على الفراغ يفتح صندوق تحديد • Alt+سحب نسخة فورية • Ctrl+D نسخ • Ctrl+A تحديد الكل
+            <Move className="w-3 h-3" /> اسحب لتحريك • Shift/Ctrl+نقر لتحديد متعدد • Alt+سحب نسخة • Ctrl+D نسخ • Ctrl+M ميرور • أسهم الكيبورد للتحريك الدقيق
           </p>
         </>
       )}
@@ -1128,7 +1291,7 @@ const EditableSheetLayout = forwardRef<EditableSheetLayoutHandle, EditableSheetL
                   <line x1={bbMinX} y1={sheetH + padY * 0.35} x2={bbMinX} y2={sheetH + padY * 0.55} stroke="hsl(var(--primary))" strokeWidth={0.08} />
                   <line x1={bbMaxX} y1={sheetH + padY * 0.35} x2={bbMaxX} y2={sheetH + padY * 0.55} stroke="hsl(var(--primary))" strokeWidth={0.08} />
                   <text x={(bbMinX + bbMaxX) / 2} y={sheetH + padY * 0.85} textAnchor="middle" fontSize={labelFont} fontWeight="700">
-                    عرض القطع: {bbW.toFixed(1)} سم
+                    عرض القطع: {safeToFixed(bbW, 1)} سم
                   </text>
                 </g>
               )}
@@ -1148,7 +1311,7 @@ const EditableSheetLayout = forwardRef<EditableSheetLayoutHandle, EditableSheetL
                     fontWeight="700"
                     transform={`rotate(-90, ${-padX * 0.75}, ${(bbMinY + bbMaxY) / 2})`}
                   >
-                    ارتفاع القطع: {bbH.toFixed(1)} سم
+                    ارتفاع القطع: {safeToFixed(bbH, 1)} سم
                   </text>
                 </g>
               )}
@@ -1236,7 +1399,82 @@ const EditableSheetLayout = forwardRef<EditableSheetLayoutHandle, EditableSheetL
                           style={{ pointerEvents: 'none' }}
                         />
                       </>
-                    ) : (
+                    ) : dielinePaths && dielinePaths.cutD ? (() => {
+                      const turns = turnsOf(p);
+                      const bboxW = dielinePaths.bbox.w;
+                      const bboxH = dielinePaths.bbox.h;
+                      // Determine unit scaling: if bboxW > 30 (which means it's in mm e.g. 194mm), scale is 0.1 to convert to cm
+                      const scaleFactor = bboxW > 30 ? 0.1 : 1;
+                      const cx = p.x + p.w / 2;
+                      const cy = p.y + p.h / 2;
+                      const angle = turns * 90;
+                      // Center origin in native mm coordinates
+                      const mmCx = bboxW / 2;
+                      const mmCy = bboxH / 2;
+                      const transform = `translate(${cx} ${cy}) scale(${scaleFactor}) rotate(${angle}) ${p.mirrored ? 'scale(-1, 1)' : ''} translate(${-mmCx} ${-mmCy})`;
+
+                      const strokeCutWidth = (selected ? 2.5 : 1.4) / innerScale;
+                      const strokeCreaseWidth = 1.0 / innerScale;
+                      const numSize = Math.min(bboxW, bboxH) * 0.22;
+
+                      return (
+                        <>
+                          {/* Invisible touch/drag container */}
+                          <rect
+                            x={p.x}
+                            y={p.y}
+                            width={p.w}
+                            height={p.h}
+                            fill="transparent"
+                            stroke={selected ? 'hsl(var(--primary))' : 'none'}
+                            strokeWidth={(selected ? 0.3 : 0) / innerScale}
+                            strokeDasharray="0.4 0.4"
+                            rx={0.2}
+                          />
+                          <g transform={transform} style={{ pointerEvents: 'none' }}>
+                            {/* White paper background shape of the dieline cut */}
+                            <path d={dielinePaths.cutD} fill={selected ? 'hsl(var(--primary) / 0.18)' : '#ffffff'} stroke="none" />
+                            
+                            {/* Green dashed crease lines */}
+                            {dielinePaths.creaseD && (
+                              <path
+                                d={dielinePaths.creaseD}
+                                fill="none"
+                                stroke="#00A651"
+                                strokeWidth={strokeCreaseWidth}
+                                strokeDasharray="3 2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              />
+                            )}
+                            
+                            {/* Red solid outer cut lines */}
+                            <path
+                              d={dielinePaths.cutD}
+                              fill="none"
+                              stroke="#ED1C24"
+                              strokeWidth={strokeCutWidth}
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            />
+
+                            {/* Piece number centered inside the box */}
+                            <text
+                              x={mmCx}
+                              y={mmCy}
+                              textAnchor="middle"
+                              dominantBaseline="middle"
+                              fontSize={numSize}
+                              fontWeight="700"
+                              fill="hsl(var(--primary))"
+                              opacity={0.6}
+                            >
+                              {i + 1}
+                            </text>
+                          </g>
+                        </>
+                      );
+                    })() : (
                       <rect
                         x={p.x}
                         y={p.y}
@@ -1278,20 +1516,22 @@ const EditableSheetLayout = forwardRef<EditableSheetLayoutHandle, EditableSheetL
                         </g>
                       );
                     })()}
-                    <text
-                      x={p.x + p.w / 2}
-                      y={p.y + p.h / 2}
-                      textAnchor="middle"
-                      dominantBaseline="central"
-                      fill={strokeColor}
-                      fontSize={Math.min(p.w, p.h) * 0.35}
-                      fontWeight="bold"
-                      fontFamily="Cairo, sans-serif"
-                      opacity={showDieline ? 0.5 : 1}
-                      style={{ pointerEvents: 'none' }}
-                    >
-                      {i + 1}
-                    </text>
+                    {!dielinePaths && (
+                      <text
+                        x={p.x + p.w / 2}
+                        y={p.y + p.h / 2}
+                        textAnchor="middle"
+                        dominantBaseline="central"
+                        fill={strokeColor}
+                        fontSize={Math.min(p.w, p.h) * 0.35}
+                        fontWeight="bold"
+                        fontFamily="Cairo, sans-serif"
+                        opacity={showDieline ? 0.5 : 1}
+                        style={{ pointerEvents: 'none' }}
+                      >
+                        {i + 1}
+                      </text>
+                    )}
                   </g>
                 );
               })}

@@ -59,6 +59,8 @@ export default function TemplateCard({ template, variant = 'minimal' }: Template
   return (
     <Link 
       to={`/template/${template.id}`}
+      target="_blank"
+      rel="noopener noreferrer"
       style={{ textDecoration: 'none', color: 'inherit', display: 'flex', flexDirection: 'column', alignItems: 'center', height: '100%' }}
     >
       {/* Outer Rounded Container Box (Matching Screenshot Image) */}

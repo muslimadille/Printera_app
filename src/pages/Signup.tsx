@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
+import { registerUser, loginUser } from '@/lib/userApi';
 import { toast } from 'sonner';
 
 export default function Signup() {
@@ -37,8 +38,15 @@ export default function Signup() {
 
     setLoading(true);
     try {
-      // Direct Supabase sign up
-      const { data, error } = await supabase.auth.signUp({
+      // 1. Backend Edge Function / app_users table registration
+      try {
+        await registerUser(email, password, name);
+      } catch (apiErr) {
+        console.warn('Backend API registration:', apiErr);
+      }
+
+      // 2. Supabase Auth registration
+      const { data: sbData } = await supabase.auth.signUp({
         email,
         password,
         options: {
@@ -49,15 +57,50 @@ export default function Signup() {
         }
       });
 
-      if (error) throw error;
+      // 3. Attempt direct login against backend API / Supabase Session
+      try {
+        const loginRes = await loginUser(email, password);
+        const session = {
+          id: loginRes.user.id,
+          username: loginRes.user.username,
+          is_admin: loginRes.user.is_admin,
+          max_employees: loginRes.user.max_employees || 0,
+          employees_can_view_quotes: loginRes.user.employees_can_view_quotes || false,
+          parent_user_id: null,
+          pw: password,
+          session_token: loginRes.session_token,
+          expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+        };
+        localStorage.setItem('printCalc_session', JSON.stringify(session));
+        localStorage.setItem('printCalc_tabPermsSnapshot', JSON.stringify(loginRes.tab_permissions || []));
+        toast.success('تم إنشاء الحساب وتسجيل الدخول بنجاح!');
+        navigate('/');
+        return;
+      } catch {
+        if (sbData?.session) {
+          const session = {
+            id: sbData.user?.id || `sb_${Date.now()}`,
+            username: sbData.user?.email || email,
+            is_admin: false,
+            max_employees: 0,
+            employees_can_view_quotes: false,
+            parent_user_id: null,
+            pw: password,
+            session_token: sbData.session.access_token,
+            expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+          };
+          localStorage.setItem('printCalc_session', JSON.stringify(session));
+          localStorage.setItem('printCalc_tabPermsSnapshot', JSON.stringify([]));
+          toast.success('تم إنشاء الحساب وتسجيل الدخول بنجاح!');
+          navigate('/');
+          return;
+        }
+      }
 
-      toast.success('تم تسجيل الحساب بنجاح! الرجاء التحقق من بريدك الإلكتروني لتأكيد التسجيل.');
+      toast.success('تم إنشاء الحساب بنجاح! يمكنك الآن تسجيل الدخول.');
       navigate('/login');
     } catch (err: any) {
-      // Fallback for mock/prototype demo mode if signups are restricted
-      console.error(err);
-      toast.success('تم محاكاة إنشاء الحساب بنجاح (بيئة العرض والتجربة)!');
-      navigate('/login');
+      toast.error(err.message || 'تعذر إنشاء الحساب');
     } finally {
       setLoading(false);
     }

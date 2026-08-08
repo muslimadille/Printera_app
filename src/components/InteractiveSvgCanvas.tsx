@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Pen, Move, Maximize2, Check, X, ZoomIn, ZoomOut, RefreshCcw } from 'lucide-react';
+import { Pen, Move, Maximize2, Check, X, ZoomIn, ZoomOut, RefreshCcw, Hand, MousePointer, SlidersHorizontal, Ruler } from 'lucide-react';
 
 export interface Pt { x: number; y: number }
 export interface Segment {
@@ -12,6 +12,10 @@ export interface Segment {
   points?: Pt[];
   bezier?: { c1: Pt; c2: Pt };
   d?: string;
+  transform?: string;
+  strokeColor?: string;
+  via?: Pt;
+  arc?: { rx: number; ry: number; xar: number; laf: number; sf: number };
 }
 
 interface InteractiveSvgCanvasProps {
@@ -20,13 +24,39 @@ interface InteractiveSvgCanvasProps {
   svgHeight: number;
   dimensionsMarkup?: string;
   onChange?: (newSvg: string, newSegments: Segment[]) => void;
+  referenceWidth?: number;
+  referenceHeight?: number;
+  showDimensions?: boolean;
+  onShowDimensionsChange?: (val: boolean) => void;
 }
 
 // Distance threshold to consider two points "connected"
 const EPSILON = 0.01;
 
-export function InteractiveSvgCanvas({ segments: initialSegments = [], svgWidth = 0, svgHeight = 0, dimensionsMarkup = '', onChange }: InteractiveSvgCanvasProps) {
+export function InteractiveSvgCanvas({
+  segments: initialSegments = [],
+  svgWidth = 0,
+  svgHeight = 0,
+  dimensionsMarkup = '',
+  onChange,
+  referenceWidth,
+  referenceHeight,
+  showDimensions: propShowDimensions,
+  onShowDimensionsChange,
+}: InteractiveSvgCanvasProps) {
   const [editMode, setEditMode] = useState(false);
+  const [internalShowDimensions, setInternalShowDimensions] = useState(true);
+
+  const showDimensions = propShowDimensions !== undefined ? propShowDimensions : internalShowDimensions;
+
+  const toggleDimensions = () => {
+    if (onShowDimensionsChange) {
+      onShowDimensionsChange(!showDimensions);
+    } else {
+      setInternalShowDimensions(!showDimensions);
+    }
+  };
+  const [toolMode, setToolMode] = useState<'select' | 'pan'>('select');
   const [segments, setSegments] = useState<Segment[]>([]);
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
 
@@ -216,41 +246,56 @@ export function InteractiveSvgCanvas({ segments: initialSegments = [], svgWidth 
   const handleZoomOut = () => setZoom(z => Math.min(10, z * 1.25));
   const handleResetZoom = () => { setZoom(1); setPan({x:0, y:0}); };
 
-  const padX = Math.max(40, svgWidth * 0.25);
-  const padY = Math.max(40, svgHeight * 0.25);
+  const bounds = useMemo(() => {
+    if (!segments || segments.length === 0) {
+      return { minX: 0, minY: 0, w: svgWidth || 100, h: svgHeight || 100 };
+    }
+    let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+    for (const s of segments) {
+      const pts = s.points || (s.start && s.end ? [s.start, s.end] : []);
+      for (const pt of pts) {
+        if (pt && Number.isFinite(pt.x)) {
+          if (pt.x < minX) minX = pt.x;
+          if (pt.x > maxX) maxX = pt.x;
+        }
+        if (pt && Number.isFinite(pt.y)) {
+          if (pt.y < minY) minY = pt.y;
+          if (pt.y > maxY) maxY = pt.y;
+        }
+      }
+    }
+    const w = (maxX > minX && Number.isFinite(maxX - minX)) ? maxX - minX : (svgWidth || 100);
+    const h = (maxY > minY && Number.isFinite(maxY - minY)) ? maxY - minY : (svgHeight || 100);
+    return {
+      minX: Number.isFinite(minX) ? minX : 0,
+      minY: Number.isFinite(minY) ? minY : 0,
+      w,
+      h
+    };
+  }, [segments, svgWidth, svgHeight]);
 
-  const vbWidth = (svgWidth + padX * 2) * zoom;
-  const vbHeight = (svgHeight + padY * 2) * zoom;
-  const vbX = -padX + pan.x + (svgWidth + padX * 2) * (1 - zoom) / 2;
-  const vbY = -padY + pan.y + (svgHeight + padY * 2) * (1 - zoom) / 2;
+  const refW = referenceWidth || (bounds.w > 0 ? bounds.w + 80 : 500);
+  const refH = referenceHeight || (bounds.h > 0 ? bounds.h + 80 : 500);
+
+  const cx = bounds.minX + bounds.w / 2;
+  const cy = bounds.minY + bounds.h / 2;
+
+  const baseVbWidth = refW;
+  const baseVbHeight = refH;
+  const baseVbX = cx - refW / 2;
+  const baseVbY = cy - refH / 2;
+
+  const vbWidth = baseVbWidth * zoom;
+  const vbHeight = baseVbHeight * zoom;
+  const vbX = baseVbX + pan.x + baseVbWidth * (1 - zoom) / 2;
+  const vbY = baseVbY + pan.y + baseVbHeight * (1 - zoom) / 2;
+
+  const handleWheel = (e: React.WheelEvent) => {
+    // Wheel zoom disabled per user request (zoom only via + and - buttons)
+  };
 
   return (
-    <div className="relative w-full h-full flex flex-col group">
-      {/* Toolbar */}
-      <div className="absolute top-2 right-2 flex gap-2 z-10">
-        <div className="flex bg-white rounded shadow border border-gray-200 overflow-hidden">
-          <button onClick={handleZoomIn} className="p-2 text-gray-700 hover:bg-gray-100" title="تكبير">
-            <ZoomIn size={18} />
-          </button>
-          <button onClick={handleResetZoom} className="p-2 text-gray-700 hover:bg-gray-100 border-l border-r border-gray-200" title="إعادة الضبط">
-            <RefreshCcw size={18} />
-          </button>
-          <button onClick={handleZoomOut} className="p-2 text-gray-700 hover:bg-gray-100" title="تصغير">
-            <ZoomOut size={18} />
-          </button>
-        </div>
-
-        <button
-          onClick={() => {
-            setEditMode(!editMode);
-            setSelectedIds(new Set());
-          }}
-          className={`p-2 rounded shadow transition-colors ${editMode ? 'bg-blue-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'}`}
-          title="تعديل الخطوط"
-        >
-          <Pen size={18} />
-        </button>
-      </div>
+    <div className="relative w-full h-full flex flex-col group bg-white" style={{ background: '#ffffff' }}>
 
       {/* Edit Panel */}
       {editMode && selectedIds.size > 0 && (
@@ -305,6 +350,7 @@ export function InteractiveSvgCanvas({ segments: initialSegments = [], svgWidth 
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
         onPointerCancel={handlePointerUp}
+        onWheel={handleWheel}
       >
         <svg
           viewBox={`${vbX} ${vbY} ${vbWidth} ${vbHeight}`}
@@ -312,30 +358,31 @@ export function InteractiveSvgCanvas({ segments: initialSegments = [], svgWidth 
           className="w-full h-full"
           style={{ cursor: isPanning ? 'grabbing' : (editMode ? 'crosshair' : 'grab') }}
         >
-          {dimensionsMarkup && <g dangerouslySetInnerHTML={{ __html: dimensionsMarkup }} />}
+          {showDimensions && dimensionsMarkup && <g dangerouslySetInnerHTML={{ __html: dimensionsMarkup }} />}
           {segments.map(s => {
             const isSelected = selectedIds.has(s.id);
-            const color = s.kind === "CREASE" ? "#00a651" : "#ed1c24";
+            const color = s.strokeColor || (s.kind === "CREASE" ? "#00a651" : "#ed1c24");
             
             const renderShape = (props: any) => {
+              const fullProps = s.transform ? { ...props, transform: s.transform } : props;
               if (s.geometry === "fillet" && s.via && s.bezier) {
-                return <path d={`M${s.start.x},${s.start.y} L${s.via.x},${s.via.y} C${s.bezier.c1.x},${s.bezier.c1.y} ${s.bezier.c2.x},${s.bezier.c2.y} ${s.end.x},${s.end.y}`} {...props} />;
+                return <path d={`M${s.start.x},${s.start.y} L${s.via.x},${s.via.y} C${s.bezier.c1.x},${s.bezier.c1.y} ${s.bezier.c2.x},${s.bezier.c2.y} ${s.end.x},${s.end.y}`} {...fullProps} />;
               }
               if (s.d) {
-                return <path d={s.d} {...props} />;
+                return <path d={s.d} {...fullProps} />;
               }
               if (s.geometry === "line" || !s.geometry) {
-                return <line x1={s.start.x} y1={s.start.y} x2={s.end.x} y2={s.end.y} {...props} />;
+                return <line x1={s.start.x} y1={s.start.y} x2={s.end.x} y2={s.end.y} {...fullProps} />;
               }
               if (s.geometry === "polyline" && s.points) {
                 const pts = s.points.map(pt => `${pt.x},${pt.y}`).join(" ");
-                return <polyline points={pts} {...props} />;
+                return <polyline points={pts} {...fullProps} />;
               }
               if (s.geometry === "bezier" && s.bezier) {
-                return <path d={`M ${s.start.x},${s.start.y} C ${s.bezier.c1.x},${s.bezier.c1.y} ${s.bezier.c2.x},${s.bezier.c2.y} ${s.end.x},${s.end.y}`} {...props} />;
+                return <path d={`M ${s.start.x},${s.start.y} C ${s.bezier.c1.x},${s.bezier.c1.y} ${s.bezier.c2.x},${s.bezier.c2.y} ${s.end.x},${s.end.y}`} {...fullProps} />;
               }
               if (s.geometry === "arc" && s.arc) {
-                return <path d={`M ${s.start.x},${s.start.y} A ${s.arc.rx} ${s.arc.ry} ${s.arc.xar} ${s.arc.laf} ${s.arc.sf} ${s.end.x},${s.end.y}`} {...props} />;
+                return <path d={`M ${s.start.x},${s.start.y} A ${s.arc.rx} ${s.arc.ry} ${s.arc.xar} ${s.arc.laf} ${s.arc.sf} ${s.end.x},${s.end.y}`} {...fullProps} />;
               }
               return null;
             };
@@ -359,6 +406,47 @@ export function InteractiveSvgCanvas({ segments: initialSegments = [], svgWidth 
           })}
         </svg>
       </div>
+
+      {/* Floating Bottom Canvas Toolbar */}
+      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1 bg-white/95 backdrop-blur-md px-3 py-1.5 rounded-full shadow-lg border border-gray-200/80">
+        <button 
+          onClick={() => setToolMode('select')}
+          className={`p-2 rounded-full transition-all ${toolMode === 'select' ? 'bg-gray-100 text-blue-600 font-bold' : 'text-gray-600 hover:bg-gray-100'}`} 
+          title="تحديد"
+        >
+          <MousePointer size={16} />
+        </button>
+        <button 
+          onClick={() => setToolMode('pan')}
+          className={`p-2 rounded-full transition-all ${toolMode === 'pan' ? 'bg-gray-100 text-blue-600 font-bold' : 'text-gray-600 hover:bg-gray-100'}`} 
+          title="تحريك"
+        >
+          <Hand size={16} />
+        </button>
+
+        <div className="w-[1px] h-5 bg-gray-200 mx-1" />
+
+        <button onClick={handleZoomIn} className="p-2 text-gray-600 hover:bg-gray-100 rounded-full" title="تكبير (+)">
+          <ZoomIn size={16} />
+        </button>
+        <button onClick={handleResetZoom} className="p-2 text-gray-600 hover:bg-gray-100 rounded-full" title="إعادة الضبط">
+          <RefreshCcw size={15} />
+        </button>
+        <button onClick={handleZoomOut} className="p-2 text-gray-600 hover:bg-gray-100 rounded-full" title="تصغير (-)">
+          <ZoomOut size={16} />
+        </button>
+
+        <div className="w-[1px] h-5 bg-gray-200 mx-1" />
+
+        <button 
+          onClick={toggleDimensions}
+          className={`p-2 rounded-full transition-all ${showDimensions ? 'bg-blue-600 text-white' : 'text-gray-600 hover:bg-gray-100'}`} 
+          title="إظهار / إخفاء القياسات"
+        >
+          <Ruler size={16} />
+        </button>
+      </div>
+
     </div>
   );
 }

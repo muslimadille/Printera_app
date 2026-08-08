@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import { useAppContent } from '@/hooks/useAppContent';
 import {
   Accordion,
   AccordionContent,
@@ -192,6 +193,8 @@ const HeroVisual = () => (
 );
 
 const Landing = () => {
+  const { banner, faqs } = useAppContent();
+
   // Update meta tags for SEO (single H1, title, description).
   useEffect(() => {
     document.title = 'PrintingOS — نظام تشغيل المطابع الحديث';
@@ -218,25 +221,24 @@ const Landing = () => {
             <span className="font-bold tracking-tight text-lg">PrintingOS</span>
           </div>
           <nav className="hidden md:flex items-center gap-8 text-sm text-muted-foreground">
-            <a href="#losses" className="hover:text-foreground transition">الخسائر</a>
-            <a href="#nesting" className="hover:text-foreground transition">المونتاج الذكي</a>
-            <a href="#vision" className="hover:text-foreground transition">الرؤية</a>
-            <a href="#faq" className="hover:text-foreground transition">الأسئلة</a>
+            <a href="#losses" className="hover:text-foreground transition-colors">المشكلة</a>
+            <a href="#workflow" className="hover:text-foreground transition-colors">الحل</a>
+            <a href="#faq" className="hover:text-foreground transition-colors">الأسئلة</a>
           </nav>
           <div className="flex items-center gap-3">
-            <Link to="/app" className="text-sm text-muted-foreground hover:text-foreground hidden sm:inline">
-              تسجيل الدخول
+            <Link to="/login">
+              <Button variant="ghost" size="sm" className="rounded-full">تسجيل الدخول</Button>
             </Link>
-            <Button size="sm" className="rounded-full px-5">
-              احجز تجربة
-            </Button>
+            <Link to="/signup">
+              <Button size="sm" className="rounded-full">البدء مجاناً</Button>
+            </Link>
           </div>
         </div>
       </header>
 
       {/* ========== HERO ========== */}
-      <section className="relative overflow-hidden">
-        <div className="absolute inset-0 pointer-events-none">
+      <section className="relative overflow-hidden pt-12 pb-20 lg:pt-20 lg:pb-32">
+        <div className="absolute inset-0 -z-10 overflow-hidden pointer-events-none">
           <div className="absolute top-20 -left-20 w-96 h-96 rounded-full bg-primary/5 blur-3xl" />
           <div className="absolute bottom-0 right-0 w-[500px] h-[500px] rounded-full bg-accent/5 blur-3xl" />
         </div>
@@ -251,25 +253,16 @@ const Landing = () => {
               </Reveal>
               <Reveal delay={80}>
                 <h1 className="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-bold leading-[1.15] tracking-tight">
-                  بعض أكبر خسائر المطابع…
-                  <br />
-                  <span className="text-muted-foreground/70">غير مرئية.</span>
+                  {banner.title}
                 </h1>
               </Reveal>
               <Reveal delay={180}>
                 <p className="mt-8 text-lg lg:text-xl text-muted-foreground leading-relaxed max-w-2xl">
-                  يساعد PrintingOS المطابع على تنظيم التشغيل وتقليل الهدر وتحسين
-                  استغلال الإنتاج، والعمل بثبات أكبر في سوق يتغير بسرعة.
+                  {banner.subtitle}
                 </p>
               </Reveal>
               <Reveal delay={280}>
                 <div className="mt-10 flex flex-wrap items-center gap-4">
-                  <Button size="lg" className="rounded-full px-7 h-12 text-base">
-                    شاهد كيف يعمل
-                    <ArrowLeft className="w-4 h-4 mr-2" />
-                  </Button>
-                  <Button size="lg" variant="ghost" className="rounded-full px-7 h-12 text-base">
-                    احجز تجربة
                   </Button>
                 </div>
               </Reveal>
@@ -749,38 +742,17 @@ const Landing = () => {
             <div className="lg:col-span-8">
               <Reveal delay={100}>
                 <Accordion type="single" collapsible className="w-full">
-                  {[
-                    {
-                      q: 'هل يناسب المطابع الصغيرة؟',
-                      a: 'نعم. صُمّم النظام ليبدأ بسيطًا مع المطابع الصغيرة، ويتدرّج مع نموّها — دون فرض تعقيد قبل الحاجة إليه.',
-                    },
-                    {
-                      q: 'هل الهدف استبدال الموظفين؟',
-                      a: 'لا. الهدف هو تحويل الخبرة الفردية إلى نظام مشترك، يساعد الفريق على العمل بثبات وسرعة أعلى.',
-                    },
-                    {
-                      q: 'لماذا التنظيم مهم إلى هذه الدرجة؟',
-                      a: 'لأن أكبر الخسائر التشغيلية لا تظهر في الأرقام مباشرة — التنظيم يكشفها ويقلّلها قبل أن تتراكم.',
-                    },
-                    {
-                      q: 'هل يساعد فعلاً على النمو؟',
-                      a: 'النمو يبدأ من ثبات التشغيل. عندما تستقر العمليات، تتسع قدرة المطبعة على استقبال طلبات أكثر تنوعًا.',
-                    },
-                    {
-                      q: 'لماذا التسعير مرتبط بالتشغيل؟',
-                      a: 'لأن دقة السعر تأتي من فهم استهلاك المواد، استغلال الشيت، ومراحل الإنتاج الفعلية — لا من تقدير عام.',
-                    },
-                  ].map((item, i) => (
+                  {faqs.map((item, i) => (
                     <AccordionItem
-                      key={i}
+                      key={item.id || i}
                       value={`item-${i}`}
                       className="border-b border-border/60"
                     >
                       <AccordionTrigger className="text-right text-base font-semibold py-6 hover:no-underline">
-                        {item.q}
+                        {item.question}
                       </AccordionTrigger>
                       <AccordionContent className="text-muted-foreground leading-relaxed pb-6 text-base">
-                        {item.a}
+                        {item.answer}
                       </AccordionContent>
                     </AccordionItem>
                   ))}

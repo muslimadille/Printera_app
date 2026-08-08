@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
+import { toast } from 'sonner';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -43,7 +44,7 @@ const DEFAULT_NESTING: T00012NestingParams = {
 
 const num = (v: string, fallback: number) => {
   const n = parseFloat(v);
-  return Number.isFinite(n) ? n : fallback;
+  return isNaN(n) ? fallback : n;
 };
 
 const UNIT_FACTORS: Record<'mm' | 'cm' | 'in', number> = { mm: 1, cm: 10, in: 25.4 };
@@ -70,8 +71,12 @@ const T00012Calculator = ({ isAdmin = false, onSaveBox }: { isAdmin?: boolean; o
 
   const hiddenCls = isAdmin ? '' : 'hidden';
 
-  const [params, setParams] = useState<T00012Params>(T00012_DEFAULTS);
-  const [nesting, setNesting] = useState<T00012NestingParams>(DEFAULT_NESTING);
+  const [draftParams, setDraftParams] = useState<T00012Params>(T00012_DEFAULTS);
+  const [appliedParams, setAppliedParams] = useState<T00012Params>(T00012_DEFAULTS);
+
+  const [draftNesting, setDraftNesting] = useState<T00012NestingParams>(DEFAULT_NESTING);
+  const [appliedNesting, setAppliedNesting] = useState<T00012NestingParams>(DEFAULT_NESTING);
+
   const [previewMode, setPreviewMode] = useState<'template' | 'sheet' | 'three'>('template');
   const [showDimensions, setShowDimensions] = useState(true);
   const [dimUnit, setDimUnit] = useState<'mm' | 'cm' | 'in'>('mm');
@@ -83,23 +88,42 @@ const T00012Calculator = ({ isAdmin = false, onSaveBox }: { isAdmin?: boolean; o
   });
 
   const setN = <K extends keyof T00012NestingParams>(k: K, v: T00012NestingParams[K]) =>
-    setNesting(prev => ({ ...prev, [k]: v }));
+    setDraftNesting(prev => ({ ...prev, [k]: v }));
 
   const set = <K extends keyof T00012Params>(k: K, v: T00012Params[K]) => {
-    setParams(prev => ({ ...prev, [k]: v }));
-    setSegmentOverrides({ svg: null, segments: null });
+    setDraftParams(prev => {
+      const next = { ...prev, [k]: v };
+      if (k === 'referenceMode') {
+        if (v) {
+          return { ...T00012_REFERENCE, referenceMode: true };
+        } else {
+          return { ...T00012_DEFAULTS, referenceMode: false };
+        }
+      }
+      return next;
+    });
   };
 
-  const reset = () => {
-    setParams({ ...T00012_DEFAULTS });
-    setNesting({ ...DEFAULT_NESTING });
+  const handleSave = () => {
+    setAppliedParams({ ...draftParams });
+    setAppliedNesting({ ...draftNesting });
     setSegmentOverrides({ svg: null, segments: null });
+    toast.success('تم حفظ التعديلات وتطبيقها');
   };
 
-  const usable = useMemo(() => usableSheet(params), [params]);
-  const nestingResult = useMemo(() => computeT00012Nesting(params, nesting), [params, nesting]);
+  const handleReset = () => {
+    setDraftParams({ ...T00012_DEFAULTS });
+    setAppliedParams({ ...T00012_DEFAULTS });
+    setDraftNesting({ ...DEFAULT_NESTING });
+    setAppliedNesting({ ...DEFAULT_NESTING });
+    setSegmentOverrides({ svg: null, segments: null });
+    toast.info('تم إعادة تعيين جميع الأبعاد للقيم الافتراضية');
+  };
 
-  const baseGeo = useMemo(() => buildT00012Geometry(params), [params]);
+  const usable = useMemo(() => usableSheet(appliedParams), [appliedParams]);
+  const nestingResult = useMemo(() => computeT00012Nesting(appliedParams, appliedNesting), [appliedParams, appliedNesting]);
+
+  const baseGeo = useMemo(() => buildT00012Geometry(appliedParams), [appliedParams]);
 
   const geo = useMemo<T00012Geometry>(() => {
     if (segmentOverrides.svg && segmentOverrides.segments) {
@@ -168,20 +192,17 @@ const T00012Calculator = ({ isAdmin = false, onSaveBox }: { isAdmin?: boolean; o
     return { w: maxX - minX, h: maxY - minY };
   }, [nestingResult]);
 
-  const refOn = !!params.referenceMode;
+  const refOn = !!draftParams.referenceMode;
 
   const dimsSvg = useMemo(
-    () => (showDimensions ? buildT00012DimensionsSvg(params, dimUnit, 1) : ''),
-    [showDimensions, params, dimUnit],
+    () => (showDimensions ? buildT00012DimensionsSvg(appliedParams, dimUnit, 1) : ''),
+    [showDimensions, appliedParams, dimUnit],
   );
 
   return (
     <>
       <TemplateEditorLayout
         title="T00012 — علبة بريدية مغلقة (Mailer Box - Roll End Tuck Top)"
-        hasReferenceMode={true}
-        referenceModeOn={refOn}
-        onReferenceModeChange={v => set('referenceMode', v)}
         previewMode={previewMode}
         onPreviewModeChange={setPreviewMode}
         hasSheetPreview={showNestingPreview}
@@ -190,59 +211,18 @@ const T00012Calculator = ({ isAdmin = false, onSaveBox }: { isAdmin?: boolean; o
         onShowDimensionsChange={setShowDimensions}
         dimUnit={dimUnit}
         onDimUnitChange={setDimUnit}
-        topPanels={
-          <>
-            {/* Smart Auto Nesting controls */}
-      <Card className={hiddenCls}>
-        <CardHeader>
-          <CardTitle className="text-lg">إعدادات التوزيع الذكي</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-            <div className="sm:col-span-2 flex flex-col gap-2">
-              <Label>التعشيق الذكي Smart Auto</Label>
-              <div className="flex items-center gap-2 h-10">
-                <Switch id="t00012-smart" checked={!!nesting.smartAuto}
-                  onCheckedChange={v => setN('smartAuto', v)} />
-                <Label htmlFor="t00012-smart" className="text-sm font-normal">
-                  {nesting.smartAuto ? 'يحسب Pitch و Interlock تلقائياً' : 'يدوي (Interlock من المستخدم)'}
-                </Label>
-              </div>
-            </div>
-            <div>
-              <Label>التداخل الأفقي ({dimUnit})</Label>
-              <Input type="number" step="0.1" min="0" value={toDisplay(nesting.horizontalInterlock, dimUnit)}
-                disabled={!!nesting.smartAuto}
-                onChange={e => setN('horizontalInterlock', toMm(num(e.target.value, toDisplay(nesting.horizontalInterlock, dimUnit)), dimUnit))} />
-            </div>
-            <div>
-              <Label>التداخل العمودي ({dimUnit})</Label>
-              <Input type="number" step="0.1" min="0" value={toDisplay(nesting.verticalInterlock, dimUnit)}
-                disabled={!!nesting.smartAuto}
-                onChange={e => setN('verticalInterlock', toMm(num(e.target.value, toDisplay(nesting.verticalInterlock, dimUnit)), dimUnit))} />
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-          </>
-        }
+        onSave={handleSave}
+        onReset={handleReset}
         actionButtons={
           <>
-            <Button variant="outline" size="sm" onClick={() => setPrintOpen(true)}>
-              ملخص الطباعة
-            </Button>
-            <ExportSingleButton params={params} geo={geo} />
-            <ExportSheetButton params={params} nesting={nesting} result={nestingResult} />
+            <ExportSingleButton params={appliedParams} geo={geo} />
+            <ExportSheetButton params={appliedParams} nesting={appliedNesting} result={nestingResult} />
           </>
         }
         previewArea={
           <>
             {previewMode === 'template' ? (
-                <div className="space-y-2">
-                  <div className="text-xs text-muted-foreground">
-                    القطع والخطوط الخارجية: <b>{geo.segments.length}</b>
-                    {' · '}مقاس القالب: <b>{geo.bbox.w.toFixed(2)} × {geo.bbox.h.toFixed(2)} مم</b>
-                  </div>
+                <div className="w-full h-full relative overflow-hidden">
                   <InteractiveSvgCanvas
                     segments={geo.segments}
                     svgWidth={geo.bbox.w}
@@ -254,7 +234,7 @@ const T00012Calculator = ({ isAdmin = false, onSaveBox }: { isAdmin?: boolean; o
                   />
                 </div>
               ) : previewMode === 'sheet' ? (
-                <T00012SheetNestingPreview params={params} nesting={nesting} result={nestingResult} />
+                <T00012SheetNestingPreview params={appliedParams} nesting={appliedNesting} result={nestingResult} />
               ) : (
                 <MailerBox3DPreview
                   svgMarkup={geo.svg}
@@ -267,18 +247,23 @@ const T00012Calculator = ({ isAdmin = false, onSaveBox }: { isAdmin?: boolean; o
         }
         sidebarArea={
           <>
-            {/* أبعاد القالب */}
-              <section>
-                <h3 className="text-sm font-bold mb-2">أبعاد العلبة</h3>
+              {/* أبعاد القالب */}
+              <section className="space-y-3">
+                <h3 className="text-sm font-bold border-b pb-1">أبعاد العلبة</h3>
                 <div className="grid grid-cols-3 gap-2">
-                  <NumField label="العرض" value={params.width} disabled={refOn} unit={dimUnit} onChange={v => set('width', v)} />
-                  <NumField label="الارتفاع" value={params.height} disabled={refOn} unit={dimUnit} onChange={v => set('height', v)} />
-                  <NumField label="العمق" value={params.depth} disabled={refOn} unit={dimUnit} onChange={v => set('depth', v)} />
+                  <NumField label="العرض" value={draftParams.width} unit={dimUnit} onChange={v => set('width', v)} />
+                  <NumField label="الارتفاع" value={draftParams.height} unit={dimUnit} onChange={v => set('height', v)} />
+                  <NumField label="العمق" value={draftParams.depth} unit={dimUnit} onChange={v => set('depth', v)} />
                 </div>
-                <div className="grid grid-cols-3 gap-2 mt-2">
-                  <NumField label="لسان الغبار" value={params.dustFlapLength ?? params.depth} disabled={refOn} unit={dimUnit} onChange={v => set('dustFlapLength', v)} />
-                  <NumField label="اللسان العلوي" value={params.topFlapTuckLength ?? 20} disabled={refOn} unit={dimUnit} onChange={v => set('topFlapTuckLength', v)} />
-                  <NumField label="الألسنة الجانبية" value={params.sideFlapsLength ?? 15.5} disabled={refOn} unit={dimUnit} onChange={v => set('sideFlapsLength', v)} />
+              </section>
+
+              {/* تخصيص متقدم */}
+              <section className="space-y-3">
+                <h3 className="text-sm font-bold border-b pb-1">تخصيص متقدم</h3>
+                <div className="grid grid-cols-3 gap-2">
+                  <NumField label="لسان الغبار" value={draftParams.dustFlapLength ?? draftParams.depth} unit={dimUnit} onChange={v => set('dustFlapLength', v)} />
+                  <NumField label="اللسان العلوي" value={draftParams.topFlapTuckLength ?? 20} unit={dimUnit} onChange={v => set('topFlapTuckLength', v)} />
+                  <NumField label="الألسنة الجانبية" value={draftParams.sideFlapsLength ?? 15.5} unit={dimUnit} onChange={v => set('sideFlapsLength', v)} />
                 </div>
               </section>
 
@@ -286,58 +271,20 @@ const T00012Calculator = ({ isAdmin = false, onSaveBox }: { isAdmin?: boolean; o
               <section>
                 <h3 className="text-sm font-bold mb-2">إعدادات الشيت</h3>
                 <div className="grid grid-cols-3 gap-2">
-                  <NumField label="عرض الشيت" value={params.sheetWidth} unit={dimUnit} onChange={v => set('sheetWidth', v)} />
-                  <NumField label="ارتفاع الشيت" value={params.sheetHeight} unit={dimUnit} onChange={v => set('sheetHeight', v)} />
-                  <NumField label="القابض" value={params.gripper} unit={dimUnit} onChange={v => set('gripper', v)} />
+                  <NumField label="عرض الشيت" value={draftParams.sheetWidth} unit={dimUnit} onChange={v => set('sheetWidth', v)} />
+                  <NumField label="ارتفاع الشيت" value={draftParams.sheetHeight} unit={dimUnit} onChange={v => set('sheetHeight', v)} />
+                  <NumField label="القابض" value={draftParams.gripper} unit={dimUnit} onChange={v => set('gripper', v)} />
                 </div>
                 <div className="grid grid-cols-3 gap-2 mt-2">
-                  <NumField label="الهامش" value={params.sheetMargin} unit={dimUnit} onChange={v => set('sheetMargin', v)} />
-                  <NumField label="التباعد الأفقي" value={nesting.horizontalGap} step="0.1" min="0" unit={dimUnit} onChange={v => setN('horizontalGap', v)} />
-                  <NumField label="التباعد العمودي" value={nesting.verticalGap} step="0.1" min="0" unit={dimUnit} onChange={v => setN('verticalGap', v)} />
+                  <NumField label="الهامش" value={draftParams.sheetMargin} unit={dimUnit} onChange={v => set('sheetMargin', v)} />
+                  <NumField label="التباعد الأفقي" value={draftNesting.horizontalGap} step="0.1" min="0" unit={dimUnit} onChange={v => setN('horizontalGap', v)} />
+                  <NumField label="التباعد العمودي" value={draftNesting.verticalGap} step="0.1" min="0" unit={dimUnit} onChange={v => setN('verticalGap', v)} />
                 </div>
                 <div className="mt-2 text-[11px] text-muted-foreground space-y-0.5">
                   <div>الصافي: {usable.width.toFixed(2)} × {usable.height.toFixed(2)} مم</div>
                 </div>
               </section>
 
-              {/* خيارات التدوير */}
-              <section className="space-y-3">
-                <h3 className="text-sm font-bold border-b pb-1">خيارات التدوير والتكرار</h3>
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="t00012-allow-rot" className="text-xs">السماح بتدوير التصميم 90°</Label>
-                    <Switch id="t00012-allow-rot" checked={nesting.allowRotation} onCheckedChange={v => setN('allowRotation', v)} />
-                  </div>
-                  {nesting.allowRotation && (
-                    <div className="flex items-center justify-between gap-2">
-                      <Label htmlFor="t00012-rot-mode" className="text-xs">وضع التدوير</Label>
-                      <select id="t00012-rot-mode" className="h-8 rounded-md border border-input bg-background px-2 text-sm"
-                        value={nesting.rotationMode} onChange={e => setN('rotationMode', e.target.value as RotationMode)}>
-                        <option value="auto">تلقائي (الأفضل)</option>
-                        <option value="normal">بدون تدوير (0°)</option>
-                        <option value="rotated">تدوير فقط (90°)</option>
-                      </select>
-                    </div>
-                  )}
-                </div>
-              </section>
-
-              {/* ملخص التوزيع */}
-              <section className="pt-3 border-t">
-                <h3 className="text-sm font-bold mb-2">ملخص التوزيع</h3>
-                <div className="grid grid-cols-1 gap-1 text-sm">
-                  <div>الإجمالي: <b>{nestingResult.bestTotal}</b></div>
-                  <div>مقاس التوزيع: <b>{toDisplay(distributionFootprint.w, dimUnit)} × {toDisplay(distributionFootprint.h, dimUnit)} {dimUnit}</b></div>
-                </div>
-              </section>
-
-              {/* إعادة الضبط */}
-              <div className="flex justify-end gap-2 border-t pt-3">
-                <Button variant="ghost" size="sm" onClick={reset} className="text-muted-foreground hover:text-foreground">
-                  <RotateCcw className="w-3.5 h-3.5 ml-1" />
-                  إعادة تعيين
-                </Button>
-              </div>
           </>
         }
       />
@@ -345,8 +292,8 @@ const T00012Calculator = ({ isAdmin = false, onSaveBox }: { isAdmin?: boolean; o
       <T00012PrintSummary
         open={printOpen}
         onOpenChange={setPrintOpen}
-        params={params}
-        nesting={nesting}
+        params={appliedParams}
+        nesting={appliedNesting}
         nestingResult={nestingResult}
         dimUnit={dimUnit}
         distributionFootprint={distributionFootprint}
