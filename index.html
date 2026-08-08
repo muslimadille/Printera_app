@@ -3,16 +3,37 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" href="/favicon.png" type="image/png">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <script>
+      (function () {
+        try {
+          var stored = localStorage.getItem('printCalc_theme');
+          var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+          var isDark =
+            stored === 'dark' ||
+            (stored === 'system' && prefersDark);
+          if (isDark) document.documentElement.classList.add('dark');
+          else document.documentElement.classList.remove('dark');
+        } catch (e) {}
+      })();
+    </script>
     <title>حاسبة تكلفة الطباعة الذكية</title>
     <meta name="description" content="احسب تكاليف الطباعة في أقل من 30 ثانية — حاسبة تكلفة الطباعة الذكية للورق والتشطيب">
     <meta name="author" content="PrintLogic" />
     <meta name="robots" content="index, follow" />
-    <meta name="theme-color" content="hsl(221 83% 53%)" />
+    <meta name="theme-color" content="#2563eb" />
     <meta name="application-name" content="حاسبة تكلفة الطباعة الذكية" />
     <link rel="canonical" href="https://printlogic.online/" />
     <link rel="alternate" hreflang="ar" href="https://printlogic.online/" />
     <link rel="alternate" hreflang="x-default" href="https://printlogic.online/" />
+
+    <!-- PWA / iOS home-screen -->
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="حاسبة الطباعة" />
 
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://printlogic.online/" />
@@ -32,6 +53,65 @@
 
   <body>
     <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
+    <!-- Kill stuck VitePWA SWs on localhost before the app boots (dual-React / Invalid hook call). -->
+    <script>
+      (function () {
+        var host = location.hostname;
+        var local = host === "localhost" || host === "127.0.0.1";
+        var boot = function () {
+          var s = document.createElement("script");
+          s.type = "module";
+          s.src = "/src/main.tsx";
+          document.body.appendChild(s);
+        };
+        if (!local || !("serviceWorker" in navigator)) {
+          boot();
+          return;
+        }
+        var hadController = !!navigator.serviceWorker.controller;
+        Promise.resolve()
+          .then(function () {
+            return navigator.serviceWorker.getRegistrations();
+          })
+          .then(function (regs) {
+            // Push self-destroying SW update first (replaces broken Workbox /dev-sw.js).
+            var updates = regs.map(function (r) {
+              return r.update().catch(function () {
+                return null;
+              });
+            });
+            return Promise.all(updates).then(function () {
+              return regs;
+            });
+          })
+          .then(function (regs) {
+            return Promise.all(
+              regs.map(function (r) {
+                return r.unregister();
+              })
+            ).then(function () {
+              return typeof caches !== "undefined" ? caches.keys() : [];
+            });
+          })
+          .then(function (keys) {
+            return Promise.all(
+              (keys || []).map(function (k) {
+                return caches.delete(k);
+              })
+            );
+          })
+          .then(function () {
+            if (hadController && !sessionStorage.getItem("printera:html-sw-purge")) {
+              sessionStorage.setItem("printera:html-sw-purge", "1");
+              location.reload();
+              return;
+            }
+            boot();
+          })
+          .catch(function () {
+            boot();
+          });
+      })();
+    </script>
   </body>
 </html>

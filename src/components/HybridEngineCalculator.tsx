@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { usePrintingStore, useCalculations, type FinishingItem, type CalculatorInputs } from '@/store/printingStore';
 import { calculateQuote } from '@/lib/calcEngine';
+import { finite, formatMoney, isFiniteMoney, safeDiv } from '@/lib/safeNumber';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -41,6 +42,8 @@ const HYBRID_ENGINE_STEPS: GuideStepExt[] = [
 ];
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import ProfitMargins from '@/components/ProfitMargins';
+import { useUiPrefs } from '@/hooks/useUiPrefs';
+import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { calcTypeLabels } from '@/lib/calcTypeLabels';
 import { downloadCostCalcTemplate, parseCostCalcExcelMulti } from '@/lib/costCalcExcel';
@@ -436,6 +439,9 @@ const WorkspaceScaler = ({ children }: { children: React.ReactNode }) => {
 };
 
 const HybridEngineCalculator = ({ onNavigateToQuote, sessionToken }: { onNavigateToQuote?: () => void; sessionToken?: string }) => {
+  const { layoutMode } = useUiPrefs();
+  /** Stacked preview + 2 cards only when using the vertical/sidebar nav */
+  const sidebarNav = layoutMode === 'sidebar';
   const { paperTypes, priceSettings, setInputs, editingQuoteData, setEditingQuoteData } = usePrintingStore();
   const calc = useCalculations();
 
@@ -701,8 +707,9 @@ const HybridEngineCalculator = ({ onNavigateToQuote, sessionToken }: { onNavigat
     });
   }, [sheet, paperTypes, priceSettings]);
 
-  const sheetGrandTotal = pieceCosts.reduce((sum, c) => sum + c.grandTotal, 0);
-  const sheetTotalQuantity = sheet?.pieces.reduce((sum, p) => sum + p.quantity, 0) || 0;
+  const sheetGrandTotal = finite(pieceCosts.reduce((sum, c) => sum + finite(c.grandTotal), 0));
+  const sheetTotalQuantity = sheet?.pieces.reduce((sum, p) => sum + (p.quantity || 0), 0) || 0;
+  const sheetCostReady = pieceCosts.length > 0 && pieceCosts.every((c) => c.valid) && isFiniteMoney(sheetGrandTotal);
 
   // Calculate totals for ALL sheets
   const allSheetsTotals = useMemo(() => {
@@ -737,14 +744,18 @@ const HybridEngineCalculator = ({ onNavigateToQuote, sessionToken }: { onNavigat
           machineSizeIdx: piece.machineSizeIdx,
           cellophaneOverridePerFace: piece.cellophaneOverrideEnabled ? piece.cellophaneOverridePerFace : undefined,
         });
-        total += result.grandTotal;
-        qty += piece.quantity;
+        total += finite(result.grandTotal);
+        qty += piece.quantity || 0;
       }
-      return { total, qty };
+      return { total: finite(total), qty };
     });
   }, [sheets, paperTypes, priceSettings]);
 
-  const allSheetsGrandTotal = allSheetsTotals.reduce((sum, s) => sum + s.total, 0);
+  const allSheetsGrandTotal = finite(allSheetsTotals.reduce((sum, s) => sum + s.total, 0));
+  const allSheetsCostReady = allSheetsTotals.length > 0
+    && allSheetsGrandTotal >= 0
+    && isFiniteMoney(allSheetsGrandTotal)
+    && pieceCosts.every((c) => c.valid);
 
   // Save handler
   const handleSave = async (skipMetadata = false) => {
@@ -795,56 +806,147 @@ const HybridEngineCalculator = ({ onNavigateToQuote, sessionToken }: { onNavigat
   };
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-5 pb-20 lg:pb-0">
-      {/* ═══ Cost Summary (now on visual right via order-3 in RTL) ═══ */}
-      <div className="hidden lg:block lg:col-span-3 space-y-4 lg:sticky lg:top-4 lg:self-start order-3">
-        <Card className="shadow-sm border-primary/30 bg-gradient-to-b from-primary/5 to-transparent">
-          <CardContent className="pt-5 pb-4">
-            <SectionHeader icon={Calculator} title="ملخص التكلفة" />
-            <div className="space-y-2 mb-4">
-              {sheets.length > 1 && (
-                <div className="p-3 rounded-lg bg-accent/10 border border-accent/20 text-center">
-                  <p className="text-xs text-muted-foreground mb-0.5">إجمالي كل الأوراق</p>
-                  <p className="text-2xl font-bold text-accent-foreground">{allSheetsGrandTotal.toFixed(2)}</p>
-                  <p className="text-[10px] text-muted-foreground">ريال</p>
-                </div>
-              )}
-              {sheets.length > 1 && (
-                <div className="space-y-1">
-                  {sheets.map((s, si) => (
-                    <div key={s.id} className={`flex justify-between text-xs px-2 py-1.5 rounded ${si === activeSheetIdx ? 'bg-primary/10 border border-primary/20' : 'bg-muted/50'}`}>
-                      <span className={si === activeSheetIdx ? 'text-primary font-semibold' : 'text-muted-foreground'}>ورقة {si + 1}</span>
-                      <span className="font-mono font-medium">{allSheetsTotals[si]?.total.toFixed(2) || '0.00'} ر.س</span>
-                    </div>
-                  ))}
-                </div>
-              )}
-              <div className="p-3 rounded-lg bg-primary/10 border border-primary/20 text-center">
-                <p className="text-xs text-muted-foreground mb-0.5">{sheets.length > 1 ? `إجمالي الورقة ${activeSheetIdx + 1}` : 'الإجمالي الشامل'}</p>
-                <p className="text-2xl font-bold text-primary">{sheetGrandTotal.toFixed(2)}</p>
-                <p className="text-[10px] text-muted-foreground">ريال</p>
+    <div
+      data-layout={layoutMode}
+      className={cn(
+        'pb-20 lg:pb-0 min-w-0 w-full calc-shell',
+        sidebarNav
+          ? 'flex flex-col gap-4 sm:gap-5'
+          : 'grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-5',
+      )}
+    >
+      {/* Preview: FULL WIDTH on top in vertical/sidebar menu; side column in topbar */}
+      <div
+        className={cn(
+          sidebarNav
+            ? 'w-full max-w-full shrink-0 basis-full space-y-4'
+            : 'lg:col-span-4 space-y-4 order-1',
+        )}
+      >
+        {/* Visual preview for the FIRST piece on the active sheet */}
+        {mainPiece && (() => {
+          const selectedType = paperTypes.find(t => t.name === mainPiece.paperType);
+          const selectedEntry = selectedType?.entries.find(
+            (e: any) => e.sizeName === mainPiece.purchaseSize && e.grammage === mainPiece.grammage
+          );
+          const masterW = selectedEntry?.width || 0;
+          const masterH = selectedEntry?.height || 0;
+
+          // ─── SMART MODE: original Smart Engine preview, untouched ───
+          if (mode === 'smart') {
+            return (
+              <div data-tour="preview">
+                <SmartSheetLayoutPreview
+                  sheetW={masterW}
+                  sheetH={masterH}
+                  pressW={mainPiece.pressWidth}
+                  pressH={mainPiece.pressHeight}
+                  productW={mainPiece.printWidth}
+                  productH={mainPiece.printHeight}
+                  quantity={mainPiece.quantity}
+                  onPressSizeChange={(w, h) => updatePiece(activeSheetIdx, 0, { pressWidth: w, pressHeight: h })}
+                  onSelectStage1={(id, count) => updatePiece(activeSheetIdx, 0, { selectedStage1Id: id, baseCuts: count })}
+                  onSelectStage2={(id, count) => updatePiece(activeSheetIdx, 0, { selectedStage2Id: id, cutsPerSheet: count })}
+                />
               </div>
-              {sheet?.pieces.length > 1 && (
-                <div className="space-y-1">
-                  {sheet.pieces.map((p, pi) => (
-                    <div key={p.id} className="flex justify-between text-xs px-2 py-1 rounded bg-muted/50">
-                      <span className="text-muted-foreground">قطعة {pi + 1}</span>
-                      <span className="font-mono font-medium">{pieceCosts[pi]?.grandTotal.toFixed(2) || '0.00'} ر.س</span>
-                    </div>
-                  ))}
+            );
+          }
+
+          // ─── MANUAL MODE: free dieline import + manual editor ───
+          const sheetW = mainPiece.pressWidth || masterW;
+          const sheetH = mainPiece.pressHeight || masterH;
+          const pW = importedDieline?.width ?? mainPiece.printWidth;
+          const pH = importedDieline?.height ?? mainPiece.printHeight;
+          const canEdit = sheetW > 0 && sheetH > 0 && pW > 0 && pH > 0;
+
+          return (
+            <div data-tour="preview" className="space-y-3">
+              <div className="rounded-lg border border-accent/40 bg-accent/5 p-3 space-y-2">
+                <div className="flex items-center justify-between gap-2 flex-wrap">
+                  <div className="flex items-center gap-2">
+                    <Hand className="w-4 h-4 text-accent-foreground" />
+                    <span className="text-xs font-bold text-accent-foreground">وضع التحكم اليدوي</span>
+                  </div>
+                  <span data-tour="dieline-import">
+                    <DielineImportDialog
+                      onImported={handleDielineImport}
+                      triggerLabel={importedDieline ? 'تغيير القالب' : 'استيراد قالب علبة'}
+                      compact
+                    />
+                  </span>
                 </div>
+                <p className="text-[10px] text-muted-foreground leading-relaxed">
+                  المحرك الذكي مُعطَّل. القوالب تُستورد كما هي 100% — حرّك / دوّر / كرّر بدون تدخل.
+                  العدد الناتج يُربط بحساب التكلفة عند الانتهاء.
+                </p>
+                {importedDieline && (
+                  <div className="flex items-center justify-between gap-2 text-[10px] bg-primary/10 border border-primary/30 rounded px-2 py-1.5">
+                    <span className="text-primary font-semibold truncate">
+                      ✓ {importedDieline.fileName} ({importedDieline.width.toFixed(1)}×{importedDieline.height.toFixed(1)} سم)
+                    </span>
+                    <button
+                      onClick={() => updateActiveSheet({ importedDieline: null, manualCount: 0, manualPieces: [] })}
+                      className="text-destructive/70 hover:text-destructive shrink-0"
+                    >إزالة</button>
+                  </div>
+                )}
+              </div>
+
+              {manualCount > 0 && (
+                <div className="flex items-center justify-between gap-2 rounded-lg border border-primary/30 bg-primary/5 px-3 py-2">
+                  <span className="text-xs text-muted-foreground">عدد القطع في الشيت (يدوي)</span>
+                  <span className="text-lg font-bold text-primary tabular-nums">{manualCount}</span>
+                </div>
+              )}
+
+              {canEdit ? (
+                <WorkspaceScaler>
+                  <ManualLayoutHost
+                    key={`manual-${sheet?.id}-${importedDieline?.fileName || 'no-dl'}`}
+                    sheetW={sheetW}
+                    sheetH={sheetH}
+                    productW={pW}
+                    productH={pH}
+                    importedDieline={importedDieline}
+                    onDielineImported={handleDielineImport}
+                    initialPieces={sheet?.manualPieces ?? []}
+                    onCountChange={(count, layoutPieces) =>
+                      updateActiveSheet({ manualCount: count, manualPieces: layoutPieces.map(p => ({ ...p })) })
+                    }
+                  />
+                </WorkspaceScaler>
+              ) : (
+                <div className="rounded-lg border border-dashed border-border p-6 text-center text-xs text-muted-foreground">
+                  أدخل مقاس الصنف ومقاس شيت الطباعة لبدء التحرير اليدوي.
+                </div>
+              )}
+
+              {manualCount > 0 && (
+                <Button
+                  className="w-full gap-2"
+                  onClick={() => {
+                    updatePiece(activeSheetIdx, 0, { cutsPerSheet: manualCount, baseCuts: 1 });
+                    toast.success(`تم اعتماد التوزيع: ${manualCount} قطعة لكل شيت`);
+                  }}
+                >
+                  <Check className="w-4 h-4" /> اعتماد التوزيع وحساب التكلفة
+                </Button>
               )}
             </div>
-            <ProfitMargins grandTotal={sheets.length > 1 ? allSheetsGrandTotal : sheetGrandTotal} quantity={sheetTotalQuantity} />
-            <Button className="w-full mt-4 gap-2" onClick={() => setSaveDialogOpen(true)}>
-              <Save className="w-4 h-4" /> حفظ التكلفة
-            </Button>
-          </CardContent>
-        </Card>
+          );
+        })()}
       </div>
 
-      {/* ═══ Main Inputs (middle column) ═══ */}
-      <div className="lg:col-span-5 space-y-3 sm:space-y-4 order-2">
+      {/* Under preview (sidebar): 2 cards. Topbar: contents joins outer 12-col grid */}
+      <div
+        className={cn(
+          sidebarNav
+            ? 'grid w-full grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-5'
+            : 'contents',
+        )}
+      >
+      {/* ═══ Main Inputs ═══ */}
+      <div className={cn('space-y-3 sm:space-y-4 min-w-0', sidebarNav ? 'lg:col-span-8' : 'lg:col-span-5 order-2')}>
 
 
 
@@ -950,139 +1052,8 @@ const HybridEngineCalculator = ({ onNavigateToQuote, sessionToken }: { onNavigat
             <Copy className="w-4 h-4" /> تكرار
           </Button>
         </div>
-      </div>
 
-      {/* ═══ Visual Sheet Layout Preview + Calculation Details (now on visual left via order-1) ═══ */}
-      <div className="lg:col-span-4 space-y-4 order-1">
-        {/* Visual preview for the FIRST piece on the active sheet */}
-        {mainPiece && (() => {
-          const selectedType = paperTypes.find(t => t.name === mainPiece.paperType);
-          const selectedEntry = selectedType?.entries.find(
-            (e: any) => e.sizeName === mainPiece.purchaseSize && e.grammage === mainPiece.grammage
-          );
-          const masterW = selectedEntry?.width || 0;
-          const masterH = selectedEntry?.height || 0;
-
-          // ─── SMART MODE: original Smart Engine preview, untouched ───
-          if (mode === 'smart') {
-            return (
-              <div data-tour="preview">
-                <SmartSheetLayoutPreview
-                  sheetW={masterW}
-                  sheetH={masterH}
-                  pressW={mainPiece.pressWidth}
-                  pressH={mainPiece.pressHeight}
-                  productW={mainPiece.printWidth}
-                  productH={mainPiece.printHeight}
-                  quantity={mainPiece.quantity}
-                  onPressSizeChange={(w, h) => updatePiece(activeSheetIdx, 0, { pressWidth: w, pressHeight: h })}
-                  onSelectStage1={(id, count) => updatePiece(activeSheetIdx, 0, { selectedStage1Id: id, baseCuts: count })}
-                  onSelectStage2={(id, count) => updatePiece(activeSheetIdx, 0, { selectedStage2Id: id, cutsPerSheet: count })}
-                />
-              </div>
-            );
-          }
-
-          // ─── MANUAL MODE: free dieline import + manual editor ───
-          // No auto-distribution, no scenarios, no smart suggestions.
-          // Cost engine consumes only the live `manualCount` -> cutsPerSheet.
-          // CRITICAL: the EditableSheetLayout must NOT remount on every parent
-          // re-render, otherwise the user's manual moves/rotations/duplicates
-          // get wiped. We give it a stable key tied ONLY to the manual session
-          // (active sheet + dieline file), and we let it own its piece state
-          // for the entire session — we never push a new `optimalPieces`
-          // array reference at it after mount.
-          const sheetW = mainPiece.pressWidth || masterW;
-          const sheetH = mainPiece.pressHeight || masterH;
-          const pW = importedDieline?.width ?? mainPiece.printWidth;
-          const pH = importedDieline?.height ?? mainPiece.printHeight;
-          const canEdit = sheetW > 0 && sheetH > 0 && pW > 0 && pH > 0;
-
-          return (
-            <div data-tour="preview" className="space-y-3">
-              {/* Manual mode header / dieline import */}
-              <div className="rounded-lg border border-accent/40 bg-accent/5 p-3 space-y-2">
-                <div className="flex items-center justify-between gap-2 flex-wrap">
-                  <div className="flex items-center gap-2">
-                    <Hand className="w-4 h-4 text-accent-foreground" />
-                    <span className="text-xs font-bold text-accent-foreground">وضع التحكم اليدوي</span>
-                  </div>
-                  <span data-tour="dieline-import">
-                    <DielineImportDialog
-                      onImported={handleDielineImport}
-                      triggerLabel={importedDieline ? 'تغيير القالب' : 'استيراد قالب علبة'}
-                      compact
-                    />
-                  </span>
-                </div>
-                <p className="text-[10px] text-muted-foreground leading-relaxed">
-                  المحرك الذكي مُعطَّل. القوالب تُستورد كما هي 100% — حرّك / دوّر / كرّر بدون تدخل.
-                  العدد الناتج يُربط بحساب التكلفة عند الانتهاء.
-                </p>
-                {importedDieline && (
-                  <div className="flex items-center justify-between gap-2 text-[10px] bg-primary/10 border border-primary/30 rounded px-2 py-1.5">
-                    <span className="text-primary font-semibold truncate">
-                      ✓ {importedDieline.fileName} ({importedDieline.width.toFixed(1)}×{importedDieline.height.toFixed(1)} سم)
-                    </span>
-                    <button
-                      onClick={() => updateActiveSheet({ importedDieline: null, manualCount: 0, manualPieces: [] })}
-                      className="text-destructive/70 hover:text-destructive shrink-0"
-                    >إزالة</button>
-                  </div>
-                )}
-              </div>
-
-              {/* Live count badge — feeds the cost engine on confirm */}
-              {manualCount > 0 && (
-                <div className="flex items-center justify-between gap-2 rounded-lg border border-primary/30 bg-primary/5 px-3 py-2">
-                  <span className="text-xs text-muted-foreground">عدد القطع في الشيت (يدوي)</span>
-                  <span className="text-lg font-bold text-primary tabular-nums">{manualCount}</span>
-                </div>
-              )}
-
-              {/* Free editor — no auto distribution, no scenarios.
-                  Each sheet owns its own manualPieces array; switching tabs
-                  remounts the editor with that sheet's stored layout, so
-                  every sheet keeps an independent free distribution. */}
-              {canEdit ? (
-                <WorkspaceScaler>
-                  <ManualLayoutHost
-                    key={`manual-${sheet?.id}-${importedDieline?.fileName || 'no-dl'}`}
-                    sheetW={sheetW}
-                    sheetH={sheetH}
-                    productW={pW}
-                    productH={pH}
-                    importedDieline={importedDieline}
-                    onDielineImported={handleDielineImport}
-                    initialPieces={sheet?.manualPieces ?? []}
-                    onCountChange={(count, layoutPieces) =>
-                      updateActiveSheet({ manualCount: count, manualPieces: layoutPieces.map(p => ({ ...p })) })
-                    }
-                  />
-                </WorkspaceScaler>
-              ) : (
-                <div className="rounded-lg border border-dashed border-border p-6 text-center text-xs text-muted-foreground">
-                  أدخل مقاس الصنف ومقاس شيت الطباعة لبدء التحرير اليدوي.
-                </div>
-              )}
-
-              {/* Confirm button — applies manualCount to cutsPerSheet */}
-              {manualCount > 0 && (
-                <Button
-                  className="w-full gap-2"
-                  onClick={() => {
-                    updatePiece(activeSheetIdx, 0, { cutsPerSheet: manualCount, baseCuts: 1 });
-                    toast.success(`تم اعتماد التوزيع: ${manualCount} قطعة لكل شيت`);
-                  }}
-                >
-                  <Check className="w-4 h-4" /> اعتماد التوزيع وحساب التكلفة
-                </Button>
-              )}
-            </div>
-          );
-        })()}
-
-        {/* تفاصيل for each piece */}
+        {/* تفاصيل الحساب — under the inputs card column */}
         {sheet?.pieces.map((piece, pieceIdx) => {
           const cost = pieceCosts[pieceIdx];
           if (!cost?.valid) return null;
@@ -1136,6 +1107,66 @@ const HybridEngineCalculator = ({ onNavigateToQuote, sessionToken }: { onNavigat
         })}
       </div>
 
+      {/* ═══ Cost Summary ═══ */}
+      <div
+        className={cn(
+          'hidden lg:block space-y-4 lg:sticky lg:top-4 lg:self-start',
+          sidebarNav ? 'lg:col-span-4' : 'lg:col-span-3 order-3',
+        )}
+      >
+        <Card className="shadow-sm border-primary/30 bg-gradient-to-b from-primary/5 to-transparent">
+          <CardContent className="pt-5 pb-4">
+            <SectionHeader icon={Calculator} title="ملخص التكلفة" />
+            <div className="space-y-2 mb-4">
+              {sheets.length > 1 && (
+                <div className="p-3 rounded-lg bg-accent/10 border border-accent/20 text-center">
+                  <p className="text-xs text-muted-foreground mb-0.5">إجمالي كل الأوراق</p>
+                  <p className="text-2xl font-bold text-accent-foreground">{formatMoney(allSheetsCostReady ? allSheetsGrandTotal : NaN)}</p>
+                  <p className="text-[10px] text-muted-foreground">ريال</p>
+                </div>
+              )}
+              {sheets.length > 1 && (
+                <div className="space-y-1">
+                  {sheets.map((s, si) => (
+                    <div key={s.id} className={`flex justify-between text-xs px-2 py-1.5 rounded ${si === activeSheetIdx ? 'bg-primary/10 border border-primary/20' : 'bg-muted/50'}`}>
+                      <span className={si === activeSheetIdx ? 'text-primary font-semibold' : 'text-muted-foreground'}>ورقة {si + 1}</span>
+                      <span className="font-mono font-medium">{formatMoney(allSheetsTotals[si]?.total)} ر.س</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <div className="p-3 rounded-lg bg-primary/10 border border-primary/20 text-center">
+                <p className="text-xs text-muted-foreground mb-0.5">{sheets.length > 1 ? `إجمالي الورقة ${activeSheetIdx + 1}` : 'الإجمالي الشامل'}</p>
+                <p className="text-2xl font-bold text-primary">{formatMoney(sheetCostReady ? sheetGrandTotal : NaN)}</p>
+                <p className="text-[10px] text-muted-foreground">ريال</p>
+                {!sheetCostReady && (
+                  <p className="text-[11px] text-muted-foreground mt-1">أدخل البيانات لعرض التكلفة</p>
+                )}
+              </div>
+              {sheet?.pieces.length > 1 && (
+                <div className="space-y-1">
+                  {sheet.pieces.map((p, pi) => (
+                    <div key={p.id} className="flex justify-between text-xs px-2 py-1 rounded bg-muted/50">
+                      <span className="text-muted-foreground">قطعة {pi + 1}</span>
+                      <span className="font-mono font-medium">{formatMoney(pieceCosts[pi]?.valid ? pieceCosts[pi]?.grandTotal : NaN)} ر.س</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+            <ProfitMargins
+              grandTotal={sheets.length > 1 ? allSheetsGrandTotal : sheetGrandTotal}
+              quantity={sheetTotalQuantity}
+              incomplete={!sheetCostReady && !(sheets.length > 1 && allSheetsCostReady)}
+            />
+            <Button className="w-full mt-4 gap-2" onClick={() => setSaveDialogOpen(true)}>
+              <Save className="w-4 h-4" /> حفظ التكلفة
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+      </div>
+
       {/* ═══ Save Dialog ═══ */}
       <Dialog open={saveDialogOpen} onOpenChange={setSaveDialogOpen}>
         <DialogContent dir="rtl" className="sm:max-w-md">
@@ -1174,14 +1205,16 @@ const HybridEngineCalculator = ({ onNavigateToQuote, sessionToken }: { onNavigat
             <div className="text-center">
               <p className="text-[10px] text-muted-foreground leading-tight">الإجمالي</p>
               <p className="text-lg font-bold text-primary leading-tight">
-                {(sheets.length > 1 ? allSheetsGrandTotal : sheetGrandTotal).toFixed(2)}
+                {formatMoney((sheets.length > 1 ? allSheetsCostReady : sheetCostReady)
+                  ? (sheets.length > 1 ? allSheetsGrandTotal : sheetGrandTotal)
+                  : NaN)}
               </p>
             </div>
-            {sheetTotalQuantity > 0 && sheetGrandTotal > 0 && (
-              <div className="text-center border-r border-border/60 pr-3">
+            {sheetCostReady && sheetTotalQuantity > 0 && sheetGrandTotal > 0 && (
+              <div className="text-center border-e border-border/60 pe-3">
                 <p className="text-[10px] text-muted-foreground leading-tight">سعر القطعة</p>
                 <p className="text-sm font-semibold text-foreground leading-tight">
-                  {(sheetGrandTotal / sheetTotalQuantity).toFixed(3)}
+                  {formatMoney(safeDiv(sheetGrandTotal, sheetTotalQuantity), 3)}
                 </p>
               </div>
             )}
@@ -1643,16 +1676,6 @@ const PieceInputs = ({
           </CollapsibleTrigger>
           <CollapsibleContent>
             <CardContent className="pt-0 pb-4 space-y-2">
-              {/* Column Headers */}
-              {(() => { const hasTiered = piece.finishing.some(f => f.enabled && f.calcType === 'tiered_1000'); return (
-              <div className="hidden sm:flex items-center gap-2 flex-wrap px-3 pb-1 border-b border-border/40">
-                <span className="text-[10px] font-semibold text-muted-foreground w-28">التشطيب</span>
-                <span className="text-[10px] font-semibold text-muted-foreground w-28">نوع الحساب</span>
-                <span className="text-[10px] font-semibold text-muted-foreground w-20">المتغيرات</span>
-                <span className="text-[10px] font-semibold text-muted-foreground w-24">سعر الوحدة</span>
-                {hasTiered && <span className="text-[10px] font-semibold text-muted-foreground w-24">ألف إضافي</span>}
-                <span className="text-[10px] font-semibold text-muted-foreground mr-auto">التكلفة</span>
-              </div>); })()}
               {piece.finishing.map((item, idx) => (
                 <FinishingRow
                   key={idx}
@@ -1730,7 +1753,7 @@ const FinishingRow = ({
 
   return (
   <div
-    className={`rounded-lg border p-2.5 sm:p-3 transition-all cursor-pointer
+    className={`rounded-lg border p-2.5 sm:p-3 transition-all duration-200 cursor-pointer
       ${item.enabled
         ? 'bg-primary/5 border-primary/30 shadow-sm'
         : 'bg-muted/20 border-transparent hover:bg-primary/5 hover:border-primary/20'
@@ -1740,41 +1763,53 @@ const FinishingRow = ({
       onToggle();
     }}
   >
-    <div className="flex items-center gap-1.5 sm:flex-nowrap flex-wrap">
-      <FieldHelp field="name" />
-      <Input
-        className="h-8 text-xs w-full sm:w-24 bg-background shrink-0"
-        value={item.name}
-        onChange={(e) => handleFieldChange({ name: e.target.value })}
-        onClick={(e) => e.stopPropagation()}
-      />
-      <FieldHelp field="calcType" />
-      <Select value={item.calcType} onValueChange={(val) => handleFieldChange({ calcType: val as FinishingItem['calcType'] })}>
-        <SelectTrigger className="h-8 text-xs w-full sm:w-24 bg-background shrink-0" onClick={(e) => e.stopPropagation()}>
-          <SelectValue />
-        </SelectTrigger>
-        <SelectContent>
-          {Object.entries(calcTypeLabels).map(([key, val]) => (
-            <SelectItem key={key} value={key}>{val.label}</SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-      <FieldHelp field="multiplier" />
-      <Input type="number" className="h-8 text-xs w-16 bg-background shrink-0" value={item.multiplier} onChange={(e) => handleFieldChange({ multiplier: Number(e.target.value) })} onClick={(e) => e.stopPropagation()} placeholder="متغ" />
-      <FieldHelp field="pricePerUnit" />
-      <Input type="number" className="h-8 text-xs w-20 bg-background shrink-0" value={item.pricePerUnit} onChange={(e) => handleFieldChange({ pricePerUnit: Number(e.target.value) })} onClick={(e) => e.stopPropagation()} placeholder="سعر" />
+    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 items-center">
+      <div className="col-span-2 sm:col-span-1 flex items-center gap-1 min-w-0">
+        <FieldHelp field="name" />
+        <Input
+          className="h-8 text-xs flex-1 min-w-0 bg-background"
+          value={item.name}
+          onChange={(e) => handleFieldChange({ name: e.target.value })}
+          onClick={(e) => e.stopPropagation()}
+        />
+      </div>
+      <div className="flex items-center gap-1 min-w-0">
+        <FieldHelp field="calcType" />
+        <Select value={item.calcType} onValueChange={(val) => handleFieldChange({ calcType: val as FinishingItem['calcType'] })}>
+          <SelectTrigger className="h-8 text-xs flex-1 min-w-0 bg-background" onClick={(e) => e.stopPropagation()}>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {Object.entries(calcTypeLabels).map(([key, val]) => (
+              <SelectItem key={key} value={key}>{val.label}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+      <div className="flex items-center gap-1 min-w-0">
+        <FieldHelp field="multiplier" />
+        <Input type="number" className="h-8 text-xs flex-1 min-w-0 bg-background" value={item.multiplier} onChange={(e) => handleFieldChange({ multiplier: Number(e.target.value) })} onClick={(e) => e.stopPropagation()} placeholder="متغ" />
+      </div>
+      <div className="flex items-center gap-1 min-w-0">
+        <FieldHelp field="pricePerUnit" />
+        <Input type="number" className="h-8 text-xs flex-1 min-w-0 bg-background" value={item.pricePerUnit} onChange={(e) => handleFieldChange({ pricePerUnit: Number(e.target.value) })} onClick={(e) => e.stopPropagation()} placeholder="سعر" />
+      </div>
       {item.calcType === 'tiered_1000' && (
-        <>
+        <div className="flex items-center gap-1 min-w-0">
           <FieldHelp field="extraPer1000" />
-          <Input type="number" className="h-8 text-xs w-20 bg-background shrink-0" value={item.extraPer1000} onChange={(e) => handleFieldChange({ extraPer1000: Number(e.target.value) })} onClick={(e) => e.stopPropagation()} placeholder="ألف+" />
-        </>
+          <Input type="number" className="h-8 text-xs flex-1 min-w-0 bg-background" value={item.extraPer1000} onChange={(e) => handleFieldChange({ extraPer1000: Number(e.target.value) })} onClick={(e) => e.stopPropagation()} placeholder="ألف+" />
+        </div>
       )}
-      {item.enabled && (
-        <span className="text-xs font-bold text-primary whitespace-nowrap mr-auto">{cost.toFixed(2)} ر.س</span>
-      )}
-      <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive/60 hover:text-destructive shrink-0" onClick={(e) => { e.stopPropagation(); onRemove(); }}>
-        <Trash2 className="w-3.5 h-3.5" />
-      </Button>
+      <div className="col-span-2 sm:col-span-1 lg:col-span-1 flex items-center justify-between gap-2 min-w-0">
+        {item.enabled ? (
+          <span className="text-xs font-bold text-primary whitespace-nowrap">{cost.toFixed(2)} ر.س</span>
+        ) : (
+          <span className="text-[10px] text-muted-foreground">—</span>
+        )}
+        <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive/60 hover:text-destructive shrink-0" onClick={(e) => { e.stopPropagation(); onRemove(); }} aria-label="حذف التشطيب">
+          <Trash2 className="w-3.5 h-3.5" />
+        </Button>
+      </div>
     </div>
   </div>
   );

@@ -74,38 +74,27 @@ export function downloadD003SingleTemplate(geo: D003Geometry, filename = "D003-s
   setTimeout(() => URL.revokeObjectURL(url), 0);
 }
 
+export async function buildD003SingleTemplatePdf(svgMarkup: string) {
+  const { generatePdfFromSvg } = await import("@/lib/pdf/pdfService");
+  return generatePdfFromSvg(svgMarkup);
+}
+
 export async function downloadD003SingleTemplatePdf(
   svgMarkup: string,
   filename = "D003-single-template.pdf",
 ) {
-  const host = document.createElement("div");
-  host.style.position = "fixed";
-  host.style.left = "-100000px";
-  host.style.top = "0";
-  host.style.visibility = "hidden";
-  host.innerHTML = svgMarkup;
-  const svgEl = host.querySelector("svg") as SVGSVGElement | null;
-  if (!svgEl) throw new Error("D003 PDF export: failed to parse SVG.");
-  document.body.appendChild(host);
+  const { downloadPdf } = await import("@/lib/pdf/pdfService");
+  const pdf = await buildD003SingleTemplatePdf(svgMarkup);
+  downloadPdf(pdf, filename);
+  return pdf;
+}
 
-  const vb = (svgEl.getAttribute("viewBox") || "0 0 0 0").split(/\s+/).map(Number);
-  const pageW = vb[2] || 1;
-  const pageH = vb[3] || 1;
-
-  try {
-    const [{ jsPDF }, { svg2pdf }] = await Promise.all([
-      import("jspdf"),
-      import("svg2pdf.js"),
-    ]);
-    const pdf = new jsPDF({
-      unit: "mm",
-      format: [pageW, pageH],
-      orientation: pageW >= pageH ? "landscape" : "portrait",
-      compress: true,
-    });
-    await svg2pdf(svgEl, pdf, { x: 0, y: 0, width: pageW, height: pageH });
-    pdf.save(filename);
-  } finally {
-    document.body.removeChild(host);
-  }
+export async function previewD003SingleTemplatePdf(
+  svgMarkup: string,
+  filename = "D003-single-template.pdf",
+) {
+  const { previewPdf } = await import("@/lib/pdf/pdfService");
+  const pdf = await buildD003SingleTemplatePdf(svgMarkup);
+  await previewPdf(pdf, filename);
+  return pdf;
 }

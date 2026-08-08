@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { usePrintingStore, useCalculations, type FinishingItem, type CalculatorInputs } from '@/store/printingStore';
 import { calculateQuote } from '@/lib/calcEngine';
+import { finite, formatMoney, isFiniteMoney } from '@/lib/safeNumber';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -16,6 +17,8 @@ import type { LayoutPiece } from '@/lib/sheetLayoutOptimizer';
 import { SpotlightTour, LightHints, SMART_ENGINE_STEPS } from '@/components/SmartEngineGuide';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import ProfitMargins from '@/components/ProfitMargins';
+import { useUiPrefs } from '@/hooks/useUiPrefs';
+import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { calcTypeLabels } from '@/lib/calcTypeLabels';
 import { downloadItemCostTemplate, parseItemCostExcelMulti } from '@/lib/itemCostExcel';
@@ -504,6 +507,8 @@ const WorkspaceScaler = ({ children }: { children: React.ReactNode }) => {
 };
 
 const MontagItemCostCalculator = ({ onNavigateToQuote, sessionToken }: { onNavigateToQuote?: () => void; sessionToken?: string }) => {
+  const { layoutMode } = useUiPrefs();
+  const sidebarNav = layoutMode === 'sidebar';
   const { paperTypes, priceSettings, setInputs, editingQuoteData, setEditingQuoteData } = usePrintingStore();
   const calc = useCalculations();
 
@@ -831,7 +836,7 @@ const MontagItemCostCalculator = ({ onNavigateToQuote, sessionToken }: { onNavig
     });
   }, [sheet, paperTypes, priceSettings]);
 
-  const sheetGrandTotal = pieceCosts.reduce((sum, c) => sum + c.grandTotal, 0);
+  const sheetGrandTotal = finite(pieceCosts.reduce((sum, c) => sum + finite(c.grandTotal), 0));
   const sheetTotalQuantity = sheet?.pieces.reduce((sum, p) => sum + p.quantity, 0) || 0;
 
   // Calculate totals for ALL sheets
@@ -874,7 +879,7 @@ const MontagItemCostCalculator = ({ onNavigateToQuote, sessionToken }: { onNavig
     });
   }, [sheets, paperTypes, priceSettings]);
 
-  const allSheetsGrandTotal = allSheetsTotals.reduce((sum, s) => sum + s.total, 0);
+  const allSheetsGrandTotal = finite(allSheetsTotals.reduce((sum, s) => sum + finite(s.total), 0));
 
   // Save handler
   const handleSave = async (skipMetadata = false) => {
@@ -925,111 +930,48 @@ const MontagItemCostCalculator = ({ onNavigateToQuote, sessionToken }: { onNavig
   };
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-5 pb-20 lg:pb-0">
-      {/* ═══ Cost Summary (now on visual right via order-3 in RTL) ═══ */}
-      <div className="hidden lg:block lg:col-span-3 space-y-4 lg:sticky lg:top-4 lg:self-start order-3">
-        <Card className="shadow-sm border-primary/30 bg-gradient-to-b from-primary/5 to-transparent">
-          <CardContent className="pt-5 pb-4">
-            <SectionHeader icon={Calculator} title="ملخص التكلفة" />
-            <div className="space-y-2 mb-4">
-              {sheets.length > 1 && (
-                <div className="p-3 rounded-lg bg-accent/10 border border-accent/20 text-center">
-                  <p className="text-xs text-muted-foreground mb-0.5">إجمالي كل الأوراق</p>
-                  <p className="text-2xl font-bold text-accent-foreground">{allSheetsGrandTotal.toFixed(2)}</p>
-                  <p className="text-[10px] text-muted-foreground">ريال</p>
-                </div>
-              )}
-              {sheets.length > 1 && (
-                <div className="space-y-1">
-                  {sheets.map((s, si) => (
-                    <div key={s.id} className={`flex justify-between text-xs px-2 py-1.5 rounded ${si === activeSheetIdx ? 'bg-primary/10 border border-primary/20' : 'bg-muted/50'}`}>
-                      <span className={si === activeSheetIdx ? 'text-primary font-semibold' : 'text-muted-foreground'}>ورقة {si + 1}</span>
-                      <span className="font-mono font-medium">{allSheetsTotals[si]?.total.toFixed(2) || '0.00'} ر.س</span>
-                    </div>
-                  ))}
-                </div>
-              )}
-              <div className="p-3 rounded-lg bg-primary/10 border border-primary/20 text-center">
-                <p className="text-xs text-muted-foreground mb-0.5">{sheets.length > 1 ? `إجمالي الورقة ${activeSheetIdx + 1}` : 'الإجمالي الشامل'}</p>
-                <p className="text-2xl font-bold text-primary">{sheetGrandTotal.toFixed(2)}</p>
-                <p className="text-[10px] text-muted-foreground">ريال</p>
-              </div>
-              {sheet?.pieces.length > 1 && (
-                <div className="space-y-1">
-                  {sheet.pieces.map((p, pi) => (
-                    <div key={p.id} className="flex justify-between text-xs px-2 py-1 rounded bg-muted/50">
-                      <span className="text-muted-foreground">قطعة {pi + 1}</span>
-                      <span className="font-mono font-medium">{pieceCosts[pi]?.grandTotal.toFixed(2) || '0.00'} ر.س</span>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-            <ProfitMargins grandTotal={sheets.length > 1 ? allSheetsGrandTotal : sheetGrandTotal} quantity={sheetTotalQuantity} />
-            <Button className="w-full mt-4 gap-2" onClick={() => setSaveDialogOpen(true)}>
-              <Save className="w-4 h-4" /> حفظ التكلفة
-            </Button>
-          </CardContent>
-        </Card>
-
-        {/* تفاصيل الحساب — منقولة تحت زر حفظ التكلفة */}
-        {sheet?.pieces.map((piece, pieceIdx) => {
-          const cost = pieceCosts[pieceIdx];
-          if (!cost?.valid) return null;
-
-          const details: { label: string; value: string; highlight?: boolean }[] = [];
-
-          const matchedSize = priceSettings.sizes.find(
-            s => (s.width === piece.printWidth && s.height === piece.printHeight) ||
-                 (s.width === piece.printHeight && s.height === piece.printWidth)
+    <div
+      className={cn(
+        'pb-20 lg:pb-0 min-w-0 w-full calc-shell',
+        sidebarNav
+          ? 'flex flex-col gap-4 sm:gap-5'
+          : 'grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-5',
+      )}
+      data-layout={layoutMode}
+    >
+      <div className={cn(sidebarNav ? 'w-full max-w-full shrink-0 basis-full space-y-4' : 'lg:col-span-4 space-y-4 order-1')}>
+        {/* Visual preview for the FIRST piece on the active sheet */}
+        {mainPiece && (() => {
+          const selectedType = paperTypes.find(t => t.name === mainPiece.paperType);
+          const selectedEntry = selectedType?.entries.find(
+            (e: any) => e.sizeName === mainPiece.purchaseSize && e.grammage === mainPiece.grammage
           );
-          if (matchedSize) details.push({ label: 'مقاس الطباعة', value: matchedSize.sizeName, highlight: true });
-          if (cost.thousands > 0) details.push({ label: 'عدد الآلاف', value: `${cost.thousands}` });
-          if (cost.printSheetsPerPurchase > 0) details.push({ label: 'تفصيل الشيت الأساسي', value: cost.printSheetsPerPurchase.toString() });
-          if (cost.printSheetsBeforeWaste > 0) details.push({ label: 'عدد شيتات الطباعة', value: cost.printSheetsBeforeWaste.toString() });
-          if (cost.printSheetsAfterWaste > 0) details.push({ label: 'شيتات الطباعة بعد الهدر', value: cost.printSheetsAfterWaste.toString() });
-          if (cost.purchaseSheetsNeeded > 0) details.push({ label: 'عدد شيتات الشراء', value: cost.purchaseSheetsNeeded.toString() });
-          if (cost.paperCost > 0) details.push({ label: 'الورق', value: `${cost.paperCost.toFixed(2)} ر.س` });
-          if (cost.sortCost > 0) details.push({ label: 'الفرز', value: `${cost.sortCost.toFixed(2)} ر.س` });
-          if (cost.printCost > 0) details.push({ label: 'الطباعة', value: `${cost.printCost.toFixed(2)} ر.س` });
-          if (cost.extraColorCost > 0) details.push({ label: 'ألوان إضافية', value: `${cost.extraColorCost.toFixed(2)} ر.س` });
-          if (cost.cellophaneCost > 0) details.push({ label: 'السلفان', value: `${cost.cellophaneCost.toFixed(2)} ر.س` });
-          if (cost.dieCutCost > 0) details.push({ label: 'التكسير', value: `${cost.dieCutCost.toFixed(2)} ر.س` });
-          if (piece.moldPrice > 0) details.push({ label: 'قيمة القالب', value: `${piece.moldPrice.toFixed(2)} ر.س` });
-          if (cost.customFieldsBreakdown?.length > 0) {
-            cost.customFieldsBreakdown.forEach(cf => {
-              details.push({ label: cf.name, value: `${cf.value.toFixed(2)} ر.س` });
-            });
-          }
-          if (cost.totalFinishing > 0) details.push({ label: 'مجموع التشطيبات', value: `${cost.totalFinishing.toFixed(2)} ر.س` });
+          const masterW = selectedEntry?.width || 0;
+          const masterH = selectedEntry?.height || 0;
 
-          piece.finishing.forEach((f) => {
-            if (!f.enabled) return;
-            const fCost = calculateFinishingCost(f, piece.quantity, cost.thousands);
-            if (fCost > 0) details.push({ label: `  ${f.name}`, value: `${fCost.toFixed(2)} ر.س`, isSubItem: true } as any);
-          });
-
-          if (details.length === 0) return null;
-
+          // ─── SMART MODE ONLY (manual distribution removed in تكلفة صنف) ───
           return (
-            <Card key={piece.id} className="shadow-sm border-border/60">
-              <CardContent className="pt-5 pb-4">
-                <SectionHeader icon={Sparkles} title={sheet.pieces.length > 1 ? `تفاصيل قطعة ${pieceIdx + 1}` : 'تفاصيل الحساب'} />
-                <div className="space-y-1 text-xs">
-                  {details.map((d, i) => (
-                    <DetailRow key={i} label={d.label} value={d.value} highlight={d.highlight} />
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
+            <div data-tour="preview">
+              <SmartSheetLayoutPreview
+                sheetW={masterW}
+                sheetH={masterH}
+                pressW={mainPiece.pressWidth}
+                pressH={mainPiece.pressHeight}
+                productW={mainPiece.printWidth}
+                productH={mainPiece.printHeight}
+                quantity={mainPiece.quantity}
+                onPressSizeChange={(w, h) => updatePiece(activeSheetIdx, 0, { pressWidth: w, pressHeight: h })}
+                onSelectStage1={(id, count) => updatePiece(activeSheetIdx, 0, { selectedStage1Id: id, baseCuts: count })}
+                onSelectStage2={(id, count) => updatePiece(activeSheetIdx, 0, { selectedStage2Id: id, cutsPerSheet: count })}
+              />
+            </div>
           );
-        })}
+        })()}
       </div>
 
-      {/* ═══ Main Inputs (middle column) ═══ */}
-      <div className="lg:col-span-5 space-y-3 sm:space-y-4 order-2">
-
-
+      <div className={cn(sidebarNav ? 'grid w-full grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-5' : 'contents')}>
+      {/* ═══ Main Inputs ═══ */}
+      <div className={cn('space-y-3 sm:space-y-4 min-w-0', sidebarNav ? 'lg:col-span-8' : 'lg:col-span-5 order-2')}>
 
         {/* Sheet tabs - always visible */}
         <div className="flex items-center gap-1.5 flex-wrap">
@@ -1115,38 +1057,112 @@ const MontagItemCostCalculator = ({ onNavigateToQuote, sessionToken }: { onNavig
             <Copy className="w-4 h-4" /> تكرار
           </Button>
         </div>
+
+        {/* تفاصيل الحساب — under the inputs card column */}
+        {sheet?.pieces.map((piece, pieceIdx) => {
+          const cost = pieceCosts[pieceIdx];
+          if (!cost?.valid) return null;
+
+          const details: { label: string; value: string; highlight?: boolean }[] = [];
+
+          const matchedSize = priceSettings.sizes.find(
+            s => (s.width === piece.printWidth && s.height === piece.printHeight) ||
+                 (s.width === piece.printHeight && s.height === piece.printWidth)
+          );
+          if (matchedSize) details.push({ label: 'مقاس الطباعة', value: matchedSize.sizeName, highlight: true });
+          if (cost.thousands > 0) details.push({ label: 'عدد الآلاف', value: `${cost.thousands}` });
+          if (cost.printSheetsPerPurchase > 0) details.push({ label: 'تفصيل الشيت الأساسي', value: cost.printSheetsPerPurchase.toString() });
+          if (cost.printSheetsBeforeWaste > 0) details.push({ label: 'عدد شيتات الطباعة', value: cost.printSheetsBeforeWaste.toString() });
+          if (cost.printSheetsAfterWaste > 0) details.push({ label: 'شيتات الطباعة بعد الهدر', value: cost.printSheetsAfterWaste.toString() });
+          if (cost.purchaseSheetsNeeded > 0) details.push({ label: 'عدد شيتات الشراء', value: cost.purchaseSheetsNeeded.toString() });
+          if (cost.paperCost > 0) details.push({ label: 'الورق', value: `${cost.paperCost.toFixed(2)} ر.س` });
+          if (cost.sortCost > 0) details.push({ label: 'الفرز', value: `${cost.sortCost.toFixed(2)} ر.س` });
+          if (cost.printCost > 0) details.push({ label: 'الطباعة', value: `${cost.printCost.toFixed(2)} ر.س` });
+          if (cost.extraColorCost > 0) details.push({ label: 'ألوان إضافية', value: `${cost.extraColorCost.toFixed(2)} ر.س` });
+          if (cost.cellophaneCost > 0) details.push({ label: 'السلفان', value: `${cost.cellophaneCost.toFixed(2)} ر.س` });
+          if (cost.dieCutCost > 0) details.push({ label: 'التكسير', value: `${cost.dieCutCost.toFixed(2)} ر.س` });
+          if (piece.moldPrice > 0) details.push({ label: 'قيمة القالب', value: `${piece.moldPrice.toFixed(2)} ر.س` });
+          if (cost.customFieldsBreakdown?.length > 0) {
+            cost.customFieldsBreakdown.forEach(cf => {
+              details.push({ label: cf.name, value: `${cf.value.toFixed(2)} ر.س` });
+            });
+          }
+          if (cost.totalFinishing > 0) details.push({ label: 'مجموع التشطيبات', value: `${cost.totalFinishing.toFixed(2)} ر.س` });
+
+          piece.finishing.forEach((f) => {
+            if (!f.enabled) return;
+            const fCost = calculateFinishingCost(f, piece.quantity, cost.thousands);
+            if (fCost > 0) details.push({ label: `  ${f.name}`, value: `${fCost.toFixed(2)} ر.س`, isSubItem: true } as any);
+          });
+
+          if (details.length === 0) return null;
+
+          return (
+            <Card key={piece.id} className="shadow-sm border-border/60">
+              <CardContent className="pt-5 pb-4">
+                <SectionHeader icon={Sparkles} title={sheet.pieces.length > 1 ? `تفاصيل قطعة ${pieceIdx + 1}` : 'تفاصيل الحساب'} />
+                <div className="space-y-1 text-xs">
+                  {details.map((d, i) => (
+                    <DetailRow key={i} label={d.label} value={d.value} highlight={d.highlight} />
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          );
+        })}
       </div>
 
-      {/* ═══ Visual Sheet Layout Preview + Calculation Details (now on visual left via order-1) ═══ */}
-      <div className="lg:col-span-4 space-y-4 order-1">
-        {/* Visual preview for the FIRST piece on the active sheet */}
-        {mainPiece && (() => {
-          const selectedType = paperTypes.find(t => t.name === mainPiece.paperType);
-          const selectedEntry = selectedType?.entries.find(
-            (e: any) => e.sizeName === mainPiece.purchaseSize && e.grammage === mainPiece.grammage
-          );
-          const masterW = selectedEntry?.width || 0;
-          const masterH = selectedEntry?.height || 0;
-
-          // ─── SMART MODE ONLY (manual distribution removed in تكلفة صنف) ───
-          return (
-            <div data-tour="preview">
-              <SmartSheetLayoutPreview
-                sheetW={masterW}
-                sheetH={masterH}
-                pressW={mainPiece.pressWidth}
-                pressH={mainPiece.pressHeight}
-                productW={mainPiece.printWidth}
-                productH={mainPiece.printHeight}
-                quantity={mainPiece.quantity}
-                onPressSizeChange={(w, h) => updatePiece(activeSheetIdx, 0, { pressWidth: w, pressHeight: h })}
-                onSelectStage1={(id, count) => updatePiece(activeSheetIdx, 0, { selectedStage1Id: id, baseCuts: count })}
-                onSelectStage2={(id, count) => updatePiece(activeSheetIdx, 0, { selectedStage2Id: id, cutsPerSheet: count })}
-              />
+      {/* ═══ Cost Summary ═══ */}
+      <div
+        className={cn(
+          'hidden lg:block space-y-4 lg:sticky lg:top-4 lg:self-start',
+          sidebarNav ? 'lg:col-span-4' : 'lg:col-span-3 order-3',
+        )}
+      >
+        <Card className="shadow-sm border-primary/30 bg-gradient-to-b from-primary/5 to-transparent">
+          <CardContent className="pt-5 pb-4">
+            <SectionHeader icon={Calculator} title="ملخص التكلفة" />
+            <div className="space-y-2 mb-4">
+              {sheets.length > 1 && (
+                <div className="p-3 rounded-lg bg-accent/10 border border-accent/20 text-center">
+                  <p className="text-xs text-muted-foreground mb-0.5">إجمالي كل الأوراق</p>
+                  <p className="text-2xl font-bold text-accent-foreground">{formatMoney(allSheetsGrandTotal)}</p>
+                  <p className="text-[10px] text-muted-foreground">ريال</p>
+                </div>
+              )}
+              {sheets.length > 1 && (
+                <div className="space-y-1">
+                  {sheets.map((s, si) => (
+                    <div key={s.id} className={`flex justify-between text-xs px-2 py-1.5 rounded ${si === activeSheetIdx ? 'bg-primary/10 border border-primary/20' : 'bg-muted/50'}`}>
+                      <span className={si === activeSheetIdx ? 'text-primary font-semibold' : 'text-muted-foreground'}>ورقة {si + 1}</span>
+                      <span className="font-mono font-medium">{formatMoney(allSheetsTotals[si]?.total)} ر.س</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <div className="p-3 rounded-lg bg-primary/10 border border-primary/20 text-center">
+                <p className="text-xs text-muted-foreground mb-0.5">{sheets.length > 1 ? `إجمالي الورقة ${activeSheetIdx + 1}` : 'الإجمالي الشامل'}</p>
+                <p className="text-2xl font-bold text-primary">{formatMoney(sheetGrandTotal)}</p>
+                <p className="text-[10px] text-muted-foreground">ريال</p>
+              </div>
+              {sheet?.pieces.length > 1 && (
+                <div className="space-y-1">
+                  {sheet.pieces.map((p, pi) => (
+                    <div key={p.id} className="flex justify-between text-xs px-2 py-1 rounded bg-muted/50">
+                      <span className="text-muted-foreground">قطعة {pi + 1}</span>
+                      <span className="font-mono font-medium">{formatMoney(pieceCosts[pi]?.grandTotal)} ر.س</span>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
-          );
-        })()}
-
+            <ProfitMargins grandTotal={sheets.length > 1 ? allSheetsGrandTotal : sheetGrandTotal} quantity={sheetTotalQuantity} />
+            <Button className="w-full mt-4 gap-2" onClick={() => setSaveDialogOpen(true)}>
+              <Save className="w-4 h-4" /> حفظ التكلفة
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
       </div>
 
       {/* ═══ Save Dialog ═══ */}

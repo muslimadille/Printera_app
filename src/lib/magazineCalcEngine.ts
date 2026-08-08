@@ -160,10 +160,12 @@ export interface MagazineScenario {
 /* ──────────────────────────── Helpers ──────────────────────────── */
 
 const fitOnSheet = (sw: number, sh: number, pw: number, ph: number): number => {
-  if (sw <= 0 || sh <= 0 || pw <= 0 || ph <= 0) return 0;
+  if (!(sw > 0) || !(sh > 0) || !(pw > 0) || !(ph > 0)) return 0;
+  if (!Number.isFinite(sw) || !Number.isFinite(sh) || !Number.isFinite(pw) || !Number.isFinite(ph)) return 0;
   const a = Math.floor(sw / pw) * Math.floor(sh / ph);
   const b = Math.floor(sw / ph) * Math.floor(sh / pw);
-  return Math.max(a, b);
+  const n = Math.max(a, b);
+  return Number.isFinite(n) ? n : 0;
 };
 
 /** ورقة بعد الطي = عرض الصفحة × 2 (العرض يتضاعف، الطول يبقى كما هو). */

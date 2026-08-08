@@ -1,0 +1,28 @@
+- generic:
+  - generic:
+    - list
+    - region "Notifications alt+T"
+  - dialog [ref=f20e2]:
+    - button "تبديل المظهر" [ref=f20e4] [cursor=pointer]
+    - generic [ref=f20e12]:
+      - heading "حاسبة تكلفة الطباعة الذكية" [level=2] [ref=f20e13]
+      - paragraph [ref=f20e14]: احسبها صح… يكفي تحسبها مرة
+      - paragraph [ref=f20e15]: مرحباً بك، يرجى تسجيل الدخول للمتابعة
+    - generic [ref=f20e16]:
+      - generic [ref=f20e17]:
+        - text: اسم المستخدم
+        - textbox "اسم المستخدم" [active] [ref=f20e18]:
+          - /placeholder: أدخل اسم المستخدم
+      - generic [ref=f20e19]:
+        - text: كلمة المرور
+        - textbox "كلمة المرور" [ref=f20e20]:
+          - /placeholder: أدخل كلمة المرور
+      - generic [ref=f20e21]:
+        - generic [ref=f20e22]:
+          - checkbox "تذكرني لمدة 30 يوم" [checked] [ref=f20e23] [cursor=pointer]
+          - checkbox [checked]
+          - generic [ref=f20e24] [cursor=pointer]: تذكرني لمدة 30 يوم
+        - button "تغيير كلمة المرور" [ref=f20e25] [cursor=pointer]
+      - button "تسجيل الدخول" [ref=f20e29] [cursor=pointer]
+    - button "إغلاق" [ref=f20e30] [cursor=pointer]:
+      - generic [ref=f20e34]: Close

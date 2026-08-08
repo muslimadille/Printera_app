@@ -3,6 +3,7 @@
  * Mirrors useCalculations() from printingStore but works with plain data.
  */
 import type { PaperType, SizePricing, SizeCustomField, ColorPricing, CalculatorInputs, FinishingItem, PriceSettings, ExtraColorConfig } from '@/store/printingStore';
+import { finite, num, safeDiv, sheetsPerPurchase } from '@/lib/safeNumber';
 
 function migrateSizePricing(s: any): SizePricing {
   if (s.color1) return s;
@@ -32,20 +33,27 @@ function calcExtraColorCost(config: ExtraColorConfig, quantity: number, thousand
     case 'tiered_1000': costPerColor = extraColorPrice + Math.max(0, thousands - 1) * extraColorExtra1000; break;
     default: costPerColor = 0;
   }
-  return costPerColor * extraColorCount;
+  return finite(costPerColor * extraColorCount);
 }
 function calcCustomFieldCost(f: SizeCustomField, quantity: number, thousands: number): number {
-  const m = f.multiplier || 1;
-  const p = f.pricePerUnit || 0;
+  const m = num(f.multiplier, 1);
+  const p = num(f.pricePerUnit);
   if (p <= 0) return 0;
   switch (f.calcType) {
-    case 'per_piece': return quantity * m * p;
-    case 'per_1000': return thousands * m * p;
-    case 'tiered_1000': return m * (p + Math.max(thousands - 1, 0) * (f.extraPer1000 || 0));
-    case 'flat': return m * p;
+    case 'per_piece': return finite(quantity * m * p);
+    case 'per_1000': return finite(thousands * m * p);
+    case 'tiered_1000': return finite(m * (p + Math.max(thousands - 1, 0) * num(f.extraPer1000)));
+    case 'flat': return finite(m * p);
     default: return 0;
   }
 }
+
+const EMPTY_RESULT = (): CalcResult => ({
+  paperCost: 0, sortCost: 0, printCost: 0, extraColorCost: 0, cellophaneCost: 0, dieCutCost: 0,
+  customFieldsCost: 0, customFieldsBreakdown: [], totalCost: 0, totalFinishing: 0, grandTotal: 0,
+  pricePerPiece: 0, printSheetsPerPurchase: 0, printSheetsBeforeWaste: 0, printSheetsAfterWaste: 0,
+  purchaseSheetsNeeded: 0, thousands: 0, valid: false, error: 'بيانات ناقصة',
+});
 
 export interface CalcResult {
   paperCost: number;
@@ -85,46 +93,52 @@ export function calculateQuote(
   priceSettings: PriceSettings,
   overrides: CalcOverrides = {},
 ): CalcResult {
+  const quantity = num(inputs.quantity);
+  const cutsPerSheet = num(inputs.cutsPerSheet);
+  const pw = num(inputs.printWidth);
+  const ph = num(inputs.printHeight);
+
   const selectedType = paperTypes.find(t => t.name === inputs.paperType);
   const selectedEntry = selectedType?.entries.find(
     e => e.sizeName === inputs.purchaseSize && e.grammage === inputs.grammage
   );
 
-  if (!selectedEntry || !inputs.quantity || !inputs.cutsPerSheet) {
-    return { paperCost: 0, sortCost: 0, printCost: 0, extraColorCost: 0, cellophaneCost: 0, dieCutCost: 0, customFieldsCost: 0, customFieldsBreakdown: [], totalCost: 0, totalFinishing: 0, grandTotal: 0, pricePerPiece: 0, printSheetsPerPurchase: 0, printSheetsBeforeWaste: 0, printSheetsAfterWaste: 0, purchaseSheetsNeeded: 0, thousands: 0, valid: false, error: 'بيانات ناقصة' };
+  if (!selectedEntry || quantity <= 0 || cutsPerSheet <= 0 || pw <= 0 || ph <= 0) {
+    return EMPTY_RESULT();
   }
 
-  const purchaseWidth = selectedEntry.width;
-  const purchaseHeight = selectedEntry.height;
-  const pricePerTon = selectedEntry.pricePerTon;
+  const purchaseWidth = num(selectedEntry.width);
+  const purchaseHeight = num(selectedEntry.height);
+  const pricePerTon = num(selectedEntry.pricePerTon);
   const pricingUnit = selectedEntry.pricingUnit || 'ton';
-  const pricePerReam = selectedEntry.pricePerReam || 0;
-  const sheetsPerReam = selectedEntry.sheetsPerReam || 500;
+  const pricePerReam = num(selectedEntry.pricePerReam);
+  const sheetsPerReam = num(selectedEntry.sheetsPerReam, 500);
 
   const purchaseArea = (purchaseWidth / 100) * (purchaseHeight / 100);
-  const purchaseWeight = purchaseArea * (inputs.grammage || 0);
-  const pricePerGram = pricePerTon / 1000000;
-  const pricePerSheet = pricingUnit === 'ream' && sheetsPerReam > 0 ? pricePerReam / sheetsPerReam : purchaseWeight * pricePerGram;
+  const purchaseWeight = purchaseArea * num(inputs.grammage);
+  const pricePerGram = safeDiv(pricePerTon, 1_000_000);
+  const pricePerSheet = pricingUnit === 'ream' && sheetsPerReam > 0
+    ? safeDiv(pricePerReam, sheetsPerReam)
+    : finite(purchaseWeight * pricePerGram);
 
-  const pw = inputs.printWidth;
-  const ph = inputs.printHeight;
-  const o1 = Math.floor(purchaseWidth / pw) * Math.floor(purchaseHeight / ph);
-  const o2 = Math.floor(purchaseWidth / ph) * Math.floor(purchaseHeight / pw);
-  const autoPrintSheetsPerPurchase = Math.max(o1, o2);
-  const baseCuts = (inputs as any).baseCuts || 0;
+  const autoPrintSheetsPerPurchase = sheetsPerPurchase(purchaseWidth, purchaseHeight, pw, ph);
+  const baseCuts = num((inputs as { baseCuts?: number }).baseCuts);
   const printSheetsPerPurchase = baseCuts > 0 ? baseCuts : autoPrintSheetsPerPurchase;
 
   if (printSheetsPerPurchase === 0) {
-    return { paperCost: 0, sortCost: 0, printCost: 0, extraColorCost: 0, cellophaneCost: 0, dieCutCost: 0, customFieldsCost: 0, customFieldsBreakdown: [], totalCost: 0, totalFinishing: 0, grandTotal: 0, pricePerPiece: 0, printSheetsPerPurchase: 0, printSheetsBeforeWaste: 0, printSheetsAfterWaste: 0, purchaseSheetsNeeded: 0, thousands: 0, valid: false, error: 'مقاس الطباعة لا يخرج من ورقة الشراء' };
+    return {
+      ...EMPTY_RESULT(),
+      error: 'مقاس الطباعة لا يخرج من ورقة الشراء',
+    };
   }
 
-  const printSheetsBeforeWaste = Math.ceil(inputs.quantity / inputs.cutsPerSheet);
-  const wasteMode = (inputs as any).wasteMode || 'percent';
+  const printSheetsBeforeWaste = Math.ceil(safeDiv(quantity, cutsPerSheet));
+  const wasteMode = (inputs as { wasteMode?: string }).wasteMode || 'percent';
   const printSheetsAfterWaste = wasteMode === 'number'
-    ? printSheetsBeforeWaste + (inputs.wastePercent || 0)
-    : Math.ceil(printSheetsBeforeWaste * (1 + inputs.wastePercent / 100));
-  const purchaseSheetsNeeded = Math.ceil(printSheetsAfterWaste / printSheetsPerPurchase);
-  const paperCost = pricePerSheet * purchaseSheetsNeeded;
+    ? printSheetsBeforeWaste + num(inputs.wastePercent)
+    : Math.ceil(printSheetsBeforeWaste * (1 + num(inputs.wastePercent) / 100));
+  const purchaseSheetsNeeded = Math.ceil(safeDiv(printSheetsAfterWaste, printSheetsPerPurchase));
+  const paperCost = finite(pricePerSheet * purchaseSheetsNeeded);
 
   // wasteInCosts controls whether non-paper costs use sheets WITH waste or WITHOUT waste
   // Paper always uses waste. When false, printing/cellophane/finishing use printSheetsBeforeWaste.
@@ -136,14 +150,14 @@ export function calculateQuote(
   const machineSize = (overrides.machineSizeIdx != null && overrides.machineSizeIdx >= 0)
     ? priceSettings.sizes[overrides.machineSizeIdx]
     : matchedSize;
-  const thousands = Math.max(1, Math.ceil(effectiveSheets / 1000));
-  const effectiveColorCount = inputs.colorCount >= 5 ? 4 : inputs.colorCount;
+  const thousands = Math.max(1, Math.ceil(safeDiv(effectiveSheets, 1000)));
+  const effectiveColorCount = num(inputs.colorCount) >= 5 ? 4 : num(inputs.colorCount);
 
   let sortCost = 0;
   if (machineSize && effectiveColorCount > 0) {
     const cp = getColorPricing(machineSize, effectiveColorCount);
     if (cp) {
-      sortCost = (inputs.printedFaces === 2 && inputs.facesDifferent) ? cp.sortPerFace * 2 : cp.sortPerFace;
+      sortCost = (inputs.printedFaces === 2 && inputs.facesDifferent) ? num(cp.sortPerFace) * 2 : num(cp.sortPerFace);
     }
   }
 
@@ -151,31 +165,31 @@ export function calculateQuote(
   if (machineSize && effectiveColorCount > 0) {
     const cp = getColorPricing(machineSize, effectiveColorCount);
     if (cp) {
-      printCost = inputs.printedFaces * (cp.printFirst1000PerFace + Math.max(0, thousands - 1) * cp.printExtra1000PerFace);
+      printCost = num(inputs.printedFaces) * (num(cp.printFirst1000PerFace) + Math.max(0, thousands - 1) * num(cp.printExtra1000PerFace));
     }
   }
 
   let extraColorCost = 0;
-  if (inputs.colorCount >= 5 && inputs.extraColorPrice > 0) {
-    extraColorCost = calcExtraColorCost(inputs, inputs.quantity, thousands);
+  if (num(inputs.colorCount) >= 5 && num(inputs.extraColorPrice) > 0) {
+    extraColorCost = calcExtraColorCost(inputs, quantity, thousands);
   }
 
   // Cellophane: priority — manual override > matched product size > machine size
   let cellophaneCost = 0;
   const isFieldHidden = (field: string) => (machineSize ?? matchedSize)?.hiddenFields?.includes(field) ?? false;
-  if (inputs.cellophaneFaces > 0 && !isFieldHidden('cellophane')) {
+  if (num(inputs.cellophaneFaces) > 0 && !isFieldHidden('cellophane')) {
     let perFace = 0;
     if (overrides.cellophaneOverridePerFace != null && overrides.cellophaneOverridePerFace >= 0) {
-      perFace = overrides.cellophaneOverridePerFace;
+      perFace = num(overrides.cellophaneOverridePerFace);
     } else {
-      perFace = (matchedSize?.cellophanePerFace ?? machineSize?.cellophanePerFace ?? 0);
+      perFace = num(matchedSize?.cellophanePerFace ?? machineSize?.cellophanePerFace);
     }
-    cellophaneCost = effectiveSheets * inputs.cellophaneFaces * perFace;
+    cellophaneCost = finite(effectiveSheets * num(inputs.cellophaneFaces) * perFace);
   }
 
   let dieCutCost = 0;
   if (inputs.dieCut && machineSize && !isFieldHidden('diecut')) {
-    dieCutCost = machineSize.diecut1st1000 + Math.max(0, thousands - 1) * machineSize.diecutExtra1000;
+    dieCutCost = num(machineSize.diecut1st1000) + Math.max(0, thousands - 1) * num(machineSize.diecutExtra1000);
   }
 
   // Custom fields cost
@@ -183,14 +197,14 @@ export function calculateQuote(
   const customFieldsDetail: { name: string; cost: number }[] = [];
   if (matchedSize?.customFields) {
     for (const f of matchedSize.customFields) {
-      const cost = calcCustomFieldCost(f, inputs.quantity, thousands);
+      const cost = calcCustomFieldCost(f, quantity, thousands);
       customFieldsCost += cost;
       if (cost > 0) customFieldsDetail.push({ name: f.name, cost });
     }
   }
 
-  const moldCost = inputs.moldPrice;
-  const totalCost = paperCost + sortCost + printCost + extraColorCost + cellophaneCost + dieCutCost + customFieldsCost + moldCost;
+  const moldCost = num(inputs.moldPrice);
+  const totalCost = finite(paperCost + sortCost + printCost + extraColorCost + cellophaneCost + dieCutCost + customFieldsCost + moldCost);
 
   const finishingCosts = finishingItems.map(item => {
     const multiplier = Number.isFinite(item.multiplier) && item.multiplier > 0 ? item.multiplier : 1;
@@ -198,19 +212,38 @@ export function calculateQuote(
     const extraPer1000 = Number.isFinite(item.extraPer1000) ? item.extraPer1000 : 0;
     if (!item.enabled || pricePerUnit <= 0) return 0;
     switch (item.calcType) {
-      case 'per_piece': return inputs.quantity * multiplier * pricePerUnit;
-      case 'per_1000': return thousands * multiplier * pricePerUnit;
-      case 'tiered_1000': return multiplier * (pricePerUnit + Math.max(thousands - 1, 0) * extraPer1000);
-      case 'flat': return multiplier * pricePerUnit;
+      case 'per_piece': return finite(quantity * multiplier * pricePerUnit);
+      case 'per_1000': return finite(thousands * multiplier * pricePerUnit);
+      case 'tiered_1000': return finite(multiplier * (pricePerUnit + Math.max(thousands - 1, 0) * extraPer1000));
+      case 'flat': return finite(multiplier * pricePerUnit);
       default: return 0;
     }
   });
 
-  const totalFinishing = finishingCosts.reduce((a, b) => a + b, 0);
-  const grandTotal = totalCost + totalFinishing;
-  const pricePerPiece = inputs.quantity === 0 ? 0 : grandTotal / inputs.quantity;
+  const totalFinishing = finite(finishingCosts.reduce((a, b) => a + b, 0));
+  const grandTotal = finite(totalCost + totalFinishing);
+  const pricePerPiece = quantity === 0 ? 0 : safeDiv(grandTotal, quantity);
 
-  const customFieldsBreakdown = customFieldsDetail.map(d => ({ name: d.name, value: d.cost }));
+  const customFieldsBreakdown = customFieldsDetail.map(d => ({ name: d.name, value: finite(d.cost) }));
 
-  return { paperCost, sortCost, printCost, extraColorCost, cellophaneCost, dieCutCost, customFieldsCost, customFieldsBreakdown, totalCost, totalFinishing, grandTotal, pricePerPiece, printSheetsPerPurchase, printSheetsBeforeWaste, printSheetsAfterWaste, purchaseSheetsNeeded, thousands, valid: true };
+  return {
+    paperCost: finite(paperCost),
+    sortCost: finite(sortCost),
+    printCost: finite(printCost),
+    extraColorCost: finite(extraColorCost),
+    cellophaneCost: finite(cellophaneCost),
+    dieCutCost: finite(dieCutCost),
+    customFieldsCost: finite(customFieldsCost),
+    customFieldsBreakdown,
+    totalCost,
+    totalFinishing,
+    grandTotal,
+    pricePerPiece,
+    printSheetsPerPurchase: finite(printSheetsPerPurchase),
+    printSheetsBeforeWaste: finite(printSheetsBeforeWaste),
+    printSheetsAfterWaste: finite(printSheetsAfterWaste),
+    purchaseSheetsNeeded: finite(purchaseSheetsNeeded),
+    thousands: finite(thousands),
+    valid: true,
+  };
 }

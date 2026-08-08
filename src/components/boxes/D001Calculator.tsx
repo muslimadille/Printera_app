@@ -448,7 +448,7 @@ const D001Calculator = ({ isAdmin = false }: { isAdmin?: boolean }) => {
           </div>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 lg:grid-cols-[1fr_440px] gap-4 items-start">
+          <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(0,440px)] gap-4 items-start min-w-0 w-full calc-shell">
             <div className="min-w-0">
               {previewMode === 'template' ? (
                 <D001Preview params={params} fitContainer showDebug={false} showDimensions={showDimensions} dimUnit={dimUnit} />
@@ -626,13 +626,14 @@ const ExportSingleButton = ({ params }: { params: D001Params }) => {
     const name = `D001_${params.width}x${params.height}x${params.depth}.svg`;
     downloadD001SingleTemplate(geo, name);
   };
-  const onExportPdf = async () => {
+  const onExportPdf = async (mode: 'download' | 'preview') => {
     const { buildD001Geometry } = await import('@/lib/d001/geometry');
-    const { buildD001SingleTemplateSvg, downloadD001SingleTemplatePdf } = await import('@/lib/d001/exportSingle');
+    const { buildD001SingleTemplateSvg, downloadD001SingleTemplatePdf, previewD001SingleTemplatePdf } = await import('@/lib/d001/exportSingle');
     const geo = buildD001Geometry(params);
     const svg = buildD001SingleTemplateSvg(geo);
     const name = `D001_${params.width}x${params.height}x${params.depth}.pdf`;
-    await downloadD001SingleTemplatePdf(svg, name);
+    if (mode === 'preview') await previewD001SingleTemplatePdf(svg, name);
+    else await downloadD001SingleTemplatePdf(svg, name);
   };
   return (
     <DropdownMenu>
@@ -647,8 +648,11 @@ const ExportSingleButton = ({ params }: { params: D001Params }) => {
         <DropdownMenuItem onSelect={onExportSvg}>
           تصدير SVG
         </DropdownMenuItem>
-        <DropdownMenuItem onSelect={onExportPdf}>
-          تصدير PDF
+        <DropdownMenuItem onSelect={() => void onExportPdf('preview')}>
+          معاينة PDF
+        </DropdownMenuItem>
+        <DropdownMenuItem onSelect={() => void onExportPdf('download')}>
+          تحميل PDF
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
@@ -667,9 +671,10 @@ const ExportSheetButton = ({
     const { downloadD001SheetLayout } = await import('@/lib/d001/exportSheet');
     downloadD001SheetLayout(params, nesting, result);
   };
-  const onExportPdf = async () => {
-    const { downloadD001SheetLayoutPdf } = await import('@/lib/d001/exportSheet');
-    await downloadD001SheetLayoutPdf(params, nesting, result);
+  const onExportPdf = async (mode: 'download' | 'preview') => {
+    const { downloadD001SheetLayoutPdf, previewD001SheetLayoutPdf } = await import('@/lib/d001/exportSheet');
+    if (mode === 'preview') await previewD001SheetLayoutPdf(params, nesting, result);
+    else await downloadD001SheetLayoutPdf(params, nesting, result);
   };
   return (
     <DropdownMenu>
@@ -684,8 +689,11 @@ const ExportSheetButton = ({
         <DropdownMenuItem onSelect={onExportSvg} disabled={disabled}>
           تصدير SVG
         </DropdownMenuItem>
-        <DropdownMenuItem onSelect={onExportPdf} disabled={disabled}>
-          تصدير PDF
+        <DropdownMenuItem onSelect={() => void onExportPdf('preview')} disabled={disabled}>
+          معاينة PDF
+        </DropdownMenuItem>
+        <DropdownMenuItem onSelect={() => void onExportPdf('download')} disabled={disabled}>
+          تحميل PDF
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

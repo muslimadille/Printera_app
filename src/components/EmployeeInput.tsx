@@ -1,4 +1,5 @@
 import { usePrintingStore, useCalculations } from '@/store/printingStore';
+import { formatMoney, isFiniteMoney } from '@/lib/safeNumber';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -283,7 +284,7 @@ const EmployeeInput = ({ onNavigateToQuote }: { onNavigateToQuote?: () => void }
             <div className="space-y-2 mb-4">
               <div className="p-3 rounded-lg bg-primary/10 border border-primary/20 text-center">
                 <p className="text-xs text-muted-foreground mb-0.5">الإجمالي الشامل</p>
-                <p className="text-2xl font-bold text-primary">{calc.grandTotal.toFixed(2)}</p>
+                <p className="text-2xl font-bold text-primary">{formatMoney(calc.grandTotal)}</p>
                 <p className="text-[10px] text-muted-foreground">ريال</p>
               </div>
               <div className="grid grid-cols-2 gap-2">
@@ -298,10 +299,10 @@ const EmployeeInput = ({ onNavigateToQuote }: { onNavigateToQuote?: () => void }
               </div>
               <div className="p-2 rounded-lg bg-muted/50 text-center">
                 <p className="text-[10px] text-muted-foreground">التشطيبات الإضافية</p>
-                <p className="text-sm font-semibold">{calc.totalFinishing.toFixed(2)} ريال</p>
+                <p className="text-sm font-semibold">{formatMoney(calc.totalFinishing)} ريال</p>
               </div>
             </div>
-            <ProfitMargins grandTotal={calc.grandTotal} quantity={inputs.quantity} />
+            <ProfitMargins grandTotal={calc.grandTotal} quantity={inputs.quantity} incomplete={!!calc.validationMessage || !isFiniteMoney(calc.grandTotal)} />
             <Button className="w-full mt-4 gap-2" onClick={handleSendToQuote}>
               <FileText className="w-4 h-4" />
               إرسال لعرض السعر

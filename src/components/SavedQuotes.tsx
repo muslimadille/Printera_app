@@ -12,6 +12,7 @@ import { toast } from 'sonner';
 import { SavedQuote, listQuotes, deleteQuote, toggleEmployeesViewQuotes, transferQuotes, listEmployees, AppUser, saveQuote } from '@/lib/userApi';
 import * as XLSX from 'xlsx';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { TableScroller } from '@/components/layout';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { parseCostCalcExcelMulti, type CostCalcImportResult } from '@/lib/costCalcExcel';
 import { calculateQuote } from '@/lib/calcEngine';
@@ -370,17 +371,17 @@ const SavedQuotes = ({ sessionToken, userId, isEmployee, employeesCanViewQuotes,
   };
 
   const QuotesTable = ({ items, showOwner, canEdit }: { items: SavedQuote[]; showOwner: boolean; canEdit: boolean }) => (
-    <div className="rounded-lg border overflow-hidden">
+    <TableScroller hint="اسحب أفقياً لعرض كل الأعمدة">
       <Table>
         <TableHeader>
           <TableRow className="bg-muted/50 hover:bg-muted/50">
-            <TableHead className="text-right font-bold w-8">#</TableHead>
-            <TableHead className="text-right font-bold">الصنف</TableHead>
-            <TableHead className="text-right font-bold">النوع</TableHead>
-            <TableHead className="text-right font-bold">الإجمالي</TableHead>
-            <TableHead className="text-right font-bold">الكمية</TableHead>
-            <TableHead className="text-right font-bold">التاريخ</TableHead>
-            {showOwner && <TableHead className="text-right font-bold">الموظف</TableHead>}
+            <TableHead className="text-start font-bold w-8">#</TableHead>
+            <TableHead className="text-start font-bold">الصنف</TableHead>
+            <TableHead className="text-start font-bold">النوع</TableHead>
+            <TableHead className="text-start font-bold">الإجمالي</TableHead>
+            <TableHead className="text-start font-bold">الكمية</TableHead>
+            <TableHead className="text-start font-bold">التاريخ</TableHead>
+            {showOwner && <TableHead className="text-start font-bold">الموظف</TableHead>}
             <TableHead className="text-center font-bold w-[140px]">إجراءات</TableHead>
           </TableRow>
         </TableHeader>
@@ -437,12 +438,12 @@ const SavedQuotes = ({ sessionToken, userId, isEmployee, employeesCanViewQuotes,
               <TableCell>
                 <div className="flex items-center justify-center gap-1">
                   {canEdit && onLoadQuote && (
-                    <Button variant="ghost" size="icon" className="h-7 w-7 text-primary" title="تعديل" onClick={() => onLoadQuote(q)}>
+                    <Button variant="ghost" size="icon" className="h-11 w-11 sm:h-7 sm:w-7 text-primary" title="تعديل" onClick={() => onLoadQuote(q)}>
                       <Edit className="w-3.5 h-3.5" />
                     </Button>
                   )}
                   {canEdit && (
-                    <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive" title="حذف" onClick={() => handleDelete(q)}>
+                    <Button variant="ghost" size="icon" className="h-11 w-11 sm:h-7 sm:w-7 text-destructive hover:text-destructive" title="حذف" onClick={() => handleDelete(q)}>
                       <Trash2 className="w-3.5 h-3.5" />
                     </Button>
                   )}
@@ -452,7 +453,7 @@ const SavedQuotes = ({ sessionToken, userId, isEmployee, employeesCanViewQuotes,
           ))}
         </TableBody>
       </Table>
-    </div>
+    </TableScroller>
   );
 
   return (

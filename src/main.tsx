@@ -2,6 +2,7 @@ import { createRoot } from "react-dom/client";
 import App from "./App.tsx";
 import "./index.css";
 import { installInternalErrorLogger } from "./lib/errorLogger";
+import { purgeDevServiceWorker } from "./lib/purgeDevServiceWorker";
 
 // Silent internal logging for 404 / proxy / network errors (no UI to user).
 installInternalErrorLogger();
@@ -16,4 +17,6 @@ window.addEventListener('unhandledrejection', (e) => {
   }
 });
 
-createRoot(document.getElementById("root")!).render(<App />);
+void purgeDevServiceWorker().then(() => {
+  createRoot(document.getElementById("root")!).render(<App />);
+});

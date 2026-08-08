@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { usePrintingStore, useCalculations, type FinishingItem, type CalculatorInputs } from '@/store/printingStore';
 import { calculateQuote } from '@/lib/calcEngine';
+import { finite, formatMoney, isFiniteMoney } from '@/lib/safeNumber';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -439,7 +440,7 @@ const CostCalculator = ({ onNavigateToQuote, sessionToken }: { onNavigateToQuote
     });
   }, [sheet, paperTypes, priceSettings]);
 
-  const sheetGrandTotal = pieceCosts.reduce((sum, c) => sum + c.grandTotal, 0);
+  const sheetGrandTotal = finite(pieceCosts.reduce((sum, c) => sum + finite(c.grandTotal), 0));
   const sheetTotalQuantity = sheet?.pieces.reduce((sum, p) => sum + p.quantity, 0) || 0;
 
   // Calculate totals for ALL sheets
@@ -482,7 +483,7 @@ const CostCalculator = ({ onNavigateToQuote, sessionToken }: { onNavigateToQuote
     });
   }, [sheets, paperTypes, priceSettings]);
 
-  const allSheetsGrandTotal = allSheetsTotals.reduce((sum, s) => sum + s.total, 0);
+  const allSheetsGrandTotal = finite(allSheetsTotals.reduce((sum, s) => sum + finite(s.total), 0));
 
   // Save handler
   const handleSave = async (skipMetadata = false) => {
@@ -532,7 +533,7 @@ const CostCalculator = ({ onNavigateToQuote, sessionToken }: { onNavigateToQuote
   };
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-5 pb-20 lg:pb-0">
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-5 pb-20 lg:pb-0 min-w-0 w-full calc-shell">
       {/* ═══ Main Inputs ═══ */}
       <div className="lg:col-span-2 space-y-3 sm:space-y-4">
 
@@ -616,7 +617,7 @@ const CostCalculator = ({ onNavigateToQuote, sessionToken }: { onNavigateToQuote
               {sheets.length > 1 && (
                 <div className="p-3 rounded-lg bg-accent/10 border border-accent/20 text-center">
                   <p className="text-xs text-muted-foreground mb-0.5">إجمالي كل الأوراق</p>
-                  <p className="text-2xl font-bold text-accent-foreground">{allSheetsGrandTotal.toFixed(2)}</p>
+                  <p className="text-2xl font-bold text-accent-foreground">{formatMoney(allSheetsGrandTotal)}</p>
                   <p className="text-[10px] text-muted-foreground">ريال</p>
                 </div>
               )}
@@ -626,7 +627,7 @@ const CostCalculator = ({ onNavigateToQuote, sessionToken }: { onNavigateToQuote
                   {sheets.map((s, si) => (
                     <div key={s.id} className={`flex justify-between text-xs px-2 py-1.5 rounded ${si === activeSheetIdx ? 'bg-primary/10 border border-primary/20' : 'bg-muted/50'}`}>
                       <span className={si === activeSheetIdx ? 'text-primary font-semibold' : 'text-muted-foreground'}>ورقة {si + 1}</span>
-                      <span className="font-mono font-medium">{allSheetsTotals[si]?.total.toFixed(2) || '0.00'} ر.س</span>
+                      <span className="font-mono font-medium">{formatMoney(allSheetsTotals[si]?.total)} ر.س</span>
                     </div>
                   ))}
                 </div>
@@ -634,7 +635,7 @@ const CostCalculator = ({ onNavigateToQuote, sessionToken }: { onNavigateToQuote
               {/* Current sheet total */}
               <div className="p-3 rounded-lg bg-primary/10 border border-primary/20 text-center">
                 <p className="text-xs text-muted-foreground mb-0.5">{sheets.length > 1 ? `إجمالي الورقة ${activeSheetIdx + 1}` : 'الإجمالي الشامل'}</p>
-                <p className="text-2xl font-bold text-primary">{sheetGrandTotal.toFixed(2)}</p>
+                <p className="text-2xl font-bold text-primary">{formatMoney(sheetGrandTotal)}</p>
                 <p className="text-[10px] text-muted-foreground">ريال</p>
               </div>
               {sheet?.pieces.length > 1 && (
@@ -642,7 +643,7 @@ const CostCalculator = ({ onNavigateToQuote, sessionToken }: { onNavigateToQuote
                   {sheet.pieces.map((p, pi) => (
                     <div key={p.id} className="flex justify-between text-xs px-2 py-1 rounded bg-muted/50">
                       <span className="text-muted-foreground">قطعة {pi + 1}</span>
-                      <span className="font-mono font-medium">{pieceCosts[pi]?.grandTotal.toFixed(2) || '0.00'} ر.س</span>
+                      <span className="font-mono font-medium">{formatMoney(pieceCosts[pi]?.grandTotal)} ر.س</span>
                     </div>
                   ))}
                 </div>

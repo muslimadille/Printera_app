@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { TableScroller } from '@/components/layout';
 import { Button } from '@/components/ui/button';
 import { fetchLoginLogs, LoginLog } from '@/lib/userApi';
 import { History, RefreshCw, Loader2 } from 'lucide-react';
@@ -50,26 +51,26 @@ const LoginHistory = ({ currentUser, currentPassword }: { currentUser: { usernam
         ) : logs.length === 0 ? (
           <p className="text-center text-muted-foreground py-8">لا توجد سجلات بعد</p>
         ) : (
-          <div className="rounded-md border overflow-auto">
+          <TableScroller>
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="text-right">المستخدم</TableHead>
-                  <TableHead className="text-right">وقت الدخول</TableHead>
-                  <TableHead className="text-right">عنوان IP</TableHead>
+                  <TableHead className="text-start">المستخدم</TableHead>
+                  <TableHead className="text-start">وقت الدخول</TableHead>
+                  <TableHead className="text-start">عنوان IP</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {logs.map((log) => (
                   <TableRow key={log.id}>
                     <TableCell className="font-medium">{log.username}</TableCell>
-                    <TableCell>{formatDate(log.logged_in_at)}</TableCell>
+                    <TableCell className="whitespace-nowrap">{formatDate(log.logged_in_at)}</TableCell>
                     <TableCell className="text-muted-foreground">{log.ip_address || '—'}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
             </Table>
-          </div>
+          </TableScroller>
         )}
       </CardContent>
     </Card>

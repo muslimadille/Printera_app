@@ -71,6 +71,12 @@ export function trackActivity(
     details: details || {},
     occurred_at: new Date().toISOString(),
   });
+  // Light engagement signal for the PWA install prompt (non-blocking).
+  if (action === 'calculate' || action === 'save_quote') {
+    void import('@/lib/outbox')
+      .then((m) => m.markEngagementForInstall(action === 'calculate' ? 'calc' : 'save'))
+      .catch(() => undefined);
+  }
 }
 
 export async function flushNow(useBeacon = false): Promise<void> {

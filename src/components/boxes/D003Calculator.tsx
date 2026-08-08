@@ -273,7 +273,7 @@ const D003Calculator = ({ isAdmin = false }: { isAdmin?: boolean }) => {
           </div>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 lg:grid-cols-[1fr_440px] gap-4 items-start">
+          <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(0,440px)] gap-4 items-start min-w-0 w-full calc-shell">
             <div className="min-w-0">
               {previewMode === 'template' ? (
                 <D003Preview params={params} fitContainer showDebug={false} />
@@ -400,13 +400,14 @@ const ExportSingleButton = ({ params }: { params: D003Params }) => {
     const name = `D003_${params.width}x${params.height}x${params.depth}.svg`;
     downloadD003SingleTemplate(geo, name);
   };
-  const onExportPdf = async () => {
+  const onExportPdf = async (mode: 'download' | 'preview') => {
     const { buildD003Geometry } = await import('@/lib/d003/geometry');
-    const { buildD003SingleTemplateSvg, downloadD003SingleTemplatePdf } = await import('@/lib/d003/exportSingle');
+    const { buildD003SingleTemplateSvg, downloadD003SingleTemplatePdf, previewD003SingleTemplatePdf } = await import('@/lib/d003/exportSingle');
     const geo = buildD003Geometry(params);
     const svg = buildD003SingleTemplateSvg(geo);
     const name = `D003_${params.width}x${params.height}x${params.depth}.pdf`;
-    await downloadD003SingleTemplatePdf(svg, name);
+    if (mode === 'preview') await previewD003SingleTemplatePdf(svg, name);
+    else await downloadD003SingleTemplatePdf(svg, name);
   };
   return (
     <DropdownMenu>
@@ -420,8 +421,11 @@ const ExportSingleButton = ({ params }: { params: D003Params }) => {
         <DropdownMenuItem onSelect={onExportSvg}>
           Export SVG
         </DropdownMenuItem>
-        <DropdownMenuItem onSelect={onExportPdf}>
-          Export PDF
+        <DropdownMenuItem onSelect={() => void onExportPdf('preview')}>
+          Preview PDF
+        </DropdownMenuItem>
+        <DropdownMenuItem onSelect={() => void onExportPdf('download')}>
+          Download PDF
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
@@ -440,9 +444,10 @@ const ExportSheetButton = ({
     const { downloadD003SheetLayout } = await import('@/lib/d003/exportSheet');
     downloadD003SheetLayout(params, nesting, result);
   };
-  const onExportPdf = async () => {
-    const { downloadD003SheetLayoutPdf } = await import('@/lib/d003/exportSheet');
-    await downloadD003SheetLayoutPdf(params, nesting, result);
+  const onExportPdf = async (mode: 'download' | 'preview') => {
+    const { downloadD003SheetLayoutPdf, previewD003SheetLayoutPdf } = await import('@/lib/d003/exportSheet');
+    if (mode === 'preview') await previewD003SheetLayoutPdf(params, nesting, result);
+    else await downloadD003SheetLayoutPdf(params, nesting, result);
   };
   return (
     <DropdownMenu>
@@ -456,8 +461,11 @@ const ExportSheetButton = ({
         <DropdownMenuItem onSelect={onExportSvg} disabled={disabled}>
           Export SVG
         </DropdownMenuItem>
-        <DropdownMenuItem onSelect={onExportPdf} disabled={disabled}>
-          Export PDF
+        <DropdownMenuItem onSelect={() => void onExportPdf('preview')} disabled={disabled}>
+          Preview PDF
+        </DropdownMenuItem>
+        <DropdownMenuItem onSelect={() => void onExportPdf('download')} disabled={disabled}>
+          Download PDF
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

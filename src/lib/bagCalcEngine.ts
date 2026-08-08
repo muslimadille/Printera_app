@@ -150,16 +150,22 @@ export function calculateBag(
     const mh = m.height;
 
     // Cuts of MACHINE sheet from PURCHASE sheet (both orientations)
-    const cutsA = Math.floor(purchaseW / mw) * Math.floor(purchaseH / mh);
-    const cutsB = Math.floor(purchaseW / mh) * Math.floor(purchaseH / mw);
-    const machineSheetsPerPurchase = Math.max(cutsA, cutsB);
+    const machineSheetsPerPurchase = (purchaseW > 0 && purchaseH > 0 && mw > 0 && mh > 0)
+      ? Math.max(
+          Math.floor(purchaseW / mw) * Math.floor(purchaseH / mh),
+          Math.floor(purchaseW / mh) * Math.floor(purchaseH / mw),
+        )
+      : 0;
 
     const cp = getColorPricing(m, inputs.colorCount);
 
     // Case A: Flat fits inside the machine sheet (try both orientations)
-    const fitA = Math.floor(mw / flatWidth) * Math.floor(mh / flatHeight);
-    const fitB = Math.floor(mw / flatHeight) * Math.floor(mh / flatWidth);
-    const bagsPerSheet = Math.max(fitA, fitB);
+    const bagsPerSheet = (mw > 0 && mh > 0 && flatWidth > 0 && flatHeight > 0)
+      ? Math.max(
+          Math.floor(mw / flatWidth) * Math.floor(mh / flatHeight),
+          Math.floor(mw / flatHeight) * Math.floor(mh / flatWidth),
+        )
+      : 0;
 
     let scenario: BagScenario;
 

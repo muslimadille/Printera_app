@@ -306,14 +306,14 @@ const SmartSheetLayoutPreview = ({
               </Button>
             </div>
 
-            <div className="space-y-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
               {list.map((s, idx) => {
                 const isManual = manualScenario?.id === s.id;
                 const cardLabel = isManual
                   ? 'سيناريو يدوي'
                   : `سيناريو ${String.fromCharCode(0x0041 + (manualScenario ? idx - 1 : idx))}`;
                 return (
-                <div key={s.id} data-tour={s.id === bestId ? 'best-scenario' : undefined}>
+                <div key={s.id} data-tour={s.id === bestId ? 'best-scenario' : undefined} className="min-w-0">
                 <ScenarioCard
                   scenario={s}
                   label={cardLabel}

@@ -35,7 +35,7 @@ const LidTuckBoxCalculator = () => {
     outsideRange(H, LID_TUCK_BOX_RANGES.H);
 
   return (
-    <div className="grid gap-4 lg:grid-cols-[360px_1fr]" dir="rtl">
+    <div className="grid gap-4 grid-cols-1 lg:grid-cols-[minmax(0,360px)_minmax(0,1fr)] min-w-0 w-full calc-shell" dir="rtl">
       <Card className="border-primary/20 shadow-sm">
         <CardHeader className="pb-3">
           <CardTitle className="flex items-center gap-2 text-base">

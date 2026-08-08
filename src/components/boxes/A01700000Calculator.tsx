@@ -80,7 +80,7 @@ const A01700000Calculator = ({ isAdmin = false }: { isAdmin?: boolean }) => {
   const reset = () => setParams({ ...A01700000_DEFAULTS });
 
   return (
-    <div className="grid grid-cols-[300px_1fr] gap-4 p-4">
+    <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,300px)_minmax(0,1fr)] gap-4 p-2 sm:p-4 min-w-0 w-full calc-shell">
       {/* Left: Controls */}
       <Card>
         <CardHeader className="pb-2">

@@ -241,7 +241,7 @@ export function InteractiveSvgCanvas({ segments: initialSegments = [], svgWidth 
 
       {/* Edit Panel */}
       {editMode && selectedIds.size > 0 && (
-        <div className="absolute top-14 right-2 bg-white p-3 rounded shadow-lg border border-gray-200 z-10 flex flex-col gap-3 min-w-[200px]" dir="rtl">
+        <div className="absolute top-14 end-2 max-w-[calc(100%-1rem)] bg-white dark:bg-card p-3 rounded shadow-lg border border-gray-200 dark:border-border z-10 flex flex-col gap-3 min-w-0 w-[min(200px,100%)]" dir="rtl">
           <div className="flex justify-between items-center">
             <h4 className="font-bold text-sm text-gray-800">تعديل {selectedIds.size} خط</h4>
             <button onClick={() => setSelectedIds(new Set())} className="text-gray-400 hover:text-red-500"><X size={14} /></button>

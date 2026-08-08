@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Printer, LogIn, Loader2, Monitor, Smartphone, LogOut, KeyRound } from 'lucide-react';
 import { loginUser, forceLogin, changePassword, TabPermission } from '@/lib/userApi';
+import { ThemeToggle } from '@/components/ThemeToggle';
 import { toast } from 'sonner';
 
 interface ActiveSession {
@@ -176,11 +177,23 @@ const LoginDialog = ({ onLogin, onPasswordCapture, onSessionToken, onTabPermissi
       </div>
 
       <Dialog open={true}>
+        {/*
+          No position utility in this className. DialogContent composes it with cn(),
+          which runs tailwind-merge, and tailwind-merge treats `relative` and the base
+          component's `fixed` as the same group — last one wins, so `relative` silently
+          DROPS `fixed`. left-[50%]/top-[50%] then resolve against the document instead
+          of the viewport and the dialog renders entirely off-screen.
+          The ThemeToggle below is `absolute`, but `fixed` is already a positioned
+          ancestor for it, so nothing needs `relative` here.
+        */}
         <DialogContent
           className={`sm:max-w-md border-border/50 shadow-2xl shadow-primary/10 transition-transform ${shake ? 'animate-shake' : ''}`}
           onPointerDownOutside={(e) => e.preventDefault()}
           onEscapeKeyDown={(e) => e.preventDefault()}
         >
+          <div className="absolute top-3 start-3 z-10">
+            <ThemeToggle />
+          </div>
           <DialogHeader className="items-center text-center gap-4">
             <div className="w-20 h-20 rounded-2xl gradient-primary flex items-center justify-center mx-auto shadow-xl shadow-primary/30 animate-float">
               <Printer className="w-10 h-10 text-primary-foreground" />

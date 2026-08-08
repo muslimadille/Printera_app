@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { TableScroller } from '@/components/layout';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { UserPlus, Trash2, Edit, Shield, Clock, Loader2, RefreshCw, Monitor, Layers, Users, HelpCircle, Activity, BarChart3, Circle, ChevronDown, ChevronLeft, LogIn, LogOut, Heart, AlertCircle, Download, Save, Calculator, FileText, Settings as SettingsIcon, Upload, MousePointerClick } from 'lucide-react';
@@ -326,30 +327,30 @@ const UserManagement = ({ currentUser, currentPassword }: UserManagementProps) =
   };
 
   const eventTypeMeta: Record<string, { label: string; icon: any; color: string }> = {
-    login: { label: 'تسجيل دخول', icon: LogIn, color: 'text-green-600' },
-    logout: { label: 'تسجيل خروج', icon: LogOut, color: 'text-blue-600' },
-    auto_logout: { label: 'إنهاء تلقائي', icon: AlertCircle, color: 'text-orange-600' },
+    login: { label: 'تسجيل دخول', icon: LogIn, color: 'text-green-600 dark:text-green-400' },
+    logout: { label: 'تسجيل خروج', icon: LogOut, color: 'text-blue-600 dark:text-blue-400' },
+    auto_logout: { label: 'إنهاء تلقائي', icon: AlertCircle, color: 'text-orange-600 dark:text-orange-400' },
     heartbeat: { label: 'نشاط', icon: Heart, color: 'text-muted-foreground' },
-    tab_open: { label: 'فتح تبويبة', icon: MousePointerClick, color: 'text-indigo-600' },
-    calculate: { label: 'حساب', icon: Calculator, color: 'text-purple-600' },
-    save_quote: { label: 'حفظ تكلفة', icon: Save, color: 'text-green-700' },
-    update_quote: { label: 'تعديل تكلفة', icon: Edit, color: 'text-amber-600' },
-    delete_quote: { label: 'حذف تكلفة', icon: Trash2, color: 'text-red-600' },
-    export_pdf: { label: 'تصدير PDF', icon: FileText, color: 'text-rose-600' },
-    export_excel: { label: 'تصدير Excel', icon: Download, color: 'text-emerald-600' },
-    import_excel: { label: 'استيراد Excel', icon: Upload, color: 'text-cyan-600' },
-    settings_change: { label: 'تغيير إعدادات', icon: SettingsIcon, color: 'text-slate-600' },
+    tab_open: { label: 'فتح تبويبة', icon: MousePointerClick, color: 'text-indigo-600 dark:text-indigo-400' },
+    calculate: { label: 'حساب', icon: Calculator, color: 'text-purple-600 dark:text-purple-400' },
+    save_quote: { label: 'حفظ تكلفة', icon: Save, color: 'text-green-700 dark:text-green-400' },
+    update_quote: { label: 'تعديل تكلفة', icon: Edit, color: 'text-amber-600 dark:text-amber-400' },
+    delete_quote: { label: 'حذف تكلفة', icon: Trash2, color: 'text-red-600 dark:text-red-400' },
+    export_pdf: { label: 'تصدير PDF', icon: FileText, color: 'text-rose-600 dark:text-rose-400' },
+    export_excel: { label: 'تصدير Excel', icon: Download, color: 'text-emerald-600 dark:text-emerald-400' },
+    import_excel: { label: 'استيراد Excel', icon: Upload, color: 'text-cyan-600 dark:text-cyan-400' },
+    settings_change: { label: 'تغيير إعدادات', icon: SettingsIcon, color: 'text-slate-600 dark:text-slate-300' },
   };
 
   const alertMeta: Record<string, { label: string; tone: string }> = {
-    long_session: { label: 'جلسة طويلة جداً (+4 ساعات)', tone: 'bg-orange-100 text-orange-800 border-orange-200' },
-    many_calc_no_save: { label: 'حسابات كثيرة بدون حفظ', tone: 'bg-amber-100 text-amber-800 border-amber-200' },
-    frequent_tab_switching: { label: 'تنقّل متكرر بين التبويبات', tone: 'bg-blue-100 text-blue-800 border-blue-200' },
+    long_session: { label: 'جلسة طويلة جداً (+4 ساعات)', tone: 'bg-orange-100 text-orange-800 border-orange-200 dark:bg-orange-950/50 dark:text-orange-300 dark:border-orange-800' },
+    many_calc_no_save: { label: 'حسابات كثيرة بدون حفظ', tone: 'bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-950/50 dark:text-amber-300 dark:border-amber-800' },
+    frequent_tab_switching: { label: 'تنقّل متكرر بين التبويبات', tone: 'bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-950/50 dark:text-blue-300 dark:border-blue-800' },
   };
 
   const performanceMeta: Record<string, { label: string; tone: string }> = {
-    active: { label: '🚀 نشط جداً', tone: 'bg-green-600 text-white' },
-    average: { label: '📊 متوسط', tone: 'bg-blue-500 text-white' },
+    active: { label: '🚀 نشط جداً', tone: 'bg-green-600 text-white dark:bg-green-500' },
+    average: { label: '📊 متوسط', tone: 'bg-blue-500 text-white dark:bg-blue-400 dark:text-slate-900' },
     low: { label: '💤 منخفض', tone: 'bg-muted text-muted-foreground' },
   };
 
@@ -546,20 +547,21 @@ const UserManagement = ({ currentUser, currentPassword }: UserManagementProps) =
               <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
             </div>
           ) : (
+            <TableScroller hint="اسحب أفقياً لعرض كل الأعمدة">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="text-right">اسم المستخدم</TableHead>
-                  <TableHead className="text-right">النوع</TableHead>
-                  <TableHead className="text-right">الحالة</TableHead>
-                  <TableHead className="text-right">الاتصال</TableHead>
-                  <TableHead className="text-right">الجلسات</TableHead>
-                  <TableHead className="text-right">الاستخدام</TableHead>
-                  <TableHead className="text-right">آخر دخول</TableHead>
-                  <TableHead className="text-right">الصلاحية</TableHead>
-                  <TableHead className="text-right">الأجهزة</TableHead>
-                  <TableHead className="text-right">الموظفين</TableHead>
-                  <TableHead className="text-right">الإجراءات</TableHead>
+                  <TableHead className="text-start whitespace-nowrap">اسم المستخدم</TableHead>
+                  <TableHead className="text-start whitespace-nowrap">النوع</TableHead>
+                  <TableHead className="text-start whitespace-nowrap">الحالة</TableHead>
+                  <TableHead className="text-start whitespace-nowrap">الاتصال</TableHead>
+                  <TableHead className="text-start whitespace-nowrap">الجلسات</TableHead>
+                  <TableHead className="text-start whitespace-nowrap">الاستخدام</TableHead>
+                  <TableHead className="text-start whitespace-nowrap">آخر دخول</TableHead>
+                  <TableHead className="text-start whitespace-nowrap">الصلاحية</TableHead>
+                  <TableHead className="text-start whitespace-nowrap">الأجهزة</TableHead>
+                  <TableHead className="text-start whitespace-nowrap">الموظفين</TableHead>
+                  <TableHead className="text-start whitespace-nowrap">الإجراءات</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -577,14 +579,14 @@ const UserManagement = ({ currentUser, currentPassword }: UserManagementProps) =
                       <TableCell>
                         <div className="flex items-center gap-2">
                           <Switch checked={user.is_active} onCheckedChange={() => handleToggleActive(user)} />
-                          <span className={user.is_active ? 'text-green-600' : 'text-destructive'}>
+                          <span className={user.is_active ? 'text-green-600 dark:text-green-400' : 'text-destructive'}>
                             {user.is_active ? 'مفعل' : 'معطل'}
                           </span>
                         </div>
                       </TableCell>
                       <TableCell>
                         {a?.is_online ? (
-                          <Badge className="gap-1 bg-green-600 hover:bg-green-600/90 text-white">
+                          <Badge className="gap-1 bg-green-600 hover:bg-green-600/90 text-white dark:bg-green-500">
                             <Circle className="w-2 h-2 fill-current" /> متصل
                           </Badge>
                         ) : (
@@ -648,6 +650,7 @@ const UserManagement = ({ currentUser, currentPassword }: UserManagementProps) =
                 })}
               </TableBody>
             </Table>
+            </TableScroller>
           )}
         </CardContent>
       </Card>
@@ -849,7 +852,7 @@ const UserManagement = ({ currentUser, currentPassword }: UserManagementProps) =
                   <div className="text-[11px] text-muted-foreground mb-1">الحالة</div>
                   <div className="font-semibold text-sm">
                     {analyticsTarget.is_online
-                      ? <span className="text-green-600 flex items-center gap-1"><Circle className="w-2 h-2 fill-current" /> متصل ({analyticsTarget.active_session_count})</span>
+                      ? <span className="text-green-600 dark:text-green-400 flex items-center gap-1"><Circle className="w-2 h-2 fill-current" /> متصل ({analyticsTarget.active_session_count})</span>
                       : <span className="text-muted-foreground">غير متصل</span>}
                   </div>
                 </div>
@@ -1241,11 +1244,11 @@ const UserManagement = ({ currentUser, currentPassword }: UserManagementProps) =
                                   <span className="text-xs font-medium tabular-nums">{formatDateTime(s.started_at)}</span>
                                   <span className="text-muted-foreground text-xs">←</span>
                                   <span className="text-xs tabular-nums">
-                                    {s.is_active ? <span className="text-green-600">جارية</span> : formatDateTime(s.ended_at)}
+                                    {s.is_active ? <span className="text-green-600 dark:text-green-400">جارية</span> : formatDateTime(s.ended_at)}
                                   </span>
                                   <Badge variant="outline" className="text-[10px] h-5">{s.activity_count} عملية</Badge>
                                   {s.calc_count > 0 && <Badge variant="outline" className="text-[10px] h-5 text-purple-600">{s.calc_count} حساب</Badge>}
-                                  {s.save_count > 0 && <Badge variant="outline" className="text-[10px] h-5 text-green-700">{s.save_count} حفظ</Badge>}
+                                  {s.save_count > 0 && <Badge variant="outline" className="text-[10px] h-5 text-green-700 dark:text-green-400">{s.save_count} حفظ</Badge>}
                                   {(s.alerts || []).map(a => (
                                     <Badge key={a} variant="outline" className={`text-[10px] h-5 ${alertMeta[a]?.tone || ''}`}>
                                       <AlertCircle className="w-2.5 h-2.5 ml-0.5" />{alertMeta[a]?.label || a}
@@ -1271,9 +1274,9 @@ const UserManagement = ({ currentUser, currentPassword }: UserManagementProps) =
                               </div>
                             </div>
                             {s.is_active
-                              ? <Badge className="bg-green-600 hover:bg-green-600/90 text-white shrink-0">نشطة</Badge>
+                              ? <Badge className="bg-green-600 hover:bg-green-600/90 text-white dark:bg-green-500 shrink-0">نشطة</Badge>
                               : s.last_event_type === 'auto_logout'
-                                ? <Badge variant="outline" className="text-orange-600 shrink-0">إنهاء تلقائي</Badge>
+                                ? <Badge variant="outline" className="text-orange-600 dark:text-orange-400 shrink-0">إنهاء تلقائي</Badge>
                                 : <Badge variant="secondary" className="shrink-0">منتهية</Badge>}
                           </button>
                           {isOpen && (

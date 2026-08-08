@@ -1,0 +1,56 @@
+- generic [ref=f20e36]:
+  - region "Notifications (F8)":
+    - list
+  - region "Notifications alt+T"
+  - generic [ref=f20e37]:
+    - banner [ref=f20e38]:
+      - generic [ref=f20e39]:
+        - generic [ref=f20e45]:
+          - heading "حاسبة تكلفة الطباعة الذكية" [level=1] [ref=f20e46]
+          - paragraph [ref=f20e47]: احسب تكاليف الطباعة في أقل من 30 ثانية
+        - generic [ref=f20e48]:
+          - button "التبديل إلى قائمة جانبية" [ref=f20e49] [cursor=pointer]
+          - button "تبديل المظهر" [ref=f20e50] [cursor=pointer]
+          - button "جولة تعريفية" [ref=f20e53] [cursor=pointer]
+          - generic [ref=f20e55]:
+            - generic [ref=f20e56]: A
+            - generic [ref=f20e57]:
+              - generic [ref=f20e58]: admin
+              - generic [ref=f20e59]: مدير النظام
+          - button "خروج" [ref=f20e60] [cursor=pointer]
+    - main [ref=f20e61]:
+      - generic [ref=f20e63]:
+        - tablist [ref=f20e64]:
+          - tab "حساب الصنف" [selected] [ref=f20e65] [cursor=pointer]
+          - tab "تكلفة صنف" [ref=f20e74] [cursor=pointer]
+          - tab "مسطح" [ref=f20e83] [cursor=pointer]
+          - tab "تكلفة بقالب" [ref=f20e92] [cursor=pointer]
+          - tab "قوالب" [ref=f20e101] [cursor=pointer]
+          - tab "علب" [ref=f20e106] [cursor=pointer]
+          - tab "مونتاج قالب" [ref=f20e111] [cursor=pointer]
+          - tab "تكلفة مجلة" [ref=f20e115] [cursor=pointer]
+          - tab "مونتاج" [ref=f20e119] [cursor=pointer]
+          - tab "حساب الأكياس" [ref=f20e128] [cursor=pointer]
+          - tab "حساب التكلفة" [ref=f20e133] [cursor=pointer]
+          - tab "المحرك الذكي" [ref=f20e137] [cursor=pointer]
+          - tab "دمج أصناف" [ref=f20e149] [cursor=pointer]
+          - tab "MONTAG" [ref=f20e155] [cursor=pointer]
+          - tab "المستخدمين" [ref=f20e164] [cursor=pointer]
+          - tab "السجل" [ref=f20e171] [cursor=pointer]
+        - tablist [ref=f20e177]:
+          - tab "التكاليف المحفوظة" [ref=f20e178] [cursor=pointer]
+          - tab "الإعدادات" [ref=f20e183] [cursor=pointer]
+          - tab "الورق" [ref=f20e188] [cursor=pointer]
+        - tablist [ref=f20e194]:
+          - generic [ref=f20e195]: إضافية
+          - tab "التسعير" [ref=f20e196] [cursor=pointer]
+          - tab "مجموعة أوراق" [ref=f20e200] [cursor=pointer]
+          - tab "المجلات" [ref=f20e206] [cursor=pointer]
+          - tab "المجلة" [ref=f20e210] [cursor=pointer]
+          - tab "المجلات (قديم)" [ref=f20e214] [cursor=pointer]
+          - tab "العلب والأكياس" [ref=f20e218] [cursor=pointer]
+          - tab "يدوي" [ref=f20e223] [cursor=pointer]
+          - tab "الموظف" [ref=f20e230] [cursor=pointer]
+          - tab "عرض سعر" [ref=f20e236] [cursor=pointer]
+          - tab "التشطيبات" [ref=f20e241] [cursor=pointer]
+          - tab "استيراد تسعيرات" [ref=f20e245] [cursor=pointer]

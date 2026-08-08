@@ -8,6 +8,18 @@
 
 import { clearToken, request, requestSilent, setToken } from '@/lib/apiClient';
 import { trackActivity } from '@/lib/activityTracker';
+import {
+  enqueueOp,
+  getSessionUserId,
+  isAuthError,
+  isNetworkError,
+  markEngagementForInstall,
+  readPendingQuotes,
+  registerOutboxReplay,
+  removePendingQuote,
+  resolveQuoteId,
+  upsertPendingQuote,
+} from '@/lib/outbox';
 
 export interface AppUser {
   id: string;
@@ -46,6 +58,8 @@ export interface SavedQuote {
   updated_at: string;
   employee_username?: string;
   is_parent_quote?: boolean;
+  /** Present when saved into the offline outbox and not yet synced */
+  pendingSync?: boolean;
 }
 
 // Stable per-browser device identifier — prevents creating duplicate sessions for the same device.
@@ -292,10 +306,38 @@ export async function updateTabPermissions(adminUsername: string, adminPassword:
 
 // ── User settings (cloud) ─────────────────────────────────────────────────────
 
-export async function saveUserSettings(sessionToken: string, userId: string, settings: { key: string; value: any }[]) {
+async function saveUserSettingsDirect(sessionToken: string, userId: string, settings: { key: string; value: any }[]) {
   // `user_id` is echoed back the way the old client did; the server accepts it when it
   // matches the caller and 403s when it does not (03 §5), so the check still runs.
   return request('PUT', '/settings', { token: sessionToken, body: { user_id: userId, settings } });
+}
+
+export async function saveUserSettings(sessionToken: string, userId: string, settings: { key: string; value: any }[]) {
+  const run = () => saveUserSettingsDirect(sessionToken, userId, settings);
+  if (typeof navigator !== 'undefined' && !navigator.onLine) {
+    await enqueueOp({
+      type: 'saveUserSettings',
+      userId,
+      entityKey: 'settings',
+      payload: { settings },
+    });
+    return { success: true, pendingSync: true };
+  }
+  try {
+    return await run();
+  } catch (err) {
+    if (isAuthError(err)) throw err;
+    if (isNetworkError(err)) {
+      await enqueueOp({
+        type: 'saveUserSettings',
+        userId,
+        entityKey: 'settings',
+        payload: { settings },
+      });
+      return { success: true, pendingSync: true };
+    }
+    throw err;
+  }
 }
 
 export async function loadUserSettings(sessionToken: string, userId: string): Promise<Record<string, any>> {
@@ -316,27 +358,176 @@ export async function terminateSession(adminUsername: string, adminPassword: str
 
 // ── Saved quotes ──────────────────────────────────────────────────────────────
 
-export async function saveQuote(sessionToken: string, params: { title: string; customer_name: string; quote_number: string; source_type: string; quote_data: Record<string, any> }): Promise<SavedQuote> {
+async function saveQuoteDirect(sessionToken: string, params: { title: string; customer_name: string; quote_number: string; source_type: string; quote_data: Record<string, any> }): Promise<SavedQuote> {
   const data = await request('POST', '/quotes', { token: sessionToken, body: params });
   trackActivity('save_quote', params.source_type, { quote_number: params.quote_number, customer: params.customer_name });
   return data.quote;
 }
 
-export async function updateQuote(sessionToken: string, quoteId: string, params: { title?: string; customer_name?: string; quote_number?: string; quote_data?: Record<string, any> }): Promise<SavedQuote> {
+async function updateQuoteDirect(sessionToken: string, quoteId: string, params: { title?: string; customer_name?: string; quote_number?: string; quote_data?: Record<string, any> }): Promise<SavedQuote> {
   const data = await request('PATCH', `/quotes/${quoteId}`, { token: sessionToken, body: params });
   trackActivity('update_quote', null, { quote_id: quoteId });
   return data.quote;
 }
 
-export async function deleteQuote(sessionToken: string, quoteId: string) {
+async function deleteQuoteDirect(sessionToken: string, quoteId: string) {
   const r = await request('DELETE', `/quotes/${quoteId}`, { token: sessionToken });
   trackActivity('delete_quote', null, { quote_id: quoteId });
   return r;
 }
 
-export async function listQuotes(sessionToken: string): Promise<{ quotes: SavedQuote[]; related_quotes: SavedQuote[] }> {
-  return request('GET', '/quotes', { token: sessionToken });
+function makeLocalQuoteId() {
+  try {
+    return `local_${crypto.randomUUID()}`;
+  } catch {
+    return `local_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
+  }
 }
+
+async function enqueueSaveQuote(
+  params: { title: string; customer_name: string; quote_number: string; source_type: string; quote_data: Record<string, any> },
+): Promise<SavedQuote> {
+  const userId = getSessionUserId() || 'unknown';
+  const clientQuoteId = makeLocalQuoteId();
+  const now = new Date().toISOString();
+  const quote: SavedQuote = {
+    id: clientQuoteId,
+    user_id: userId,
+    title: params.title,
+    customer_name: params.customer_name,
+    quote_number: params.quote_number,
+    source_type: params.source_type,
+    quote_data: { ...params.quote_data, pendingSync: true, clientQuoteId },
+    created_at: now,
+    updated_at: now,
+    pendingSync: true,
+  };
+  await enqueueOp({
+    type: 'saveQuote',
+    userId,
+    entityKey: clientQuoteId,
+    clientQuoteId,
+    payload: { params, clientQuoteId },
+  });
+  await upsertPendingQuote({ quote, userId });
+  markEngagementForInstall('save');
+  trackActivity('save_quote', params.source_type, { quote_number: params.quote_number, pendingSync: true });
+  return quote;
+}
+
+export async function saveQuote(sessionToken: string, params: { title: string; customer_name: string; quote_number: string; source_type: string; quote_data: Record<string, any> }): Promise<SavedQuote> {
+  if (typeof navigator !== 'undefined' && !navigator.onLine) {
+    return enqueueSaveQuote(params);
+  }
+  try {
+    const quote = await saveQuoteDirect(sessionToken, params);
+    markEngagementForInstall('save');
+    return quote;
+  } catch (err) {
+    if (isAuthError(err)) throw err;
+    if (isNetworkError(err)) return enqueueSaveQuote(params);
+    throw err;
+  }
+}
+
+export async function updateQuote(sessionToken: string, quoteId: string, params: { title?: string; customer_name?: string; quote_number?: string; quote_data?: Record<string, any> }): Promise<SavedQuote> {
+  const userId = getSessionUserId() || 'unknown';
+  const resolvedId = await resolveQuoteId(quoteId);
+
+  const enqueue = async (): Promise<SavedQuote> => {
+    await enqueueOp({
+      type: 'updateQuote',
+      userId,
+      entityKey: quoteId,
+      clientQuoteId: quoteId.startsWith('local_') ? quoteId : undefined,
+      payload: { quoteId: resolvedId, params },
+    });
+    const now = new Date().toISOString();
+    const quote: SavedQuote = {
+      id: quoteId,
+      user_id: userId,
+      title: params.title || '',
+      customer_name: params.customer_name || '',
+      quote_number: params.quote_number || '',
+      source_type: 'offline',
+      quote_data: { ...(params.quote_data || {}), pendingSync: true },
+      created_at: now,
+      updated_at: now,
+      pendingSync: true,
+    };
+    await upsertPendingQuote({ quote, userId });
+    trackActivity('update_quote', null, { quote_id: quoteId, pendingSync: true });
+    return quote;
+  };
+
+  if (resolvedId.startsWith('local_') || (typeof navigator !== 'undefined' && !navigator.onLine)) {
+    return enqueue();
+  }
+  try {
+    return await updateQuoteDirect(sessionToken, resolvedId, params);
+  } catch (err) {
+    if (isAuthError(err)) throw err;
+    if (isNetworkError(err)) return enqueue();
+    throw err;
+  }
+}
+
+export async function deleteQuote(sessionToken: string, quoteId: string) {
+  const userId = getSessionUserId() || 'unknown';
+  const resolvedId = await resolveQuoteId(quoteId);
+
+  const enqueue = async () => {
+    await enqueueOp({
+      type: 'deleteQuote',
+      userId,
+      entityKey: quoteId,
+      payload: { quoteId: resolvedId },
+    });
+    await removePendingQuote(quoteId, userId);
+    trackActivity('delete_quote', null, { quote_id: quoteId, pendingSync: true });
+    return { success: true, pendingSync: true };
+  };
+
+  if (resolvedId.startsWith('local_') || (typeof navigator !== 'undefined' && !navigator.onLine)) {
+    return enqueue();
+  }
+  try {
+    return await deleteQuoteDirect(sessionToken, resolvedId);
+  } catch (err) {
+    if (isAuthError(err)) throw err;
+    if (isNetworkError(err)) return enqueue();
+    throw err;
+  }
+}
+
+export async function listQuotes(sessionToken: string): Promise<{ quotes: SavedQuote[]; related_quotes: SavedQuote[] }> {
+  const userId = getSessionUserId();
+  const pending = await readPendingQuotes(userId);
+  const extras = pending.map((p) => p.quote as SavedQuote);
+
+  try {
+    const data = await request('GET', '/quotes', { token: sessionToken });
+    if (extras.length === 0) return data;
+    const serverIds = new Set((data.quotes || []).map((q: SavedQuote) => q.id));
+    return {
+      quotes: [...extras.filter((q) => !serverIds.has(q.id)), ...(data.quotes || [])],
+      related_quotes: data.related_quotes || [],
+    };
+  } catch (err) {
+    if (isNetworkError(err) || (typeof navigator !== 'undefined' && !navigator.onLine)) {
+      return { quotes: extras, related_quotes: [] };
+    }
+    throw err;
+  }
+}
+
+// Register direct (non-outbox) replays for drainOutbox — avoids recursion.
+registerOutboxReplay({
+  saveQuote: saveQuoteDirect,
+  updateQuote: updateQuoteDirect,
+  deleteQuote: deleteQuoteDirect,
+  saveUserSettings: saveUserSettingsDirect,
+});
 
 export async function transferQuotes(sessionToken: string, fromUserId: string, toUserId: string) {
   return request('POST', '/quotes/transfer', {

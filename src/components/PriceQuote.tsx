@@ -1,4 +1,5 @@
 import { useState, useRef } from 'react';
+import { formatMoney, isFiniteMoney } from '@/lib/safeNumber';
 import { usePrintingStore, useCalculations } from '@/store/printingStore';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -39,6 +40,7 @@ const PriceQuote = ({ sessionToken, editingQuoteId, onClearEditingQuote, existin
   const [saving, setSaving] = useState(false);
   const [saveAsNew, setSaveAsNew] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
+  const [previewAutoAction, setPreviewAutoAction] = useState<'preview' | 'download' | null>(null);
   const [attachedFile, setAttachedFile] = useState<File | null>(null);
   const [existingAttachment, setExistingAttachment] = useState<ExistingAttachment | null>(initialAttachment || null);
   const [showNoFileWarning, setShowNoFileWarning] = useState(false);
@@ -429,7 +431,7 @@ const PriceQuote = ({ sessionToken, editingQuoteId, onClearEditingQuote, existin
               </div>
               <div className="p-3 bg-primary/5 rounded-lg text-center border border-primary/10">
                 <p className="text-xs text-muted-foreground">الإجمالي الشامل</p>
-                <p className="font-bold text-primary">{grandTotal.toFixed(2)} ريال</p>
+                <p className="font-bold text-primary">{formatMoney(grandTotal)} ريال</p>
               </div>
             </div>
 
@@ -479,21 +481,35 @@ const PriceQuote = ({ sessionToken, editingQuoteId, onClearEditingQuote, existin
             <Button
               className="flex-1 gap-2"
               variant="secondary"
-              onClick={() => setShowPreview(true)}
+              onClick={() => {
+                setPreviewAutoAction('preview');
+                setShowPreview(true);
+              }}
             >
               <Eye className="w-4 h-4" />
-              معاينة احترافية
+              معاينة PDF
             </Button>
             <Button
               className="flex-1 gap-2"
-              onClick={() => { import('@/lib/activityTracker').then(m => m.trackActivity('export_pdf', 'quote')); window.print(); }}
+              onClick={() => {
+                setPreviewAutoAction('download');
+                setShowPreview(true);
+              }}
             >
               <Printer className="w-4 h-4" />
-              طباعة سريعة
+              تحميل PDF
             </Button>
           </div>
 
-          <PrintPreview open={showPreview} onOpenChange={setShowPreview} />
+          <PrintPreview
+            open={showPreview}
+            onOpenChange={(open) => {
+              setShowPreview(open);
+              if (!open) setPreviewAutoAction(null);
+            }}
+            autoAction={previewAutoAction}
+            onAutoActionDone={() => setPreviewAutoAction(null)}
+          />
         </CardContent>
       </Card>
 

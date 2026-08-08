@@ -44,8 +44,8 @@ const ColorPricingFields = ({
 }) => (
   <div className="border rounded-lg p-3 space-y-2">
     <p className="text-sm font-semibold text-primary">{label}</p>
-    <div className="grid grid-cols-3 gap-3">
-      <div className="space-y-1">
+    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 min-w-0">
+      <div className="space-y-1 min-w-0">
         <Label className="text-xs">فرز الوجه</Label>
         <Input type="number" value={colorPricing.sortPerFace} onChange={(e) => onChange({ sortPerFace: Number(e.target.value) })} />
       </div>
@@ -344,7 +344,7 @@ const PriceSettingsPanel = () => {
         ))}
 
         {/* Diecut & cellophane - only if not hidden */}
-        <div className="border-t pt-3 grid grid-cols-3 gap-4">
+        <div className="border-t pt-3 grid grid-cols-1 sm:grid-cols-3 gap-4 min-w-0">
           {!isFieldHidden(s, 'diecut') && (
             <>
               <div className="space-y-1">
@@ -435,8 +435,8 @@ const PriceSettingsPanel = () => {
         <Card className="border-primary/30">
           <CardHeader><CardTitle className="text-lg text-primary">إضافة مقاس جديد</CardTitle></CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid grid-cols-3 gap-4">
-              <div className="space-y-1">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 min-w-0">
+              <div className="space-y-1 min-w-0">
                 <Label className="text-xs">اسم المقاس</Label>
                 <Input placeholder="مثال: 60×90" value={newSize.sizeName} onChange={(e) => setNewSize({ ...newSize, sizeName: e.target.value })} />
               </div>

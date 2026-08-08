@@ -1,36 +1,87 @@
+import { useEffect, useRef } from 'react';
 import { usePrintingStore, useCalculations } from '@/store/printingStore';
+import { formatMoney, isFiniteMoney } from '@/lib/safeNumber';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Printer, FileText, Layers, DollarSign, TrendingUp, Scissors } from 'lucide-react';
+import { FileText, Layers, DollarSign, TrendingUp, Scissors } from 'lucide-react';
+import PdfActions from '@/components/pdf/PdfActions';
+import {
+  buildQuotePdfFilename,
+  downloadPdf,
+  generatePdfFromElement,
+  previewPdf,
+} from '@/lib/pdf/pdfService';
+import { toast } from 'sonner';
 
 interface PrintPreviewProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  /** When set, auto-run preview/download once the dialog content is mounted. */
+  autoAction?: 'preview' | 'download' | null;
+  onAutoActionDone?: () => void;
 }
 
-const PrintPreview = ({ open, onOpenChange }: PrintPreviewProps) => {
+const PrintPreview = ({
+  open,
+  onOpenChange,
+  autoAction = null,
+  onAutoActionDone,
+}: PrintPreviewProps) => {
   const { inputs, quoteInfo, finishingItems, profitMargins } = usePrintingStore();
   const calc = useCalculations();
+  const printAreaRef = useRef<HTMLDivElement>(null);
 
   const today = new Date().toLocaleDateString('ar-SA');
   const enabledFinishing = finishingItems.filter(f => f.enabled);
+  const pdfFilename = buildQuotePdfFilename({
+    quoteNumber: quoteInfo.quoteNumber,
+    customerName: quoteInfo.customerName,
+  });
 
-  const handlePrint = () => {
-    window.print();
-  };
+  useEffect(() => {
+    if (!open || !autoAction) return;
+    let cancelled = false;
+    const run = async () => {
+      // Wait a tick so the dialog + print-area are in the DOM.
+      await new Promise((r) => requestAnimationFrame(() => r(undefined)));
+      const el = printAreaRef.current ?? document.getElementById('print-area');
+      if (!el || cancelled) return;
+      try {
+        const pdf = await generatePdfFromElement(el);
+        if (cancelled) return;
+        if (autoAction === 'preview') await previewPdf(pdf, pdfFilename);
+        else downloadPdf(pdf, pdfFilename);
+        import('@/lib/activityTracker').then((m) => m.trackActivity('export_pdf', 'quote'));
+      } catch (e) {
+        console.error(e);
+        toast.error('فشل إنشاء ملف PDF');
+      } finally {
+        onAutoActionDone?.();
+      }
+    };
+    void run();
+    return () => {
+      cancelled = true;
+    };
+  }, [open, autoAction, pdfFilename, onAutoActionDone]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto print:max-w-none print:max-h-none print:overflow-visible print:shadow-none print:border-none">
-        <DialogHeader className="print:hidden">
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Printer className="w-5 h-5" />
+            <FileText className="w-5 h-5" />
             معاينة احترافية
           </DialogTitle>
         </DialogHeader>
 
-        {/* Printable content */}
-        <div id="print-area" className="bg-background print:bg-white space-y-6" dir="rtl">
+        {/* PDF source content (kept in DOM; no browser print path) */}
+        <div
+          id="print-area"
+          ref={printAreaRef}
+          className="bg-background space-y-6"
+          dir="rtl"
+        >
 
           {/* Header */}
           <div className="relative overflow-hidden rounded-xl bg-gradient-to-l from-primary/10 via-primary/5 to-transparent border border-primary/20 p-6">
@@ -142,7 +193,7 @@ const PrintPreview = ({ open, onOpenChange }: PrintPreviewProps) => {
           <div className="grid grid-cols-2 gap-4">
             <div className="rounded-xl border-2 border-primary bg-gradient-to-br from-primary/10 to-primary/5 p-6 text-center shadow-sm">
               <p className="text-xs text-muted-foreground mb-2 font-medium">الإجمالي الشامل</p>
-              <p className="text-3xl font-bold text-primary">{calc.grandTotal.toFixed(2)}</p>
+              <p className="text-3xl font-bold text-primary">{formatMoney(calc.grandTotal)}</p>
               <p className="text-xs text-muted-foreground mt-1">ريال سعودي</p>
             </div>
             <div className="rounded-xl border-2 border-accent bg-gradient-to-br from-accent/10 to-accent/5 p-6 text-center shadow-sm">
@@ -201,13 +252,17 @@ const PrintPreview = ({ open, onOpenChange }: PrintPreviewProps) => {
           </div>
         </div>
 
-        {/* Print button */}
-        <div className="print:hidden flex justify-end gap-3 pt-2">
+        <div className="flex flex-wrap justify-end gap-3 pt-2">
           <Button variant="outline" onClick={() => onOpenChange(false)}>إغلاق</Button>
-          <Button onClick={handlePrint} className="gap-2">
-            <Printer className="w-4 h-4" />
-            طباعة
-          </Button>
+          <PdfActions
+            filename={pdfFilename}
+            getElement={() => printAreaRef.current}
+            downloadLabel="تحميل PDF"
+            previewLabel="معاينة PDF"
+            onDone={() => {
+              import('@/lib/activityTracker').then((m) => m.trackActivity('export_pdf', 'quote'));
+            }}
+          />
         </div>
       </DialogContent>
     </Dialog>

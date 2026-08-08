@@ -135,7 +135,7 @@ const BagCalculator = ({}: Props) => {
   const finalPricePerBag = quantity > 0 ? finalTotal / quantity : 0;
 
   return (
-    <div dir="rtl" className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+    <div dir="rtl" className="grid grid-cols-1 lg:grid-cols-3 gap-4 min-w-0 w-full calc-shell">
       {/* ── المدخلات (يمين في RTL) ── */}
       <div className="lg:col-span-2 space-y-4">
         <Card className="border-primary/20 shadow-sm">

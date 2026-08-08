@@ -32,8 +32,10 @@ import {
   Collapsible, CollapsibleContent, CollapsibleTrigger,
 } from '@/components/ui/collapsible';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { BookOpen, ChevronDown, Sparkles, AlertTriangle, Check, Plus, Trash2, Settings2, Info, Printer, Save } from 'lucide-react';
+import { BookOpen, ChevronDown, Sparkles, AlertTriangle, Check, Plus, Trash2, Settings2, Info, Save } from 'lucide-react';
 import ProfitMargins from '@/components/ProfitMargins';
+import PdfActions from '@/components/pdf/PdfActions';
+import { generatePdfFromHtml } from '@/lib/pdf/pdfService';
 import { saveQuote, updateQuote } from '@/lib/userApi';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { toast } from 'sonner';
@@ -126,12 +128,12 @@ const summarizeSignatures = (
   return `${label} (${pagesList}) صفحة`;
 };
 
-/** يفتح نافذة طباعة بمحتوى جدول تفاصيل الملازم لحفظها كـ PDF عبر "Save as PDF". */
-const exportSignaturesPdf = (
+/** يبني HTML تقرير تفاصيل الملازم — يُحوَّل إلى PDF حقيقي عبر pdfService. */
+const buildSignaturesPdfHtml = (
   sel: any,
   opts?: { innerPaper?: string; coverPaper?: string },
-) => {
-  if (!sel?.innerSignaturesBreakdown?.length) return;
+): string | null => {
+  if (!sel?.innerSignaturesBreakdown?.length) return null;
   const fmtN = (n: number) => Number(n || 0).toLocaleString('en-US', { maximumFractionDigits: 2 });
   const fmtI = (n: number) => Math.round(Number(n || 0)).toLocaleString('en-US');
   const inP = decodePaper(opts?.innerPaper || '');
@@ -317,13 +319,8 @@ const exportSignaturesPdf = (
       </table>
       ${coverSection}
     </main>
-    <script>window.onload=()=>{setTimeout(()=>window.print(),400);}</script>
     </body></html>`;
-  const w = window.open('', '_blank');
-  if (!w) return;
-  w.document.open();
-  w.document.write(html);
-  w.document.close();
+  return html;
 };
 
 /** شارة توضح وحدة التسعير الفعلية (رزمة/طن) المأخوذة تلقائيًا من إعدادات المستخدم. */
@@ -639,7 +636,7 @@ const MagazineSheetCalculator = ({ onNavigateToQuote, sessionToken }: Props) => 
         </CardHeader>
       </Card>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-5">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-5 min-w-0 w-full calc-shell">
         {/* ── العمود الأيمن: المدخلات ── */}
         <div className="lg:col-span-7 space-y-4">
           {/* المدخلات الأساسية للداخل */}
@@ -1089,17 +1086,20 @@ const MagazineSheetCalculator = ({ onNavigateToQuote, sessionToken }: Props) => 
                   {/* زر عرض/إخفاء التفاصيل */}
                   {selected.innerSignaturesBreakdown && selected.innerSignaturesBreakdown.length > 0 && (
                     <>
-                      <div className="flex justify-end gap-2">
-                        <Button
-                          type="button"
-                          variant="outline"
+                      <div className="flex flex-wrap justify-end gap-2">
+                        <PdfActions
                           size="sm"
-                          className="h-7 px-2 text-xs"
-                          onClick={() => exportSignaturesPdf(selected, { innerPaper, coverPaper: coverEnabled ? coverPaper : '' })}
-                        >
-                          <Printer className="w-3.5 h-3.5 ml-1" />
-                          تصدير PDF
-                        </Button>
+                          filename={`تفاصيل-ملازم-${new Date().toISOString().slice(0, 10)}.pdf`}
+                          generate={async () => {
+                            const html = buildSignaturesPdfHtml(selected, {
+                              innerPaper,
+                              coverPaper: coverEnabled ? coverPaper : '',
+                            });
+                            if (!html) throw new Error('لا توجد بيانات للتصدير');
+                            return generatePdfFromHtml(html);
+                          }}
+                          className="[&_button]:h-7 [&_button]:px-2 [&_button]:text-xs"
+                        />
                         <Button
                           type="button"
                           variant="ghost"

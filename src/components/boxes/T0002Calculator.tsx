@@ -24,8 +24,8 @@ import {
 import { buildT0002Geometry } from '@/lib/t0002/geometry';
 import { buildT0002DimensionsSvg } from '@/lib/t0002/dimensionsOverlay';
 import { computeT0002Nesting, type T0002NestingParams, type RotationMode } from '@/lib/t0002/nesting';
-import { downloadT0002SingleTemplate, downloadT0002SingleTemplatePdf } from '@/lib/t0002/exportSingle';
-import { downloadT0002SheetLayout, downloadT0002SheetLayoutPdf } from '@/lib/t0002/exportSheet';
+import { downloadT0002SingleTemplate, downloadT0002SingleTemplatePdf, previewT0002SingleTemplatePdf } from '@/lib/t0002/exportSingle';
+import { downloadT0002SheetLayout, downloadT0002SheetLayoutPdf, previewT0002SheetLayoutPdf } from '@/lib/t0002/exportSheet';
 import T0002SheetNestingPreview from './T0002SheetNestingPreview';
 import T0002PrintSummary from './T0002PrintSummary';
 import Box3DPreview, { type Panel2DInfo } from './Box3DPreview';
@@ -274,13 +274,19 @@ const T0002Calculator = ({ isAdmin = false }: { isAdmin?: boolean }) => {
                 <DropdownMenuItem onClick={() => downloadT0002SingleTemplate(geo)}>
                   تحميل القالب المفرد (SVG)
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => downloadT0002SingleTemplatePdf(geo.svg)}>
+                <DropdownMenuItem onClick={() => void previewT0002SingleTemplatePdf(geo.svg)}>
+                  معاينة القالب المفرد (PDF)
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => void downloadT0002SingleTemplatePdf(geo.svg)}>
                   تحميل القالب المفرد (PDF)
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => downloadT0002SheetLayout(params, nesting, nestingResult)}>
                   تحميل توزيع الشيت (SVG)
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => downloadT0002SheetLayoutPdf(params, nesting, nestingResult)}>
+                <DropdownMenuItem onClick={() => void previewT0002SheetLayoutPdf(params, nesting, nestingResult)}>
+                  معاينة توزيع الشيت (PDF)
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => void downloadT0002SheetLayoutPdf(params, nesting, nestingResult)}>
                   تحميل توزيع الشيت (PDF)
                 </DropdownMenuItem>
               </DropdownMenuContent>
@@ -288,7 +294,7 @@ const T0002Calculator = ({ isAdmin = false }: { isAdmin?: boolean }) => {
           </div>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-4 items-start">
+          <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(0,400px)] gap-4 items-start min-w-0 w-full calc-shell">
             <div className="min-w-0">
               {previewMode === 'template' ? (
                 <div className="space-y-4">

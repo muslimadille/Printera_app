@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { finite, num, safeDiv, sheetsPerPurchase } from '@/lib/safeNumber';
 
 export type PricingUnit = 'ton' | 'ream';
 
@@ -566,37 +567,37 @@ export function useCalculations() {
   const sheetsPerReam = selectedEntry?.sheetsPerReam || 500;
 
   // G7: Price per gram (for ton pricing)
-  const pricePerGram = pricePerTon / 1000000;
+  const pricePerGram = safeDiv(pricePerTon, 1_000_000);
 
   // G8: Price per purchase sheet
   const pricePerSheet = pricingUnit === 'ream' && sheetsPerReam > 0
-    ? pricePerReam / sheetsPerReam
-    : purchaseWeight * pricePerGram;
+    ? safeDiv(pricePerReam, sheetsPerReam)
+    : finite(purchaseWeight * pricePerGram);
 
   // G9: Print sheets from one purchase sheet
-  const pw = inputs.printWidth;
-  const ph = inputs.printHeight;
-  const option1 = Math.floor(purchaseWidth / pw) * Math.floor(purchaseHeight / ph);
-  const option2 = Math.floor(purchaseWidth / ph) * Math.floor(purchaseHeight / pw);
-  const printSheetsPerPurchase = Math.max(option1, option2);
+  const pw = num(inputs.printWidth);
+  const ph = num(inputs.printHeight);
+  const printSheetsPerPurchase = sheetsPerPurchase(purchaseWidth, purchaseHeight, pw, ph);
 
   // G10: Print sheets needed before waste
+  const qty = num(inputs.quantity);
+  const cuts = num(inputs.cutsPerSheet);
   const printSheetsBeforeWaste =
-    inputs.quantity <= 0 || inputs.cutsPerSheet <= 0
+    qty <= 0 || cuts <= 0
       ? 0
-      : Math.ceil(inputs.quantity / inputs.cutsPerSheet);
+      : Math.ceil(safeDiv(qty, cuts));
 
   // G11: Print sheets after waste
   const printSheetsAfterWaste = Math.ceil(
-    printSheetsBeforeWaste * (1 + inputs.wastePercent / 100)
+    printSheetsBeforeWaste * (1 + num(inputs.wastePercent) / 100)
   );
 
   // G12: Purchase sheets needed
   const purchaseSheetsNeeded =
-    printSheetsPerPurchase === 0 ? 0 : Math.ceil(printSheetsAfterWaste / printSheetsPerPurchase);
+    printSheetsPerPurchase === 0 ? 0 : Math.ceil(safeDiv(printSheetsAfterWaste, printSheetsPerPurchase));
 
   // G13: Paper cost
-  const paperCost = pricePerSheet * purchaseSheetsNeeded;
+  const paperCost = finite(pricePerSheet * purchaseSheetsNeeded);
 
   // Find matching size pricing dynamically
   const matchedSize = findSizePricing(priceSettings.sizes, pw, ph);
@@ -671,7 +672,9 @@ export function useCalculations() {
   }
 
   // G20: Total cost
-  const totalCost = paperCost + sortCost + printCost + extraColorCost + cellophaneCost + dieCutCost + customFieldsCost + inputs.moldPrice;
+  const totalCost = finite(
+    paperCost + sortCost + printCost + extraColorCost + cellophaneCost + dieCutCost + customFieldsCost + num(inputs.moldPrice),
+  );
 
   // G21: Price per piece (will be recalculated after finishing)
   let pricePerPiece = 0;
@@ -682,28 +685,30 @@ export function useCalculations() {
     if (!item.enabled || !item.pricePerUnit) return 0;
     switch (item.calcType) {
       case 'per_piece':
-        return inputs.quantity * item.multiplier * item.pricePerUnit;
+        return finite(qty * item.multiplier * item.pricePerUnit);
       case 'per_1000':
-        return finishingThousands * item.multiplier * item.pricePerUnit;
+        return finite(finishingThousands * item.multiplier * item.pricePerUnit);
       case 'tiered_1000':
-        return item.multiplier * (item.pricePerUnit + Math.max(finishingThousands - 1, 0) * item.extraPer1000);
+        return finite(item.multiplier * (item.pricePerUnit + Math.max(finishingThousands - 1, 0) * item.extraPer1000));
       case 'flat':
-        return item.multiplier * item.pricePerUnit;
+        return finite(item.multiplier * item.pricePerUnit);
       default:
         return 0;
     }
   });
 
-  const totalFinishing = finishingCosts.reduce((a, b) => a + b, 0);
-  const grandTotal = totalCost + totalFinishing;
+  const totalFinishing = finite(finishingCosts.reduce((a, b) => a + b, 0));
+  const grandTotal = finite(totalCost + totalFinishing);
 
   // G21: Price per piece (including finishing)
-  pricePerPiece = inputs.quantity === 0 ? 0 : grandTotal / inputs.quantity;
+  pricePerPiece = qty === 0 ? 0 : safeDiv(grandTotal, qty);
 
   // Validation message
   let validationMessage = '';
-  if (inputs.cutsPerSheet <= 0 || inputs.quantity <= 0) {
+  if (cuts <= 0 || qty <= 0) {
     validationMessage = 'أدخل عدد القطع وعدد ما يفصل في الشيت';
+  } else if (pw <= 0 || ph <= 0) {
+    validationMessage = 'أدخل مقاس الطباعة';
   } else if (printSheetsPerPurchase === 0) {
     validationMessage = 'مقاس ورقة الطباعة لا يخرج من ورقة الشراء';
   } else if (!inputs.paperType || !inputs.purchaseSize || !inputs.grammage) {
@@ -716,22 +721,22 @@ export function useCalculations() {
     purchaseWidth,
     purchaseHeight,
     pricePerTon,
-    purchaseArea,
-    purchaseWeight,
-    pricePerGram,
-    pricePerSheet,
-    printSheetsPerPurchase,
-    printSheetsBeforeWaste,
-    printSheetsAfterWaste,
-    purchaseSheetsNeeded,
-    paperCost,
+    purchaseArea: finite(purchaseArea),
+    purchaseWeight: finite(purchaseWeight),
+    pricePerGram: finite(pricePerGram),
+    pricePerSheet: finite(pricePerSheet),
+    printSheetsPerPurchase: finite(printSheetsPerPurchase),
+    printSheetsBeforeWaste: finite(printSheetsBeforeWaste),
+    printSheetsAfterWaste: finite(printSheetsAfterWaste),
+    purchaseSheetsNeeded: finite(purchaseSheetsNeeded),
+    paperCost: finite(paperCost),
     printSizeType,
-    thousands,
-    sortCost,
-    extraColorCost,
-    printCost,
-    cellophaneCost,
-    dieCutCost,
+    thousands: finite(thousands),
+    sortCost: finite(sortCost),
+    extraColorCost: finite(extraColorCost),
+    printCost: finite(printCost),
+    cellophaneCost: finite(cellophaneCost),
+    dieCutCost: finite(dieCutCost),
     totalCost,
     pricePerPiece,
     finishingCosts,
@@ -771,18 +776,16 @@ function calcSection(
         .map((e) => e.sizeName))]
     : [];
 
-  const pw = section.printWidth;
-  const ph = section.printHeight;
-  const option1 = purchaseWidth && pw ? Math.floor(purchaseWidth / pw) * Math.floor(purchaseHeight / ph) : 0;
-  const option2 = purchaseWidth && ph ? Math.floor(purchaseWidth / ph) * Math.floor(purchaseHeight / pw) : 0;
-  const printSheetsPerPurchase = Math.max(option1, option2);
+  const pw = num(section.printWidth);
+  const ph = num(section.printHeight);
+  const printSheetsPerPurchase = sheetsPerPurchase(purchaseWidth, purchaseHeight, pw, ph);
 
-  const sheetsAfterWaste = Math.ceil(sheetsBeforeWaste * (1 + section.wastePercent / 100));
-  const purchaseSheetsNeeded = printSheetsPerPurchase === 0 ? 0 : Math.ceil(sheetsAfterWaste / printSheetsPerPurchase);
+  const sheetsAfterWaste = Math.ceil(sheetsBeforeWaste * (1 + num(section.wastePercent) / 100));
+  const purchaseSheetsNeeded = printSheetsPerPurchase === 0 ? 0 : Math.ceil(safeDiv(sheetsAfterWaste, printSheetsPerPurchase));
 
   const purchaseArea = (purchaseWidth / 100) * (purchaseHeight / 100);
-  const purchaseWeight = purchaseArea * (section.grammage || 0);
-  const pricePerGram = pricePerTon / 1000000;
+  const purchaseWeight = purchaseArea * num(section.grammage);
+  const pricePerGram = safeDiv(pricePerTon, 1_000_000);
 
   // Paper cost - handle ream vs ton pricing
   const pricingUnit = selectedEntry?.pricingUnit || 'ton';
@@ -790,14 +793,14 @@ function calcSection(
   const pricePerReam = selectedEntry?.pricePerReam || 0;
 
   const pricePerSheet = pricingUnit === 'ream' && sheetsPerReam > 0
-    ? pricePerReam / sheetsPerReam
-    : purchaseWeight * pricePerGram;
+    ? safeDiv(pricePerReam, sheetsPerReam)
+    : finite(purchaseWeight * pricePerGram);
 
   let paperCost = 0;
   if (pricingUnit === 'ream' && sheetsPerReam > 0) {
-    paperCost = (pricePerReam / sheetsPerReam) * purchaseSheetsNeeded;
+    paperCost = safeDiv(pricePerReam, sheetsPerReam) * purchaseSheetsNeeded;
   } else if (purchaseWidth && purchaseHeight && section.grammage && pricePerTon) {
-    paperCost = (purchaseWidth * purchaseHeight * section.grammage * pricePerTon * purchaseSheetsNeeded) / 10000000000;
+    paperCost = safeDiv(purchaseWidth * purchaseHeight * num(section.grammage) * pricePerTon * purchaseSheetsNeeded, 10_000_000_000);
   }
 
   const matchedSize = findSizePricing(sizes, pw, ph);
@@ -840,14 +843,27 @@ function calcSection(
   }
   dieCutCost += section.moldPrice;
 
-  const baseCost = paperCost + sortCost + printCost + extraColorCost + cellophaneCost + dieCutCost;
+  const baseCost = finite(paperCost + sortCost + printCost + extraColorCost + cellophaneCost + dieCutCost);
 
   return {
     purchaseWidth, purchaseHeight, pricePerTon,
-    purchaseArea, purchaseWeight, pricePerGram, pricePerSheet,
-    printSheetsPerPurchase, sheetsBeforeWaste, sheetsAfterWaste, purchaseSheetsNeeded,
-    paperCost: Math.round(paperCost * 10000) / 10000,
-    sizeType, thousands, sortCost, printCost, extraColorCost, cellophaneCost, dieCutCost, baseCost,
+    purchaseArea: finite(purchaseArea),
+    purchaseWeight: finite(purchaseWeight),
+    pricePerGram: finite(pricePerGram),
+    pricePerSheet: finite(pricePerSheet),
+    printSheetsPerPurchase: finite(printSheetsPerPurchase),
+    sheetsBeforeWaste: finite(sheetsBeforeWaste),
+    sheetsAfterWaste: finite(sheetsAfterWaste),
+    purchaseSheetsNeeded: finite(purchaseSheetsNeeded),
+    paperCost: Math.round(finite(paperCost) * 10000) / 10000,
+    sizeType,
+    thousands: finite(thousands),
+    sortCost: finite(sortCost),
+    printCost: finite(printCost),
+    extraColorCost: finite(extraColorCost),
+    cellophaneCost: finite(cellophaneCost),
+    dieCutCost: finite(dieCutCost),
+    baseCost,
     availableGrammages, availableSizes,
     pricingUnit, pricePerReam, sheetsPerReam,
   };
@@ -856,12 +872,12 @@ function calcSection(
 export function useMagazineCalculations() {
   const { paperTypes, priceSettings, magazineInputs: mag } = usePrintingStore();
 
-  const sheetsPerMagazine = mag.totalPages && mag.pagesPerSheet ? mag.totalPages / mag.pagesPerSheet : 0;
-  const totalInnerPieces = mag.quantity * sheetsPerMagazine;
-  const innerSheetsBeforeWaste = mag.cutsPerSheetInner ? Math.ceil(totalInnerPieces / mag.cutsPerSheetInner) : 0;
-  const coverSheetsBeforeWaste = mag.cutsPerSheetCover ? Math.ceil(mag.quantity / mag.cutsPerSheetCover) : 0;
-  const referenceThousands = Math.max(1, Math.ceil(mag.quantity / 1000));
-  const assemblyCost = referenceThousands * mag.assemblyCostPer1000;
+  const sheetsPerMagazine = mag.totalPages && mag.pagesPerSheet ? safeDiv(mag.totalPages, mag.pagesPerSheet) : 0;
+  const totalInnerPieces = num(mag.quantity) * sheetsPerMagazine;
+  const innerSheetsBeforeWaste = mag.cutsPerSheetInner ? Math.ceil(safeDiv(totalInnerPieces, mag.cutsPerSheetInner)) : 0;
+  const coverSheetsBeforeWaste = mag.cutsPerSheetCover ? Math.ceil(safeDiv(mag.quantity, mag.cutsPerSheetCover)) : 0;
+  const referenceThousands = Math.max(1, Math.ceil(safeDiv(mag.quantity, 1000)));
+  const assemblyCost = finite(referenceThousands * num(mag.assemblyCostPer1000));
 
   const inner = calcSection(mag.inner, innerSheetsBeforeWaste, paperTypes, priceSettings.sizes);
   const cover = calcSection(mag.cover, coverSheetsBeforeWaste, paperTypes, priceSettings.sizes);
@@ -884,18 +900,22 @@ export function useMagazineCalculations() {
   const totalInnerFinishing = innerFinishingCosts.reduce((a, b) => a + b, 0);
   const totalCoverFinishing = coverFinishingCosts.reduce((a, b) => a + b, 0);
 
-  const innerTotal = inner.baseCost + totalInnerFinishing;
-  const coverTotal = cover.baseCost + totalCoverFinishing;
-  const magazineTotal = innerTotal + coverTotal + assemblyCost;
-  const pricePerCopy = mag.quantity ? magazineTotal / mag.quantity : 0;
+  const innerTotal = finite(inner.baseCost + totalInnerFinishing);
+  const coverTotal = finite(cover.baseCost + totalCoverFinishing);
+  const magazineTotal = finite(innerTotal + coverTotal + assemblyCost);
+  const pricePerCopy = mag.quantity ? safeDiv(magazineTotal, mag.quantity) : 0;
 
   return {
-    sheetsPerMagazine, totalInnerPieces,
-    innerSheetsBeforeWaste, coverSheetsBeforeWaste,
-    referenceThousands, assemblyCost,
+    sheetsPerMagazine: finite(sheetsPerMagazine),
+    totalInnerPieces: finite(totalInnerPieces),
+    innerSheetsBeforeWaste: finite(innerSheetsBeforeWaste),
+    coverSheetsBeforeWaste: finite(coverSheetsBeforeWaste),
+    referenceThousands: finite(referenceThousands),
+    assemblyCost,
     inner, cover,
     innerFinishingCosts, coverFinishingCosts,
-    totalInnerFinishing, totalCoverFinishing,
+    totalInnerFinishing: finite(totalInnerFinishing),
+    totalCoverFinishing: finite(totalCoverFinishing),
     innerTotal, coverTotal, magazineTotal, pricePerCopy,
   };
 }

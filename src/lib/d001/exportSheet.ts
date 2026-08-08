@@ -137,42 +137,34 @@ export function downloadD001SheetLayout(
   setTimeout(() => URL.revokeObjectURL(url), 0);
 }
 
+export async function buildD001SheetLayoutPdf(
+  params: D001Params,
+  nesting: D001NestingParams,
+  result?: D001NestingResult,
+) {
+  const { svg, filename: svgFilename } = buildD001SheetLayoutSvg(params, nesting, result);
+  const filename = svgFilename.replace(/\.svg$/, '.pdf');
+  const { generatePdfFromSvg } = await import('@/lib/pdf/pdfService');
+  const pdf = await generatePdfFromSvg(svg);
+  return { pdf, filename };
+}
+
 export async function downloadD001SheetLayoutPdf(
   params: D001Params,
   nesting: D001NestingParams,
   result?: D001NestingResult,
 ): Promise<void> {
-  const { svg, filename: svgFilename } = buildD001SheetLayoutSvg(params, nesting, result);
-  const filename = svgFilename.replace(/\.svg$/, '.pdf');
+  const { downloadPdf } = await import('@/lib/pdf/pdfService');
+  const { pdf, filename } = await buildD001SheetLayoutPdf(params, nesting, result);
+  downloadPdf(pdf, filename);
+}
 
-  const host = document.createElement('div');
-  host.style.position = 'fixed';
-  host.style.left = '-100000px';
-  host.style.top = '0';
-  host.style.visibility = 'hidden';
-  host.innerHTML = svg;
-  const svgEl = host.querySelector('svg') as SVGSVGElement | null;
-  if (!svgEl) throw new Error('D001 Sheet PDF export: failed to parse SVG.');
-  document.body.appendChild(host);
-
-  const vb = (svgEl.getAttribute('viewBox') || '0 0 0 0').split(/\s+/).map(Number);
-  const pageW = vb[2] || 1;
-  const pageH = vb[3] || 1;
-
-  try {
-    const [{ jsPDF }, { svg2pdf }] = await Promise.all([
-      import('jspdf'),
-      import('svg2pdf.js'),
-    ]);
-    const pdf = new jsPDF({
-      unit: 'mm',
-      format: [pageW, pageH],
-      orientation: pageW >= pageH ? 'landscape' : 'portrait',
-      compress: true,
-    });
-    await svg2pdf(svgEl, pdf, { x: 0, y: 0, width: pageW, height: pageH });
-    pdf.save(filename);
-  } finally {
-    document.body.removeChild(host);
-  }
+export async function previewD001SheetLayoutPdf(
+  params: D001Params,
+  nesting: D001NestingParams,
+  result?: D001NestingResult,
+): Promise<void> {
+  const { previewPdf } = await import('@/lib/pdf/pdfService');
+  const { pdf, filename } = await buildD001SheetLayoutPdf(params, nesting, result);
+  await previewPdf(pdf, filename);
 }

@@ -11,14 +11,15 @@ import {
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
 } from '@/components/ui/dialog';
-import { Box, Ruler, Maximize2, Layers, Download, FileCode2, FileText, ChevronDown } from 'lucide-react';
+import { Box, Ruler, Maximize2, Layers, Download, Eye, FileCode2, FileText, ChevronDown } from 'lucide-react';
 import { toast } from 'sonner';
 import {
   computeCarry, buildCarryDielineSvg, auditCarryMapping, DEFAULT_CARRY_INPUTS,
   type CarryHandleInputs, type CarryResult,
 } from '@/lib/carryingHandleBoxEngine';
 import { buildCarryExportSvg, type CarryExportMode } from '@/lib/carryingHandleBoxExport';
-import { exportCarryAsPdf } from '@/lib/carryingHandleBoxPdfExport';
+import { buildCarryAsPdf } from '@/lib/carryingHandleBoxPdfExport';
+import { downloadPdf, previewPdf } from '@/lib/pdf/pdfService';
 
 type CarryExportFormat = 'svg' | 'pdf';
 import CarryingHandleBoxMappingDialog from './CarryingHandleBoxMappingDialog';
@@ -129,7 +130,7 @@ const CarryingHandleBoxCalculator = () => {
   const d = result.derived;
   const best = result.best;
 
-  const runExport = async () => {
+  const runExport = async (pdfAction: 'download' | 'preview' = 'download') => {
     if (best.total === 0) {
       toast.error('لا توجد قطع للتصدير — راجع الأبعاد');
       return;
@@ -139,9 +140,11 @@ const CarryingHandleBoxCalculator = () => {
 
     if (exportFormat === 'pdf') {
       try {
-        await exportCarryAsPdf({ mode: exportMode, inputs, result }, `${baseName}.pdf`);
+        const pdf = await buildCarryAsPdf({ mode: exportMode, inputs, result });
+        if (pdfAction === 'preview') await previewPdf(pdf, `${baseName}.pdf`);
+        else downloadPdf(pdf, `${baseName}.pdf`);
         setExportDialog(false);
-        toast.success('تم تصدير ملف PDF');
+        toast.success(pdfAction === 'preview' ? 'تمت معاينة ملف PDF' : 'تم تصدير ملف PDF');
       } catch (e) {
         console.error('PDF export failed', e);
         toast.error('فشل تصدير PDF — ' + (e instanceof Error ? e.message : String(e)));
@@ -448,10 +451,15 @@ const CarryingHandleBoxCalculator = () => {
               </button>
             </div>
           </div>
-          <DialogFooter>
+          <DialogFooter className="flex-wrap gap-2">
             <Button variant="outline" onClick={() => setExportDialog(false)}>إلغاء</Button>
-            <Button onClick={runExport} className="gap-1.5">
-              <Download className="w-3.5 h-3.5" /> تصدير
+            {exportFormat === 'pdf' && (
+              <Button variant="secondary" onClick={() => void runExport('preview')} className="gap-1.5">
+                <Eye className="w-3.5 h-3.5" /> معاينة PDF
+              </Button>
+            )}
+            <Button onClick={() => void runExport('download')} className="gap-1.5">
+              <Download className="w-3.5 h-3.5" /> {exportFormat === 'pdf' ? 'تحميل PDF' : 'تصدير'}
             </Button>
           </DialogFooter>
         </DialogContent>

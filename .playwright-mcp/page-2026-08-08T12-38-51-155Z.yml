@@ -1,0 +1,51 @@
+- generic:
+  - generic:
+    - list
+    - region "Notifications alt+T"
+  - dialog:
+    - generic:
+      - button:
+        - generic: تبديل المظهر
+    - generic:
+      - generic:
+        - heading [level=2]: حاسبة تكلفة الطباعة الذكية
+        - paragraph: احسبها صح… يكفي تحسبها مرة
+        - paragraph: مرحباً بك، يرجى تسجيل الدخول للمتابعة
+    - generic:
+      - generic:
+        - text: اسم المستخدم
+        - textbox:
+          - /placeholder: أدخل اسم المستخدم
+          - text: admin
+      - generic:
+        - text: كلمة المرور
+        - textbox:
+          - /placeholder: أدخل كلمة المرور
+          - text: smoke-admin-pw
+      - generic:
+        - generic:
+          - checkbox [checked]
+          - checkbox [checked]
+          - generic: تذكرني لمدة 30 يوم
+        - button: تغيير كلمة المرور
+      - button: تسجيل الدخول
+    - button:
+      - generic: Close
+  - alertdialog [ref=f19e36]:
+    - generic [ref=f19e37]:
+      - heading "تم الوصول للحد الأقصى من الأجهزة" [level=2] [ref=f19e38]
+      - paragraph [ref=f19e41]: "الحد المسموح: 2 أجهزة. اختر الجلسات التي تريد تسجيل الخروج منها للمتابعة."
+    - generic [ref=f19e42]:
+      - generic [ref=f19e43] [cursor=pointer]:
+        - checkbox [ref=f19e44]
+        - generic [ref=f19e47]:
+          - paragraph [ref=f19e48]: Playwright overflow audit
+          - paragraph [ref=f19e49]: "آخر نشاط: ٨‏/٨‏/٢٠٢٦، ٣:٢٢ م"
+      - generic [ref=f19e50] [cursor=pointer]:
+        - checkbox [ref=f19e51]
+        - generic [ref=f19e54]:
+          - paragraph [ref=f19e55]: جهاز غير معروف
+          - paragraph [ref=f19e56]: "آخر نشاط: ٨‏/٨‏/٢٠٢٦، ١٢:٣٢ م"
+    - generic [ref=f19e57]:
+      - button "تسجيل خروج ودخول" [disabled]
+      - button "إلغاء" [active] [ref=f19e58] [cursor=pointer]

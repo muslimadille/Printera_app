@@ -1,7 +1,10 @@
 import { useState } from 'react';
+import { useRef } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Printer, FileText, Ruler } from 'lucide-react';
+import { FileText, Ruler } from 'lucide-react';
+import PdfActions from '@/components/pdf/PdfActions';
+import { buildQuotePdfFilename } from '@/lib/pdf/pdfService';
 import type { D003Params } from '@/lib/d003/types';
 import type { D003NestingParams, D003NestingResult } from '@/lib/d003/nesting';
 
@@ -38,22 +41,20 @@ const D003PrintSummary = ({
   const today = new Date().toLocaleDateString('ar-SA');
   const u = unitLabel(dimUnit);
   const d = (mm: number) => `${toDisplay(mm, dimUnit)} ${u}`;
-
-  const handlePrint = () => {
-    window.print();
-  };
+  const printAreaRef = useRef<HTMLDivElement>(null);
+  const pdfFilename = buildQuotePdfFilename({ prefix: 'ملخص-D003', quoteNumber: 'D003' });
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto print:max-w-none print:max-h-none print:overflow-visible print:shadow-none print:border-none">
-        <DialogHeader className="print:hidden">
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Printer className="w-5 h-5" />
-            ملخص D003 — معاينة الطباعة
+            <FileText className="w-5 h-5" />
+            ملخص D003 — معاينة PDF
           </DialogTitle>
         </DialogHeader>
 
-        <div id="print-area" className="bg-background print:bg-white space-y-6" dir="rtl">
+        <div id="print-area" ref={printAreaRef} className="bg-background space-y-6" dir="rtl">
           {/* Header */}
           <div className="relative overflow-hidden rounded-xl bg-gradient-to-l from-primary/10 via-primary/5 to-transparent border border-primary/20 p-6">
             <div className="absolute top-0 left-0 w-32 h-32 bg-primary/5 rounded-full -translate-x-10 -translate-y-10" />
@@ -167,12 +168,9 @@ const D003PrintSummary = ({
           </div>
         </div>
 
-        <div className="print:hidden flex justify-end gap-3 pt-2">
+        <div className="flex flex-wrap justify-end gap-3 pt-2">
           <Button variant="outline" onClick={() => onOpenChange(false)}>إغلاق</Button>
-          <Button onClick={handlePrint} className="gap-2">
-            <Printer className="w-4 h-4" />
-            طباعة
-          </Button>
+          <PdfActions filename={pdfFilename} getElement={() => printAreaRef.current} />
         </div>
       </DialogContent>
     </Dialog>

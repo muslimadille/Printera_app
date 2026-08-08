@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { usePrintingStore, useCalculations, type FinishingItem, type CalculatorInputs } from '@/store/printingStore';
 import { calculateQuote } from '@/lib/calcEngine';
+import { finite, formatMoney, isFiniteMoney } from '@/lib/safeNumber';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -12,6 +13,8 @@ import SmartSheetLayoutPreview from '@/components/SmartSheetLayoutPreview';
 import { SpotlightTour, LightHints, SMART_ENGINE_STEPS } from '@/components/SmartEngineGuide';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import ProfitMargins from '@/components/ProfitMargins';
+import { useUiPrefs } from '@/hooks/useUiPrefs';
+import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { calcTypeLabels } from '@/lib/calcTypeLabels';
 import { downloadCostCalcTemplate, parseCostCalcExcelMulti } from '@/lib/costCalcExcel';
@@ -261,6 +264,8 @@ const createEmptySheet = (): SheetData => ({
 
 /* ═══════════════════════════════════════════════════════ */
 const SmartEngineCalculator = ({ onNavigateToQuote, sessionToken }: { onNavigateToQuote?: () => void; sessionToken?: string }) => {
+  const { layoutMode } = useUiPrefs();
+  const sidebarNav = layoutMode === 'sidebar';
   const { paperTypes, priceSettings, setInputs, editingQuoteData, setEditingQuoteData } = usePrintingStore();
   const calc = useCalculations();
 
@@ -454,7 +459,7 @@ const SmartEngineCalculator = ({ onNavigateToQuote, sessionToken }: { onNavigate
     });
   }, [sheet, paperTypes, priceSettings]);
 
-  const sheetGrandTotal = pieceCosts.reduce((sum, c) => sum + c.grandTotal, 0);
+  const sheetGrandTotal = finite(pieceCosts.reduce((sum, c) => sum + finite(c.grandTotal), 0));
   const sheetTotalQuantity = sheet?.pieces.reduce((sum, p) => sum + p.quantity, 0) || 0;
 
   // Calculate totals for ALL sheets
@@ -497,7 +502,7 @@ const SmartEngineCalculator = ({ onNavigateToQuote, sessionToken }: { onNavigate
     });
   }, [sheets, paperTypes, priceSettings]);
 
-  const allSheetsGrandTotal = allSheetsTotals.reduce((sum, s) => sum + s.total, 0);
+  const allSheetsGrandTotal = finite(allSheetsTotals.reduce((sum, s) => sum + finite(s.total), 0));
 
   // Save handler
   const handleSave = async (skipMetadata = false) => {
@@ -547,56 +552,46 @@ const SmartEngineCalculator = ({ onNavigateToQuote, sessionToken }: { onNavigate
   };
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-5 pb-20 lg:pb-0">
-      {/* ═══ Cost Summary (now on visual right via order-3 in RTL) ═══ */}
-      <div className="hidden lg:block lg:col-span-3 space-y-4 lg:sticky lg:top-4 lg:self-start order-3">
-        <Card className="shadow-sm border-primary/30 bg-gradient-to-b from-primary/5 to-transparent">
-          <CardContent className="pt-5 pb-4">
-            <SectionHeader icon={Calculator} title="ملخص التكلفة" />
-            <div className="space-y-2 mb-4">
-              {sheets.length > 1 && (
-                <div className="p-3 rounded-lg bg-accent/10 border border-accent/20 text-center">
-                  <p className="text-xs text-muted-foreground mb-0.5">إجمالي كل الأوراق</p>
-                  <p className="text-2xl font-bold text-accent-foreground">{allSheetsGrandTotal.toFixed(2)}</p>
-                  <p className="text-[10px] text-muted-foreground">ريال</p>
-                </div>
-              )}
-              {sheets.length > 1 && (
-                <div className="space-y-1">
-                  {sheets.map((s, si) => (
-                    <div key={s.id} className={`flex justify-between text-xs px-2 py-1.5 rounded ${si === activeSheetIdx ? 'bg-primary/10 border border-primary/20' : 'bg-muted/50'}`}>
-                      <span className={si === activeSheetIdx ? 'text-primary font-semibold' : 'text-muted-foreground'}>ورقة {si + 1}</span>
-                      <span className="font-mono font-medium">{allSheetsTotals[si]?.total.toFixed(2) || '0.00'} ر.س</span>
-                    </div>
-                  ))}
-                </div>
-              )}
-              <div className="p-3 rounded-lg bg-primary/10 border border-primary/20 text-center">
-                <p className="text-xs text-muted-foreground mb-0.5">{sheets.length > 1 ? `إجمالي الورقة ${activeSheetIdx + 1}` : 'الإجمالي الشامل'}</p>
-                <p className="text-2xl font-bold text-primary">{sheetGrandTotal.toFixed(2)}</p>
-                <p className="text-[10px] text-muted-foreground">ريال</p>
-              </div>
-              {sheet?.pieces.length > 1 && (
-                <div className="space-y-1">
-                  {sheet.pieces.map((p, pi) => (
-                    <div key={p.id} className="flex justify-between text-xs px-2 py-1 rounded bg-muted/50">
-                      <span className="text-muted-foreground">قطعة {pi + 1}</span>
-                      <span className="font-mono font-medium">{pieceCosts[pi]?.grandTotal.toFixed(2) || '0.00'} ر.س</span>
-                    </div>
-                  ))}
-                </div>
-              )}
+    <div
+      className={cn(
+        'pb-20 lg:pb-0 min-w-0 w-full calc-shell',
+        sidebarNav
+          ? 'flex flex-col gap-4 sm:gap-5'
+          : 'grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-5',
+      )}
+      data-layout={layoutMode}
+    >
+      <div className={cn(sidebarNav ? 'w-full max-w-full shrink-0 basis-full space-y-4' : 'lg:col-span-4 space-y-4 order-1')}>
+        {/* Visual preview for the FIRST piece on the active sheet (Smart Engine focus) */}
+        {mainPiece && (() => {
+          const selectedType = paperTypes.find(t => t.name === mainPiece.paperType);
+          const selectedEntry = selectedType?.entries.find(
+            (e: any) => e.sizeName === mainPiece.purchaseSize && e.grammage === mainPiece.grammage
+          );
+          const masterW = selectedEntry?.width || 0;
+          const masterH = selectedEntry?.height || 0;
+          return (
+            <div data-tour="preview">
+              <SmartSheetLayoutPreview
+                sheetW={masterW}
+                sheetH={masterH}
+                pressW={mainPiece.pressWidth}
+                pressH={mainPiece.pressHeight}
+                productW={mainPiece.printWidth}
+                productH={mainPiece.printHeight}
+                quantity={mainPiece.quantity}
+                onPressSizeChange={(w, h) => updatePiece(activeSheetIdx, 0, { pressWidth: w, pressHeight: h })}
+                onSelectStage1={(id, count) => updatePiece(activeSheetIdx, 0, { selectedStage1Id: id, baseCuts: count })}
+                onSelectStage2={(id, count) => updatePiece(activeSheetIdx, 0, { selectedStage2Id: id, cutsPerSheet: count })}
+              />
             </div>
-            <ProfitMargins grandTotal={sheets.length > 1 ? allSheetsGrandTotal : sheetGrandTotal} quantity={sheetTotalQuantity} />
-            <Button className="w-full mt-4 gap-2" onClick={() => setSaveDialogOpen(true)}>
-              <Save className="w-4 h-4" /> حفظ التكلفة
-            </Button>
-          </CardContent>
-        </Card>
+          );
+        })()}
       </div>
 
-      {/* ═══ Main Inputs (middle column) ═══ */}
-      <div className="lg:col-span-5 space-y-3 sm:space-y-4 order-2">
+      <div className={cn(sidebarNav ? 'grid w-full grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-5' : 'contents')}>
+      {/* ═══ Main Inputs ═══ */}
+      <div className={cn('space-y-3 sm:space-y-4 min-w-0', sidebarNav ? 'lg:col-span-8' : 'lg:col-span-5 order-2')}>
 
         {/* Sheet tabs - always visible */}
         <div className="flex items-center gap-1.5 flex-wrap">
@@ -682,37 +677,8 @@ const SmartEngineCalculator = ({ onNavigateToQuote, sessionToken }: { onNavigate
             <Copy className="w-4 h-4" /> تكرار
           </Button>
         </div>
-      </div>
 
-      {/* ═══ Visual Sheet Layout Preview + Calculation Details (now on visual left via order-1) ═══ */}
-      <div className="lg:col-span-4 space-y-4 order-1">
-        {/* Visual preview for the FIRST piece on the active sheet (Smart Engine focus) */}
-        {mainPiece && (() => {
-          const selectedType = paperTypes.find(t => t.name === mainPiece.paperType);
-          const selectedEntry = selectedType?.entries.find(
-            (e: any) => e.sizeName === mainPiece.purchaseSize && e.grammage === mainPiece.grammage
-          );
-          const masterW = selectedEntry?.width || 0;
-          const masterH = selectedEntry?.height || 0;
-          return (
-            <div data-tour="preview">
-              <SmartSheetLayoutPreview
-                sheetW={masterW}
-                sheetH={masterH}
-                pressW={mainPiece.pressWidth}
-                pressH={mainPiece.pressHeight}
-                productW={mainPiece.printWidth}
-                productH={mainPiece.printHeight}
-                quantity={mainPiece.quantity}
-                onPressSizeChange={(w, h) => updatePiece(activeSheetIdx, 0, { pressWidth: w, pressHeight: h })}
-                onSelectStage1={(id, count) => updatePiece(activeSheetIdx, 0, { selectedStage1Id: id, baseCuts: count })}
-                onSelectStage2={(id, count) => updatePiece(activeSheetIdx, 0, { selectedStage2Id: id, cutsPerSheet: count })}
-              />
-            </div>
-          );
-        })()}
-
-        {/* تفاصيل for each piece */}
+        {/* تفاصيل الحساب — under the inputs card column */}
         {sheet?.pieces.map((piece, pieceIdx) => {
           const cost = pieceCosts[pieceIdx];
           if (!cost?.valid) return null;
@@ -764,6 +730,59 @@ const SmartEngineCalculator = ({ onNavigateToQuote, sessionToken }: { onNavigate
             </Card>
           );
         })}
+      </div>
+
+      {/* ═══ Cost Summary ═══ */}
+      <div
+        className={cn(
+          'hidden lg:block space-y-4 lg:sticky lg:top-4 lg:self-start',
+          sidebarNav ? 'lg:col-span-4' : 'lg:col-span-3 order-3',
+        )}
+      >
+        <Card className="shadow-sm border-primary/30 bg-gradient-to-b from-primary/5 to-transparent">
+          <CardContent className="pt-5 pb-4">
+            <SectionHeader icon={Calculator} title="ملخص التكلفة" />
+            <div className="space-y-2 mb-4">
+              {sheets.length > 1 && (
+                <div className="p-3 rounded-lg bg-accent/10 border border-accent/20 text-center">
+                  <p className="text-xs text-muted-foreground mb-0.5">إجمالي كل الأوراق</p>
+                  <p className="text-2xl font-bold text-accent-foreground">{formatMoney(allSheetsGrandTotal)}</p>
+                  <p className="text-[10px] text-muted-foreground">ريال</p>
+                </div>
+              )}
+              {sheets.length > 1 && (
+                <div className="space-y-1">
+                  {sheets.map((s, si) => (
+                    <div key={s.id} className={`flex justify-between text-xs px-2 py-1.5 rounded ${si === activeSheetIdx ? 'bg-primary/10 border border-primary/20' : 'bg-muted/50'}`}>
+                      <span className={si === activeSheetIdx ? 'text-primary font-semibold' : 'text-muted-foreground'}>ورقة {si + 1}</span>
+                      <span className="font-mono font-medium">{formatMoney(allSheetsTotals[si]?.total)} ر.س</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <div className="p-3 rounded-lg bg-primary/10 border border-primary/20 text-center">
+                <p className="text-xs text-muted-foreground mb-0.5">{sheets.length > 1 ? `إجمالي الورقة ${activeSheetIdx + 1}` : 'الإجمالي الشامل'}</p>
+                <p className="text-2xl font-bold text-primary">{formatMoney(sheetGrandTotal)}</p>
+                <p className="text-[10px] text-muted-foreground">ريال</p>
+              </div>
+              {sheet?.pieces.length > 1 && (
+                <div className="space-y-1">
+                  {sheet.pieces.map((p, pi) => (
+                    <div key={p.id} className="flex justify-between text-xs px-2 py-1 rounded bg-muted/50">
+                      <span className="text-muted-foreground">قطعة {pi + 1}</span>
+                      <span className="font-mono font-medium">{formatMoney(pieceCosts[pi]?.grandTotal)} ر.س</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+            <ProfitMargins grandTotal={sheets.length > 1 ? allSheetsGrandTotal : sheetGrandTotal} quantity={sheetTotalQuantity} />
+            <Button className="w-full mt-4 gap-2" onClick={() => setSaveDialogOpen(true)}>
+              <Save className="w-4 h-4" /> حفظ التكلفة
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
       </div>
 
       {/* ═══ Save Dialog ═══ */}

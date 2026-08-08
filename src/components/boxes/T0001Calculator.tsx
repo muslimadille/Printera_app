@@ -23,8 +23,8 @@ import {
 import { buildT0001Geometry } from '@/lib/t0001/geometry';
 import { buildT0001DimensionsSvg } from '@/lib/t0001/dimensionsOverlay';
 import { computeT0001Nesting, type T0001NestingParams, type RotationMode } from '@/lib/t0001/nesting';
-import { downloadT0001SingleTemplate, downloadT0001SingleTemplatePdf } from '@/lib/t0001/exportSingle';
-import { downloadT0001SheetLayout, downloadT0001SheetLayoutPdf } from '@/lib/t0001/exportSheet';
+import { downloadT0001SingleTemplate, downloadT0001SingleTemplatePdf, previewT0001SingleTemplatePdf } from '@/lib/t0001/exportSingle';
+import { downloadT0001SheetLayout, downloadT0001SheetLayoutPdf, previewT0001SheetLayoutPdf } from '@/lib/t0001/exportSheet';
 import T0001SheetNestingPreview from './T0001SheetNestingPreview';
 import T0001PrintSummary from './T0001PrintSummary';
 import Box3DPreview, { type Panel2DInfo } from './Box3DPreview';
@@ -233,7 +233,7 @@ const T0001Calculator = ({ isAdmin = false }: { isAdmin?: boolean }) => {
   const refOn = params.referenceMode;
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-[1fr_440px] gap-4 p-4">
+    <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(0,440px)] gap-4 p-2 sm:p-4 min-w-0 w-full calc-shell">
       {/* Left: Preview Panel */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between gap-3 pb-2">
@@ -306,8 +306,11 @@ const T0001Calculator = ({ isAdmin = false }: { isAdmin?: boolean }) => {
                 <DropdownMenuItem onClick={() => downloadT0001SingleTemplate(geo)}>
                   تنزيل SVG
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => downloadT0001SingleTemplatePdf(geo.svg)}>
-                  تنزيل PDF
+                <DropdownMenuItem onClick={() => void previewT0001SingleTemplatePdf(geo.svg)}>
+                  معاينة PDF
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => void downloadT0001SingleTemplatePdf(geo.svg)}>
+                  تحميل PDF
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -325,8 +328,11 @@ const T0001Calculator = ({ isAdmin = false }: { isAdmin?: boolean }) => {
                 <DropdownMenuItem onClick={() => downloadT0001SheetLayout(params, nesting, nestingResult)}>
                   تنزيل SVG
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => downloadT0001SheetLayoutPdf(params, nesting, nestingResult)}>
-                  تنزيل PDF
+                <DropdownMenuItem onClick={() => void previewT0001SheetLayoutPdf(params, nesting, nestingResult)}>
+                  معاينة PDF
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => void downloadT0001SheetLayoutPdf(params, nesting, nestingResult)}>
+                  تحميل PDF
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

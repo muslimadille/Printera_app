@@ -2,16 +2,23 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import LoginDialog from '@/components/LoginDialog';
 import AppHeader from '@/components/AppHeader';
 import AppTabs from '@/components/AppTabs';
+import AppSidebarNav from '@/components/AppSidebarNav';
 import InteractiveTour from '@/components/InteractiveTour';
 import QuoteTabPickerDialog from '@/components/QuoteTabPickerDialog';
+import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
+import { useUiPrefs } from '@/hooks/useUiPrefs';
 import { usePrintingStore } from '@/store/printingStore';
 import { TabPermission, logoutSession, verifySession, saveUserSettings, SavedQuote } from '@/lib/userApi';
 import { QUOTE_CAPABLE_TABS, SOURCE_TO_TAB, getTabLabel, isTabAvailable, getDefaultTabKey } from '@/lib/tabRegistry';
 import { setActivitySession, trackActivity, flushNow } from '@/lib/activityTracker';
+import { drainOutbox, onUserLogout, setOutboxPaused, setSessionUserId } from '@/lib/outbox';
 import { useTabSEO } from '@/lib/seo';
 import { toast } from 'sonner';
 
 const Index = () => {
+  const { layoutMode, toggleLayoutMode } = useUiPrefs();
+  const guardedTabChangeRef = useRef<((tab: string) => void) | null>(null);
+
   const [currentUser, setCurrentUser] = useState<{ id: string; username: string; is_admin: boolean; max_employees: number; employees_can_view_quotes: boolean; parent_user_id: string | null } | null>(() => {
     try {
       const saved = localStorage.getItem('printCalc_session');
@@ -72,6 +79,11 @@ const Index = () => {
   const setActiveTab = useCallback((tab: string) => {
     setActiveTabState(tab);
   }, []);
+
+  const requestTabChange = useCallback((tab: string) => {
+    (guardedTabChangeRef.current ?? setActiveTab)(tab);
+  }, [setActiveTab]);
+
   const [editingQuoteId, setEditingQuoteId] = useState<string | null>(null);
   const [editingAttachment, setEditingAttachment] = useState<{ url: string; name: string } | null>(null);
   // Pending quote awaiting user choice when its origin tab is unavailable.
@@ -106,11 +118,19 @@ const Index = () => {
   const { setCurrentUsername, loadCloudSettings, setInputs, setQuoteInfo, setEditingQuoteData } = usePrintingStore();
 
   useEffect(() => {
-    if (currentUser) setCurrentUsername(currentUser.username);
+    if (currentUser) {
+      setCurrentUsername(currentUser.username);
+      setSessionUserId(currentUser.id);
+    }
   }, [currentUser, setCurrentUsername]);
 
   const handleLogin = (user: { id: string; username: string; is_admin: boolean; max_employees: number; employees_can_view_quotes: boolean; parent_user_id?: string | null }) => {
     setCurrentUser({ ...user, parent_user_id: user.parent_user_id ?? null });
+    setSessionUserId(user.id);
+    void setOutboxPaused(false).then(() => {
+      window.dispatchEvent(new Event('printCalc:sessionReady'));
+      void drainOutbox();
+    });
     // Mark that we just logged in — the permissions-aware effect below will
     // pick the admin-configured default tab (or the first available one).
     setActiveTabState('__pending_login__');
@@ -191,6 +211,8 @@ const Index = () => {
     setTabPermissions([]);
     localStorage.removeItem('printCalc_session');
     localStorage.removeItem('printCalc_tabPermsSnapshot');
+    setSessionUserId(null);
+    void onUserLogout();
     sessionVerifiedRef.current = false;
     failureCountRef.current = 0;
     if (message) toast.error(message);
@@ -243,6 +265,8 @@ const Index = () => {
     setTabPermissions([]);
     localStorage.removeItem('printCalc_session');
     localStorage.removeItem('printCalc_tabPermsSnapshot');
+    setSessionUserId(null);
+    void onUserLogout();
     if (token) {
       try { await logoutSession(token); } catch {}
     }
@@ -357,54 +381,93 @@ const Index = () => {
 
   const tourPerm = tabPermissions.find(p => p.tab_key === 'show_tour');
   const tourVisible = currentUser.is_admin || !tourPerm || tourPerm.is_enabled;
+  const sidebarLayout = layoutMode === 'sidebar';
 
-  return (
-    <div className="min-h-screen bg-background">
-      <AppHeader
-        username={currentUser.username}
-        onLogout={handleLogout}
-        onTourStart={() => setTourOpen(true)}
-        showTour={tourVisible}
-        isAdmin={currentUser.is_admin}
-        isAccountOwner={!currentUser.is_admin && !currentUser.parent_user_id}
+  const tabs = (
+    <AppTabs
+      activeTab={activeTab}
+      onTabChange={setActiveTab}
+      isAdmin={currentUser.is_admin}
+      currentUser={currentUser}
+      currentPassword={currentPassword}
+      tabPermissions={tabPermissions}
+      sessionToken={sessionToken}
+      maxEmployees={currentUser.max_employees}
+      userId={currentUser.id}
+      employeesCanViewQuotes={currentUser.employees_can_view_quotes}
+      onEmployeesViewChange={(enabled) => setCurrentUser(prev => prev ? { ...prev, employees_can_view_quotes: enabled } : null)}
+      onLoadQuote={handleLoadQuote}
+      editingQuoteId={editingQuoteId}
+      editingAttachment={editingAttachment}
+      onClearEditingQuote={() => { setEditingQuoteId(null); setEditingAttachment(null); }}
+      hideNav={sidebarLayout}
+      onProvideTabChange={(fn) => { guardedTabChangeRef.current = fn; }}
+    />
+  );
+
+  const overlays = (
+    <>
+      <InteractiveTour
+        open={tourOpen}
+        onClose={() => setTourOpen(false)}
+        onNavigateTab={requestTabChange}
       />
 
-      <main className="container mx-auto py-3 sm:py-4 md:py-6 px-2 sm:px-3 md:px-4">
-        <AppTabs
+      <QuoteTabPickerDialog
+        open={!!pendingQuote}
+        originalTabLabel={pendingQuote ? getTabLabel(SOURCE_TO_TAB[pendingQuote.source_type] || pendingQuote.source_type) : ''}
+        availableTabs={availableQuoteTabs}
+        onCancel={() => setPendingQuote(null)}
+        onConfirm={(tabKey) => {
+          const q = pendingQuote;
+          setPendingQuote(null);
+          if (q) loadQuoteIntoTab(q, tabKey);
+        }}
+      />
+    </>
+  );
+
+  const header = (
+    <AppHeader
+      username={currentUser.username}
+      onLogout={handleLogout}
+      onTourStart={() => setTourOpen(true)}
+      showTour={tourVisible}
+      isAdmin={currentUser.is_admin}
+      isAccountOwner={!currentUser.is_admin && !currentUser.parent_user_id}
+      layoutMode={layoutMode}
+      onToggleLayout={toggleLayoutMode}
+      compact={sidebarLayout}
+    />
+  );
+
+  if (sidebarLayout) {
+    return (
+      <SidebarProvider defaultOpen>
+        <AppSidebarNav
           activeTab={activeTab}
-          onTabChange={setActiveTab}
+          onTabChange={requestTabChange}
           isAdmin={currentUser.is_admin}
-          currentUser={currentUser}
-          currentPassword={currentPassword}
           tabPermissions={tabPermissions}
-          sessionToken={sessionToken}
           maxEmployees={currentUser.max_employees}
-          userId={currentUser.id}
-          employeesCanViewQuotes={currentUser.employees_can_view_quotes}
-          onEmployeesViewChange={(enabled) => setCurrentUser(prev => prev ? { ...prev, employees_can_view_quotes: enabled } : null)}
-          onLoadQuote={handleLoadQuote}
-          editingQuoteId={editingQuoteId}
-          editingAttachment={editingAttachment}
-          onClearEditingQuote={() => { setEditingQuoteId(null); setEditingAttachment(null); }}
         />
+        <SidebarInset className="min-w-0 max-w-full overflow-x-clip bg-background">
+          {header}
+          <main className="container mx-auto min-w-0 max-w-full overflow-x-clip py-3 sm:py-4 md:py-6 px-2 sm:px-3 md:px-4">
+            {tabs}
+            {overlays}
+          </main>
+        </SidebarInset>
+      </SidebarProvider>
+    );
+  }
 
-        <InteractiveTour
-          open={tourOpen}
-          onClose={() => setTourOpen(false)}
-          onNavigateTab={(tab) => setActiveTab(tab)}
-        />
-
-        <QuoteTabPickerDialog
-          open={!!pendingQuote}
-          originalTabLabel={pendingQuote ? getTabLabel(SOURCE_TO_TAB[pendingQuote.source_type] || pendingQuote.source_type) : ''}
-          availableTabs={availableQuoteTabs}
-          onCancel={() => setPendingQuote(null)}
-          onConfirm={(tabKey) => {
-            const q = pendingQuote;
-            setPendingQuote(null);
-            if (q) loadQuoteIntoTab(q, tabKey);
-          }}
-        />
+  return (
+    <div className="min-h-screen min-w-0 max-w-full overflow-x-clip bg-background">
+      {header}
+      <main className="container mx-auto min-w-0 max-w-full overflow-x-clip py-3 sm:py-4 md:py-6 px-2 sm:px-3 md:px-4">
+        {tabs}
+        {overlays}
       </main>
     </div>
   );

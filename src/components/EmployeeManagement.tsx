@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { TableScroller } from '@/components/layout';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -229,37 +230,39 @@ const EmployeeManagement = ({ sessionToken, maxEmployees, parentTabPermissions, 
           ) : employees.length === 0 ? (
             <p className="text-center text-muted-foreground py-8">لم تقم بإضافة موظفين بعد</p>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="text-right">اسم الموظف</TableHead>
-                  <TableHead className="text-right">الحالة</TableHead>
-                  <TableHead className="text-right">الإجراءات</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {employees.map(emp => (
-                  <TableRow key={emp.id}>
-                    <TableCell className="font-medium">{emp.username}</TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <Switch checked={emp.is_active} onCheckedChange={() => handleToggleActive(emp)} />
-                        <span className={emp.is_active ? 'text-green-600' : 'text-destructive'}>
-                          {emp.is_active ? 'مفعل' : 'معطل'}
-                        </span>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex gap-1">
-                        <Button variant="ghost" size="sm" onClick={() => openEditDialog(emp)} title="تعديل"><Edit className="w-4 h-4" /></Button>
-                        <Button variant="ghost" size="sm" onClick={() => openTabDialog(emp)} title="صلاحيات التبويبات"><Layers className="w-4 h-4" /></Button>
-                        <Button variant="ghost" size="sm" className="text-destructive" onClick={() => handleDeleteClick(emp)} title="حذف"><Trash2 className="w-4 h-4" /></Button>
-                      </div>
-                    </TableCell>
+            <TableScroller>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="text-start">اسم الموظف</TableHead>
+                    <TableHead className="text-start">الحالة</TableHead>
+                    <TableHead className="text-start">الإجراءات</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {employees.map(emp => (
+                    <TableRow key={emp.id}>
+                      <TableCell className="font-medium">{emp.username}</TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <Switch checked={emp.is_active} onCheckedChange={() => handleToggleActive(emp)} />
+                          <span className={emp.is_active ? 'text-green-600 dark:text-green-400' : 'text-destructive'}>
+                            {emp.is_active ? 'مفعل' : 'معطل'}
+                          </span>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex flex-wrap gap-1">
+                          <Button variant="ghost" size="sm" className="min-h-11 min-w-11 sm:min-h-0 sm:min-w-0" onClick={() => openEditDialog(emp)} title="تعديل"><Edit className="w-4 h-4" /></Button>
+                          <Button variant="ghost" size="sm" className="min-h-11 min-w-11 sm:min-h-0 sm:min-w-0" onClick={() => openTabDialog(emp)} title="صلاحيات التبويبات"><Layers className="w-4 h-4" /></Button>
+                          <Button variant="ghost" size="sm" className="min-h-11 min-w-11 sm:min-h-0 sm:min-w-0 text-destructive" onClick={() => handleDeleteClick(emp)} title="حذف"><Trash2 className="w-4 h-4" /></Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableScroller>
           )}
         </CardContent>
       </Card>

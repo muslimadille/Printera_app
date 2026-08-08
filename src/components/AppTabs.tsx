@@ -1,5 +1,5 @@
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Suspense, useState, useCallback, useEffect } from 'react';
+import { Suspense, useState, useCallback, useEffect, useLayoutEffect } from 'react';
 import { lazyWithRetry as lazy } from '@/lib/lazyWithRetry';
 import { Calculator, UserPen, FileText, Sparkles, Layers, Settings, BookOpen, PenTool, Users, History, HelpCircle, Box, Archive, FileSpreadsheet, Brain, Combine, ShoppingBag } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -95,6 +95,10 @@ interface AppTabsProps {
   editingQuoteId?: string | null;
   editingAttachment?: { url: string; name: string } | null;
   onClearEditingQuote?: () => void;
+  /** When true, hide the horizontal TabsList (sidebar owns nav). Content still renders. */
+  hideNav?: boolean;
+  /** Expose the dirty-settings-aware tab change handler to parent (sidebar nav). */
+  onProvideTabChange?: (fn: (tab: string) => void) => void;
 }
 
 // Primary tabs - always visible by default
@@ -145,7 +149,7 @@ const ADMIN_TABS = [
 
 const GUIDE_TAB = { key: 'guide', label: 'الدليل', shortLabel: '', icon: HelpCircle };
 
-const AppTabs = ({ activeTab, onTabChange, isAdmin, currentUser, currentPassword, tabPermissions, sessionToken, maxEmployees, userId, employeesCanViewQuotes, onEmployeesViewChange, onLoadQuote, editingQuoteId, editingAttachment, onClearEditingQuote }: AppTabsProps) => {
+const AppTabs = ({ activeTab, onTabChange, isAdmin, currentUser, currentPassword, tabPermissions, sessionToken, maxEmployees, userId, employeesCanViewQuotes, onEmployeesViewChange, onLoadQuote, editingQuoteId, editingAttachment, onClearEditingQuote, hideNav = false, onProvideTabChange }: AppTabsProps) => {
   const { dirtyPaper, dirtyPriceSettings, dirtyFinishing, savePaperTypes, savePriceSettings, saveFinishingItems } = usePrintingStore();
   const [pendingTab, setPendingTab] = useState<string | null>(null);
   const [visitedTabs, setVisitedTabs] = useState<Set<string>>(() => new Set([activeTab]));
@@ -221,6 +225,10 @@ const AppTabs = ({ activeTab, onTabChange, isAdmin, currentUser, currentPassword
     onTabChange(newTab);
   }, [activeTab, dirtyPaper, dirtyPriceSettings, dirtyFinishing, onTabChange]);
 
+  useLayoutEffect(() => {
+    onProvideTabChange?.(handleTabChange);
+  }, [handleTabChange, onProvideTabChange]);
+
   const handleSaveAndSwitch = () => {
     if (activeTab === 'papertypes') savePaperTypes();
     if (activeTab === 'settings') savePriceSettings();
@@ -262,7 +270,7 @@ const AppTabs = ({ activeTab, onTabChange, isAdmin, currentUser, currentPassword
         role="tabpanel"
         data-state={activeTab === tabKey ? 'active' : 'inactive'}
         hidden={activeTab !== tabKey}
-        className={`mt-2 ring-offset-background ${keepAliveClass(tabKey)}`}
+        className={`mt-2 min-w-0 max-w-full overflow-x-clip ring-offset-background ${keepAliveClass(tabKey)}`}
       >
         {shouldRenderTab(tabKey) ? (
           <TabErrorBoundary tabKey={tabKey}>{child}</TabErrorBoundary>
@@ -272,7 +280,7 @@ const AppTabs = ({ activeTab, onTabChange, isAdmin, currentUser, currentPassword
   };
 
   const renderTrigger = (tab: typeof PRIMARY_TABS[0]) => (
-    <TabsTrigger key={tab.key} value={tab.key} data-tour={`tab-${tab.key}`} className="gap-1 sm:gap-1.5 text-[11px] sm:text-xs md:text-sm rounded-lg px-2.5 sm:px-3 py-2 min-h-[40px] data-[state=active]:shadow-md data-[state=active]:shadow-primary/20">
+    <TabsTrigger key={tab.key} value={tab.key} data-tour={`tab-${tab.key}`} className="gap-1 sm:gap-1.5 text-[11px] sm:text-xs md:text-sm rounded-lg px-2.5 sm:px-3 py-2 min-h-11 sm:min-h-10 data-[state=active]:shadow-md data-[state=active]:shadow-primary/20">
       <tab.icon className="w-4 h-4 sm:w-3.5 sm:h-3.5 md:w-4 md:h-4" />
       <span className="leading-tight">{tab.label}</span>
     </TabsTrigger>
@@ -296,9 +304,10 @@ const AppTabs = ({ activeTab, onTabChange, isAdmin, currentUser, currentPassword
     </AlertDialog>
 
     <Tabs value={activeTab} onValueChange={handleTabChange} dir="rtl">
+      {!hideNav && (
       <div className="tabs-scroll mb-4 sm:mb-6 space-y-1.5 sm:space-y-2">
         {/* Primary Top Row - main calculators */}
-        <TabsList className="w-full flex-wrap h-auto gap-1 sm:gap-1.5 bg-card/80 backdrop-blur-sm border border-primary/20 p-1.5 sm:p-2 rounded-xl shadow-[0_2px_12px_-2px_hsl(221_83%_53%_/_0.08)]">
+        <TabsList className="w-full flex-wrap h-auto gap-1 sm:gap-1.5 bg-card/80 backdrop-blur-sm border border-primary/20 p-1.5 sm:p-2 rounded-xl shadow-[0_2px_12px_-2px_hsl(var(--primary)_/_0.08)]">
           {visiblePrimaryTopTabs.map(renderTrigger)}
           {!isAdmin && maxEmployees > 0 && (
             <TabsTrigger value="myemployees" className="gap-1 sm:gap-1.5 text-[11px] sm:text-xs md:text-sm rounded-lg px-2.5 sm:px-3 py-2 min-h-[40px] data-[state=active]:shadow-md data-[state=active]:shadow-primary/20">
@@ -310,19 +319,20 @@ const AppTabs = ({ activeTab, onTabChange, isAdmin, currentUser, currentPassword
 
         {/* Primary Bottom Row - tools & settings */}
         {visiblePrimaryBottomTabs.length > 0 && (
-          <TabsList className="w-full flex-wrap h-auto gap-1 sm:gap-1.5 bg-card/80 backdrop-blur-sm border border-primary/15 p-1.5 sm:p-2 rounded-xl shadow-[0_2px_12px_-2px_hsl(221_83%_53%_/_0.06)]">
+          <TabsList className="w-full flex-wrap h-auto gap-1 sm:gap-1.5 bg-card/80 backdrop-blur-sm border border-primary/15 p-1.5 sm:p-2 rounded-xl shadow-[0_2px_12px_-2px_hsl(var(--primary)_/_0.06)]">
             {visiblePrimaryBottomTabs.map(renderTrigger)}
           </TabsList>
         )}
 
         {/* Secondary Row - hidden by default, shown when enabled */}
         {visibleSecondaryTabs.length > 0 && (
-          <TabsList className="w-full flex-wrap h-auto gap-1 sm:gap-1.5 bg-card/80 backdrop-blur-sm border border-border/50 p-1.5 sm:p-2 rounded-xl shadow-[0_2px_12px_-2px_hsl(221_83%_53%_/_0.04)]">
+          <TabsList className="w-full flex-wrap h-auto gap-1 sm:gap-1.5 bg-card/80 backdrop-blur-sm border border-border/50 p-1.5 sm:p-2 rounded-xl shadow-[0_2px_12px_-2px_hsl(var(--primary)_/_0.04)]">
             <span className="text-[10px] font-bold text-muted-foreground/70 px-2 py-0.5 bg-muted/60 rounded-md ml-1 select-none">إضافية</span>
             {visibleSecondaryTabs.map(renderTrigger)}
           </TabsList>
         )}
       </div>
+      )}
 
       <div className="animate-fade-in-scale">
         <Suspense fallback={<TabLoading />}>

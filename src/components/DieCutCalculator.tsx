@@ -29,6 +29,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import ColorCountSelect from '@/components/ColorCountSelect';
 import { usePrintingStore, type ExtraColorConfig, type CalculatorInputs, type FinishingItem } from '@/store/printingStore';
 import { calculateQuote } from '@/lib/calcEngine';
+import { formatMoney } from '@/lib/safeNumber';
 import { calcTypeLabels } from '@/lib/calcTypeLabels';
 import { DollarSign } from 'lucide-react';
 
@@ -546,7 +547,7 @@ const DieCutCalculator = ({ isAdmin = true }: { isAdmin?: boolean } = {}) => {
         </CardContent>
       </Card>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6 min-w-0 w-full calc-shell">
         {/* ── Left: Inputs ── */}
         <div className="lg:col-span-5 space-y-4">
           <Card>
@@ -879,7 +880,7 @@ const DieCutCalculator = ({ isAdmin = true }: { isAdmin?: boolean } = {}) => {
                 <>
                   <div className="p-3 rounded-lg bg-primary/10 border border-primary/20 text-center mb-3">
                     <p className="text-xs text-muted-foreground mb-0.5">الإجمالي الشامل</p>
-                    <p className="text-2xl font-bold text-primary">{costResult.grandTotal.toFixed(2)}</p>
+                    <p className="text-2xl font-bold text-primary">{formatMoney(costResult.valid ? costResult.grandTotal : NaN)}</p>
                     <p className="text-[10px] text-muted-foreground">ريال</p>
                   </div>
                   <div className="space-y-1 text-xs">

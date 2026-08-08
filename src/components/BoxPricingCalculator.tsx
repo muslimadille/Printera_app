@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
+import { formatMoney, isFiniteMoney } from '@/lib/safeNumber';
 import { usePrintingStore, PaperType, SizePricing, getColorPricing, type ExtraColorConfig, calcExtraColorCost } from '@/store/printingStore';
 import ColorCountSelect from '@/components/ColorCountSelect';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -464,7 +465,7 @@ const BoxPricingCalculator = ({ onNavigateToQuote }: { onNavigateToQuote?: () =>
             <div className="space-y-2 mb-4">
               <div className="p-3 rounded-lg bg-primary/10 border border-primary/20 text-center">
                 <p className="text-xs text-muted-foreground mb-0.5">الإجمالي الشامل</p>
-                <p className="text-2xl font-bold text-primary">{grandTotal.toFixed(2)}</p>
+                <p className="text-2xl font-bold text-primary">{formatMoney(grandTotal)}</p>
                 <p className="text-[10px] text-muted-foreground">ريال</p>
               </div>
               <div className="grid grid-cols-2 gap-2">
@@ -504,7 +505,7 @@ const BoxPricingCalculator = ({ onNavigateToQuote }: { onNavigateToQuote?: () =>
               ))}
               <CostRow label="التشطيبات" value={finishingTotal.toFixed(2)} />
               <div className="border-t pt-2 mt-2">
-                <CostRow label="الإجمالي" value={grandTotal.toFixed(2)} bold />
+                <CostRow label="الإجمالي" value={formatMoney(grandTotal)} bold />
               </div>
             </div>
           </CardContent>
