@@ -72,6 +72,11 @@ final class Messages
 
     public const GENERIC_ERROR = 'حدث خطأ';
 
+    /** Voice AI key missing / provider misconfigured (BE-051). */
+    public const VOICE_AI_NOT_CONFIGURED = 'خدمة التحليل الصوتي غير مُعدّة على الخادم. تواصل مع المسؤول.';
+
+    public const VOICE_AI_PROVIDER_FAILED = 'تعذر تحليل الصوت حالياً. حاول مرة أخرى بعد قليل.';
+
     /**
      * Max-employees message includes the cap, e.g. "وصلت للحد الأقصى من الموظفين (3)".
      */

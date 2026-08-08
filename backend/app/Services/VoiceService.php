@@ -2,8 +2,10 @@
 
 namespace App\Services;
 
+use App\Exceptions\ApiException;
+use App\Support\Messages;
 use Illuminate\Support\Facades\Http;
-use RuntimeException;
+use Illuminate\Support\Facades\Log;
 use stdClass;
 
 /**
@@ -38,9 +40,8 @@ class VoiceService
         $apiKey = (string) config('printera.voice.api_key');
 
         if ($apiKey === '') {
-            // Mirrors the reference's "LOVABLE_API_KEY not configured" throw. Surfaces as
-            // the generic Arabic 500; the operator sees the real reason in the log.
-            throw new RuntimeException('Voice AI api key is not configured (printera.voice.api_key).');
+            Log::error('Voice AI api key is not configured (printera.voice.api_key / VOICE_AI_API_KEY).');
+            throw ApiException::business(Messages::VOICE_AI_NOT_CONFIGURED);
         }
 
         $response = Http::withToken($apiKey)
@@ -58,7 +59,11 @@ class VoiceService
             // Deliberately does NOT echo the provider's body. The reference returns
             // `AI API error [status]: <body>` straight to the client, which can carry
             // upstream account details into an Arabic RTL toast.
-            throw new RuntimeException("Voice AI provider returned HTTP {$response->status()}.");
+            Log::error('Voice AI provider failed', [
+                'status' => $response->status(),
+                'calcType' => $calcType,
+            ]);
+            throw ApiException::business(Messages::VOICE_AI_PROVIDER_FAILED);
         }
 
         return $this->decodeFields((string) ($response->json('choices.0.message.content') ?? '{}'));

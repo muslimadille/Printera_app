@@ -267,16 +267,15 @@ class VoiceParseTest extends TestCase
 
     // ── failures ─────────────────────────────────────────────────────────────
 
-    public function test_a_provider_error_becomes_the_generic_arabic_500(): void
+    public function test_a_provider_error_becomes_a_clear_arabic_business_error(): void
     {
-        // The reference returns `AI API error [500]: <body>` straight to the client, which
-        // can carry upstream account detail into an Arabic RTL toast.
+        // Must NOT leak upstream account detail into an Arabic RTL toast.
         $this->makeUser();
         Http::fake([self::ENDPOINT => Http::response(['error' => 'quota exceeded for org acct_12345'], 429)]);
 
         $response = $this->postJson('/api/v1/voice/parse', ['transcript' => 'نص'], $this->authAs())
-            ->assertStatus(500)
-            ->assertExactJson(['error' => Messages::SERVER_ERROR]);
+            ->assertOk()
+            ->assertExactJson(['error' => Messages::VOICE_AI_PROVIDER_FAILED]);
 
         $this->assertStringNotContainsString('acct_12345', $response->content());
     }
@@ -288,8 +287,8 @@ class VoiceParseTest extends TestCase
         Http::fake();
 
         $this->postJson('/api/v1/voice/parse', ['transcript' => 'نص'], $this->authAs())
-            ->assertStatus(500)
-            ->assertExactJson(['error' => Messages::SERVER_ERROR]);
+            ->assertOk()
+            ->assertExactJson(['error' => Messages::VOICE_AI_NOT_CONFIGURED]);
 
         Http::assertNothingSent();
     }
