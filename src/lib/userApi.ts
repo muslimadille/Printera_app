@@ -59,6 +59,33 @@ export interface AppUser {
   max_devices: number;
   max_employees: number;
   parent_user_id: string | null;
+  subscription_plan?: string;
+}
+
+const USER_PLANS_KEY = 'printCalc_userPlans';
+
+export function getUserPlan(userId?: string, username?: string): string {
+  try {
+    const raw = localStorage.getItem(USER_PLANS_KEY);
+    if (!raw) return 'plan-free';
+    const map = JSON.parse(raw);
+    if (userId && map[userId]) return map[userId];
+    if (username && map[username.toLowerCase()]) return map[username.toLowerCase()];
+    return 'plan-free';
+  } catch {
+    return 'plan-free';
+  }
+}
+
+export function saveUserPlan(userId: string | undefined, username: string | undefined, planId: string) {
+  try {
+    const raw = localStorage.getItem(USER_PLANS_KEY);
+    const map: Record<string, string> = raw ? JSON.parse(raw) : {};
+    if (userId) map[userId] = planId;
+    if (username) map[username.toLowerCase()] = planId;
+    localStorage.setItem(USER_PLANS_KEY, JSON.stringify(map));
+    window.dispatchEvent(new Event('userPlansUpdated'));
+  } catch {}
 }
 
 export interface TabPermission {
@@ -397,14 +424,25 @@ export async function listUsers(adminUsername: string, adminPassword: string): P
     }
   } catch {}
 
+  try {
+    const rawPlans = localStorage.getItem(USER_PLANS_KEY);
+    const plansMap = rawPlans ? JSON.parse(rawPlans) : {};
+    for (const u of apiUsers) {
+      u.subscription_plan = plansMap[u.id] || plansMap[u.username.toLowerCase()] || 'plan-free';
+    }
+  } catch {}
+
   return apiUsers;
 }
 
 export async function createUser(
   adminUsername: string,
   adminPassword: string,
-  params: { username: string; password: string; is_admin?: boolean; expires_at?: string | null; max_devices?: number; max_employees?: number }
+  params: { username: string; password: string; is_admin?: boolean; expires_at?: string | null; max_devices?: number; max_employees?: number; subscription_plan?: string }
 ) {
+  if (params.subscription_plan) {
+    saveUserPlan(undefined, params.username, params.subscription_plan);
+  }
   return callApi({ action: 'create', admin_username: adminUsername, admin_password: adminPassword, ...params });
 }
 
@@ -452,8 +490,11 @@ export async function updateEmployeeTabPermissions(sessionToken: string, userId:
 export async function updateUser(
   adminUsername: string,
   adminPassword: string,
-  params: { user_id: string; username?: string; password?: string; is_active?: boolean; is_admin?: boolean; expires_at?: string | null; max_devices?: number; max_employees?: number }
+  params: { user_id: string; username?: string; password?: string; is_active?: boolean; is_admin?: boolean; expires_at?: string | null; max_devices?: number; max_employees?: number; subscription_plan?: string }
 ) {
+  if (params.subscription_plan) {
+    saveUserPlan(params.user_id, params.username, params.subscription_plan);
+  }
   const isUuid = isValidUUID(params.user_id);
 
   if (isUuid) {

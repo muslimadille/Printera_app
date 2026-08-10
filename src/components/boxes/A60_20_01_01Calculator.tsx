@@ -15,6 +15,7 @@ import {
 import { ChevronDown, Download, RotateCcw } from 'lucide-react';
 import {
   A60_20_01_01_DEFAULTS,
+  usableSheet,
   type A60_20_01_01Params,
   type A60_20_01_01Geometry,
 } from '@/lib/a60_20_01_01/types';
@@ -47,13 +48,13 @@ const toDisplay = (mm: number, unit: 'mm' | 'cm' | 'in') => parseFloat((mm / UNI
 const toMm = (val: number, unit: 'mm' | 'cm' | 'in') => val * UNIT_FACTORS[unit];
 
 const NumField = ({
-  label, value, onChange, disabled, step = '0.01', min, unit,
+  label, value, defaultValue, onChange, disabled, step = '0.01', min, unit,
 }: {
-  label: string; value: number; onChange: (v: number) => void;
+  label: string; value: number; defaultValue?: number; onChange: (v: number) => void;
   disabled?: boolean; step?: string; min?: string; unit?: 'mm' | 'cm' | 'in';
 }) => (
   <div>
-    <Label className="text-xs">{label} {unit && <span className="text-muted-foreground">({unit})</span>}</Label>
+    <Label className="text-xs">{label}</Label>
     <Input type="number" step={step} min={min}
       value={unit ? toDisplay(value, unit) : value}
       disabled={disabled}
@@ -73,13 +74,13 @@ const A60_20_01_01Calculator = ({ isAdmin = true }: { isAdmin?: boolean }) => {
   const [previewMode, setPreviewMode] = useState<PreviewMode>('template');
   const [showDimensions, setShowDimensions] = useState(true);
   const [dimUnit, setDimUnit] = useState<'mm' | 'cm' | 'in'>('mm');
+  const [dimScale, setDimScale] = useState(1);
   const [printOpen, setPrintOpen] = useState(false);
 
   const [segmentOverrides, setSegmentOverrides] = useState<{ svg: string | null; segments: Segment[] | null }>({
     svg: null,
     segments: null,
   });
-
 
   const setN = <K extends keyof A60_20_01_01NestingParams>(k: K, v: A60_20_01_01NestingParams[K]) =>
     setDraftNesting(prev => ({ ...prev, [k]: v }));
@@ -106,6 +107,7 @@ const A60_20_01_01Calculator = ({ isAdmin = true }: { isAdmin?: boolean }) => {
 
   const nestingResult = useMemo(() => computeA60_20_01_01Nesting(appliedParams, appliedNesting), [appliedParams, appliedNesting]);
   const baseGeo = useMemo(() => buildA60_20_01_01Geometry(appliedParams), [appliedParams]);
+  const usable = useMemo(() => usableSheet(appliedParams), [appliedParams]);
 
   const geo = useMemo<A60_20_01_01Geometry>(() => {
     if (segmentOverrides.svg && segmentOverrides.segments) {
@@ -125,12 +127,17 @@ const A60_20_01_01Calculator = ({ isAdmin = true }: { isAdmin?: boolean }) => {
     const Gf = appliedParams.glueFlap;
     const Tuck = appliedParams.tuck;
 
+    const w1 = W;
+    const w2 = D;
+    const w3 = W;
+    const w4 = Math.max(10, D - 0.5);
+
     const x0 = 0;
     const x1 = Gf;
-    const x2 = x1 + W;
-    const x3 = x2 + D;
-    const x4 = x3 + W;
-    const x5 = x4 + Math.max(10, D - 0.5);
+    const x2 = x1 + w1;
+    const x3 = x2 + w2;
+    const x4 = x3 + w3;
+    const x5 = x4 + w4;
 
     const lidCoverH = Math.max(10, D - 0.25);
     const y0 = 0;
@@ -141,32 +148,126 @@ const A60_20_01_01Calculator = ({ isAdmin = true }: { isAdmin?: boolean }) => {
     const crashH = 0.675 * D;
     const suppH = D / 2;
 
+    const tMargin = Math.min(7.0, W * 0.15);
+    const yLidSideTop = yTuckCrease - 0.75;
+    const hTop = y0 + 0.7056;
+    const vArcMid = y0 + 9.9554;
+
+    // Top Lid Tuck Tongue Flap Polygon
+    const lidPolygon: [number, number][] = [
+      [x1, y1],
+      [x1, yLidSideTop],
+      [x1 + tMargin, yLidSideTop],
+      [x1 + tMargin, yTuckCrease + 1.25],
+      [x1 + 0.6, yLidSideTop],
+      [x1 + 0.6, vArcMid],
+      [x1 + 5.225, hTop],
+      [x2 - 5.225, hTop],
+      [x2 - 0.6, vArcMid],
+      [x2 - 0.6, yLidSideTop],
+      [x2 - tMargin, yTuckCrease + 1.25],
+      [x2 - tMargin, yLidSideTop],
+      [x2, yLidSideTop],
+      [x2, y1],
+    ];
+
+    // Top Dust Flap 1 (over Side Panel 2)
+    const df1Polygon: [number, number][] = [
+      [x2, y1],
+      [x2 + 3.0, y1 - 3.0],
+      [x2 + 5.0, y1 - dustH],
+      [x3 - 9.2, y1 - dustH],
+      [x3 - 2.7, y1 - 7.0],
+      [x3 - 0.75, y1 - 5.0],
+      [x3 - 0.75, y1],
+    ];
+
+    // Top Dust Flap 2 (over Side Panel 4)
+    const df2Polygon: [number, number][] = [
+      [x5, y1],
+      [x5 - 3.0, y1 - 3.0],
+      [x5 - 5.0, y1 - dustH],
+      [x4 + 9.2, y1 - dustH],
+      [x4 + 2.75, y1 - 7.0],
+      [x4 + 0.75, y1 - 5.0],
+      [x4 + 0.75, y1],
+    ];
+
+    // Auto Lock Bottom Flap 1 (under Front Panel 1)
+    const stepX = Math.min(D, W * 0.5);
+    const foldStartX = x1 + W - suppH;
+    const f1Polygon: [number, number][] = [
+      [x1, y2],
+      [x1 + 5.8632, y2 + crashH],
+      [x1 + stepX - 5.75, y2 + crashH],
+      [x1 + stepX, y2 + crashH - 5.75],
+      [x1 + stepX, y2 + suppH],
+      [foldStartX, y2 + suppH],
+      [x1 + W - D / 4 - 1.25, y2 + crashH],
+      [x2 - 2.0, y2 + crashH],
+      [x2 - 2.0, y2 + 8.6],
+      [x2 - 5.3, y2 + 5.3],
+      [x2, y2],
+    ];
+
+    // Auto Lock Bottom Flap 2 (under Side Panel 2)
+    const f2Polygon: [number, number][] = [
+      [x2 + 1.5, y2],
+      [x2 + 6.47, y2 + suppH],
+      [x2 + suppH, y2 + suppH],
+      [x3, y2],
+    ];
+
+    // Auto Lock Bottom Flap 3 (under Back Panel 3)
+    const foldStartX3 = x3 + W - suppH;
+    const f3Polygon: [number, number][] = [
+      [x3, y2],
+      [x3 + 5.8632, y2 + crashH],
+      [x3 + stepX - 5.75, y2 + crashH],
+      [x3 + stepX, y2 + crashH - 5.75],
+      [x3 + stepX, y2 + suppH],
+      [foldStartX3, y2 + suppH],
+      [x3 + W - D / 4 - 1.25, y2 + crashH],
+      [x4 - 2.0, y2 + crashH],
+      [x4 - 2.0, y2 + 8.6],
+      [x4 - 5.3, y2 + 5.3],
+      [x4, y2],
+    ];
+
+    // Auto Lock Bottom Flap 4 (under Side Panel 4)
+    const f4Polygon: [number, number][] = [
+      [x4 + 1.5, y2],
+      [x4 + 6.4065, y2 + suppH - 0.25],
+      [x4 + w4 / 2, y2 + suppH - 0.25],
+      [x5, y2],
+    ];
+
     return {
       body: [
         { name: 'Front', x: x1, y: y1, w: W, h: H },
         { name: 'Side1', x: x2, y: y1, w: D, h: H },
         { name: 'Back',  x: x3, y: y1, w: W, h: H },
-        { name: 'Side2', x: x4, y: y1, w: D - 0.5, h: H },
+        { name: 'Side2', x: x4, y: y1, w: w4, h: H },
       ] as any,
       glue: { name: 'GlueFlap', x: x0, y: y1, w: Gf, h: H },
       topFlaps: [
-        { name: 'TopLid', x: x1, y: y0, w: W, h: lidCoverH + Tuck },
-        { name: 'TopDust1', x: x2, y: y1 - dustH, w: D, h: dustH },
+        { name: 'TopLid', x: x1, y: y0, w: W, h: lidCoverH + Tuck, polygon: lidPolygon },
+        { name: 'TopDust1', x: x2, y: y1 - dustH, w: D, h: dustH, polygon: df1Polygon },
         { name: 'TopDust2', x: x3, y: y1, w: W, h: 0 },
-        { name: 'TopDust3', x: x4, y: y1 - dustH, w: D - 0.5, h: dustH },
+        { name: 'TopDust3', x: x4, y: y1 - dustH, w: w4, h: dustH, polygon: df2Polygon },
       ] as any,
       bottomFlaps: [
-        { name: 'AutoLock1', x: x1, y: y2, w: W, h: crashH },
-        { name: 'AutoLock2', x: x2, y: y2, w: D, h: suppH },
-        { name: 'AutoLock3', x: x3, y: y2, w: W, h: crashH },
-        { name: 'AutoLock4', x: x4, y: y2, w: D - 0.5, h: suppH },
+        { name: 'AutoLock1', x: x1, y: y2, w: W, h: crashH, polygon: f1Polygon },
+        { name: 'AutoLock2', x: x2, y: y2, w: D, h: suppH, polygon: f2Polygon },
+        { name: 'AutoLock3', x: x3, y: y2, w: W, h: crashH, polygon: f3Polygon },
+        { name: 'AutoLock4', x: x4, y: y2, w: w4, h: suppH, polygon: f4Polygon },
       ] as any,
     };
   }, [appliedParams]);
 
   const dimsSvg = useMemo(
-    () => (showDimensions ? buildA60_20_01_01DimensionsSvg(appliedParams, dimUnit, 1) : ''),
-    [showDimensions, appliedParams, dimUnit],
+    () => (showDimensions ? buildA60_20_01_01DimensionsSvg(appliedParams, dimUnit, dimScale) : ''),
+    [showDimensions, appliedParams, dimUnit, dimScale],
   );
 
   return (
@@ -182,6 +283,8 @@ const A60_20_01_01Calculator = ({ isAdmin = true }: { isAdmin?: boolean }) => {
         onShowDimensionsChange={setShowDimensions}
         dimUnit={dimUnit}
         onDimUnitChange={setDimUnit}
+        dimScale={dimScale}
+        onDimScaleChange={setDimScale}
         onSave={handleSave}
         onReset={handleReset}
         actionButtons={
@@ -199,6 +302,8 @@ const A60_20_01_01Calculator = ({ isAdmin = true }: { isAdmin?: boolean }) => {
                   svgWidth={geo.bbox.w}
                   svgHeight={geo.bbox.h}
                   dimensionsMarkup={dimsSvg}
+                  showDimensions={showDimensions}
+                  onShowDimensionsChange={setShowDimensions}
                   onChange={(newSvg, newSegs) => {
                     setSegmentOverrides({ svg: newSvg, segments: newSegs });
                   }}
@@ -225,40 +330,44 @@ const A60_20_01_01Calculator = ({ isAdmin = true }: { isAdmin?: boolean }) => {
         }
         sidebarArea={
           <>
-            {/* أبعاد القالب */}
+            {/* أبعاد العلبة */}
             <section className="pt-3 pb-3 border-b border-slate-100">
               <h3 className="text-sm font-bold mb-2">أبعاد العلبة</h3>
               <div className="grid grid-cols-3 gap-2">
-                <NumField label="العرض" value={draftParams.width} unit={dimUnit} onChange={v => set('width', v)} />
-                <NumField label="الارتفاع" value={draftParams.height} unit={dimUnit} onChange={v => set('height', v)} />
-                <NumField label="العمق" value={draftParams.depth} unit={dimUnit} onChange={v => set('depth', v)} />
+                <NumField label="العرض" value={draftParams.width} defaultValue={A60_20_01_01_DEFAULTS.width} unit={dimUnit} onChange={v => set('width', v)} />
+                <NumField label="الارتفاع" value={draftParams.height} defaultValue={A60_20_01_01_DEFAULTS.height} unit={dimUnit} onChange={v => set('height', v)} />
+                <NumField label="العمق" value={draftParams.depth} defaultValue={A60_20_01_01_DEFAULTS.depth} unit={dimUnit} onChange={v => set('depth', v)} />
               </div>
             </section>
 
             {/* تخصيص متقدم */}
-            <section className="pt-2 pb-3 border-b border-slate-100">
+            <section className="pt-2 pb-3 border-b border-slate-100 space-y-2">
               <h3 className="text-sm font-bold mb-2">تخصيص متقدم</h3>
               <div className="grid grid-cols-2 gap-2">
-                <NumField label="لسان اللصق" value={draftParams.glueFlap} unit={dimUnit} onChange={v => set('glueFlap', v)} />
-                <NumField label="لسان الغطاء" value={draftParams.tuck} unit={dimUnit} onChange={v => set('tuck', v)} />
+                <NumField label="لسان اللصق" value={draftParams.glueFlap} defaultValue={A60_20_01_01_DEFAULTS.glueFlap} unit={dimUnit} onChange={v => set('glueFlap', v)} />
+                <NumField label="لسان الغطاء" value={draftParams.tuck} defaultValue={A60_20_01_01_DEFAULTS.tuck} unit={dimUnit} onChange={v => set('tuck', v)} />
               </div>
             </section>
 
             {/* إعدادات الشيت */}
-            <section className="pt-2 pb-3 border-b border-slate-100">
-              <h3 className="text-sm font-bold mb-2">إعدادات الشيت</h3>
-              <div className="grid grid-cols-3 gap-2">
-                <NumField label="عرض الشيت" value={draftParams.sheetWidth} unit={dimUnit} onChange={v => set('sheetWidth', v)} />
-                <NumField label="ارتفاع الشيت" value={draftParams.sheetHeight} unit={dimUnit} onChange={v => set('sheetHeight', v)} />
-                <NumField label="القابض" value={draftParams.gripper} unit={dimUnit} onChange={v => set('gripper', v)} />
-              </div>
-              <div className="grid grid-cols-3 gap-2 mt-2">
-                <NumField label="الهامش" value={draftParams.sheetMargin} unit={dimUnit} onChange={v => set('sheetMargin', v)} />
-                <NumField label="التباعد الأفقي" value={draftNesting.horizontalGap} step="0.1" min="0" unit={dimUnit} onChange={v => setN('horizontalGap', v)} />
-                <NumField label="التباعد العمودي" value={draftNesting.verticalGap} step="0.1" min="0" unit={dimUnit} onChange={v => setN('verticalGap', v)} />
-              </div>
-            </section>
-
+            {showNestingPreview && previewMode === 'sheet' && (
+              <section className="pt-2 pb-3 border-b border-slate-100">
+                <h3 className="text-sm font-bold mb-2">إعدادات الشيت</h3>
+                <div className="grid grid-cols-3 gap-2">
+                  <NumField label="عرض الشيت" value={draftParams.sheetWidth} defaultValue={A60_20_01_01_DEFAULTS.sheetWidth} unit={dimUnit} onChange={v => set('sheetWidth', v)} />
+                  <NumField label="ارتفاع الشيت" value={draftParams.sheetHeight} defaultValue={A60_20_01_01_DEFAULTS.sheetHeight} unit={dimUnit} onChange={v => set('sheetHeight', v)} />
+                  <NumField label="القابض" value={draftParams.gripper} defaultValue={A60_20_01_01_DEFAULTS.gripper} unit={dimUnit} onChange={v => set('gripper', v)} />
+                </div>
+                <div className="grid grid-cols-3 gap-2 mt-2">
+                  <NumField label="الهامش" value={draftParams.sheetMargin} defaultValue={A60_20_01_01_DEFAULTS.sheetMargin} unit={dimUnit} onChange={v => set('sheetMargin', v)} />
+                  <NumField label="التباعد الأفقي" value={draftNesting.horizontalGap} defaultValue={DEFAULT_NESTING.horizontalGap} step="0.1" min="0" unit={dimUnit} onChange={v => setN('horizontalGap', v)} />
+                  <NumField label="التباعد العمودي" value={draftNesting.verticalGap} defaultValue={DEFAULT_NESTING.verticalGap} step="0.1" min="0" unit={dimUnit} onChange={v => setN('verticalGap', v)} />
+                </div>
+                <div className="mt-2 text-[11px] text-muted-foreground space-y-0.5">
+                  <div>الصافي: {usable.width.toFixed(2)} × {usable.height.toFixed(2)} مم</div>
+                </div>
+              </section>
+            )}
           </>
         }
       />

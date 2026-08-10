@@ -80,6 +80,7 @@ const T00012Calculator = ({ isAdmin = false, onSaveBox }: { isAdmin?: boolean; o
   const [previewMode, setPreviewMode] = useState<'template' | 'sheet' | 'three'>('template');
   const [showDimensions, setShowDimensions] = useState(true);
   const [dimUnit, setDimUnit] = useState<'mm' | 'cm' | 'in'>('mm');
+  const [dimScale, setDimScale] = useState(1);
   const [printOpen, setPrintOpen] = useState(false);
 
   const [segmentOverrides, setSegmentOverrides] = useState<{ svg: string | null; segments: Segment[] | null }>({
@@ -195,8 +196,8 @@ const T00012Calculator = ({ isAdmin = false, onSaveBox }: { isAdmin?: boolean; o
   const refOn = !!draftParams.referenceMode;
 
   const dimsSvg = useMemo(
-    () => (showDimensions ? buildT00012DimensionsSvg(appliedParams, dimUnit, 1) : ''),
-    [showDimensions, appliedParams, dimUnit],
+    () => (showDimensions ? buildT00012DimensionsSvg(appliedParams, dimUnit, dimScale) : ''),
+    [showDimensions, appliedParams, dimUnit, dimScale],
   );
 
   return (
@@ -211,6 +212,8 @@ const T00012Calculator = ({ isAdmin = false, onSaveBox }: { isAdmin?: boolean; o
         onShowDimensionsChange={setShowDimensions}
         dimUnit={dimUnit}
         onDimUnitChange={setDimUnit}
+        dimScale={dimScale}
+        onDimScaleChange={setDimScale}
         onSave={handleSave}
         onReset={handleReset}
         actionButtons={
@@ -228,6 +231,8 @@ const T00012Calculator = ({ isAdmin = false, onSaveBox }: { isAdmin?: boolean; o
                     svgWidth={geo.bbox.w}
                     svgHeight={geo.bbox.h}
                     dimensionsMarkup={dimsSvg}
+                    showDimensions={showDimensions}
+                    onShowDimensionsChange={setShowDimensions}
                     onChange={(newSvg, newSegs) => {
                       setSegmentOverrides({ svg: newSvg, segments: newSegs });
                     }}

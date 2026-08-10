@@ -47,6 +47,14 @@ export const A60_20_01_01_DEFAULTS: A60_20_01_01Params = {
   referenceMode: false,
 };
 
+export function usableSheet(p: A60_20_01_01Params) {
+  const margin = Math.max(0, p.sheetMargin);
+  const gripper = Math.max(0, p.gripper);
+  const w = Math.max(0, p.sheetWidth - 2 * margin);
+  const h = Math.max(0, p.sheetHeight - 2 * margin - gripper);
+  return { width: w, height: h };
+}
+
 export interface A60_20_01_01Geometry {
   params: A60_20_01_01Params;
   derived: {

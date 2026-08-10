@@ -55,7 +55,7 @@ const T0006SheetNestingPreview = ({ params, result }: Props) => {
   const padX = Math.max(sheetW * 0.03, 1.5);
   const padY = Math.max(sheetH * 0.03, 1.5);
 
-  const [isManualEdit, setIsManualEdit] = useState(false);
+  const [isManualEdit, setIsManualEdit] = useState(true);
   const [, setEditedPieces] = useState<any[] | null>(null);
 
   const cmSheetW = sheetW / 10;
@@ -76,18 +76,20 @@ const T0006SheetNestingPreview = ({ params, result }: Props) => {
 
   return (
     <div className="w-full h-full relative overflow-hidden flex items-center justify-center p-2 bg-slate-50/50 rounded-xl">
-      {/* Floating Edit Button Overlay */}
-      <div className="absolute top-3 left-3 z-20">
-        <Button
-          size="sm"
-          variant={isManualEdit ? 'default' : 'outline'}
-          className="h-8 text-xs gap-1.5 bg-white/90 hover:bg-white backdrop-blur-md text-slate-800 border border-slate-200/80 shadow-md font-bold rounded-xl px-3 flex items-center transition-all hover:shadow-lg"
-          onClick={() => setIsManualEdit(!isManualEdit)}
-        >
-          {isManualEdit ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Edit3 className="w-3.5 h-3.5 text-slate-700" />}
-          {isManualEdit ? 'إنهاء التعديل' : 'تفعيل التعديل اليدوي'}
-        </Button>
-      </div>
+      {/* Floating Edit Button Overlay (only shown when not editing) */}
+      {!isManualEdit && (
+        <div className="absolute top-3 left-3 z-20">
+          <Button
+            size="sm"
+            variant="default"
+            className="h-8 text-xs gap-1.5 bg-blue-600 hover:bg-blue-700 text-white shadow-md font-bold rounded-xl px-3 flex items-center transition-all hover:shadow-lg"
+            onClick={() => setIsManualEdit(true)}
+          >
+            <Edit3 className="w-3.5 h-3.5" />
+            تفعيل نظام التعديل اليدوي
+          </Button>
+        </div>
+      )}
 
       {isManualEdit ? (
         <div className="w-full h-full bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">

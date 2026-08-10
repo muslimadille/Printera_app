@@ -8,11 +8,12 @@ import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { UserPlus, Trash2, Edit, Shield, Clock, Loader2, RefreshCw, Monitor, Layers, Users, HelpCircle, Activity, BarChart3, Circle, ChevronDown, ChevronLeft, LogIn, LogOut, Heart, AlertCircle, Download, Save, Calculator, FileText, Settings as SettingsIcon, Upload, MousePointerClick } from 'lucide-react';
+import { UserPlus, Trash2, Edit, Shield, Clock, Loader2, RefreshCw, Monitor, Layers, Users, HelpCircle, Activity, BarChart3, Circle, ChevronDown, ChevronLeft, LogIn, LogOut, Heart, AlertCircle, Download, Save, Calculator, FileText, Settings as SettingsIcon, Upload, MousePointerClick, Sparkles } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
 import * as XLSX from 'xlsx';
-import { AppUser, TabPermission, UserAnalytics, listUsers, createUser, updateUser, deleteUser, getTabPermissions, updateTabPermissions, getUserSessions, terminateSession, getUserAnalytics } from '@/lib/userApi';
+import { AppUser, TabPermission, UserAnalytics, listUsers, createUser, updateUser, deleteUser, getTabPermissions, updateTabPermissions, getUserSessions, terminateSession, getUserAnalytics, getUserPlan, saveUserPlan } from '@/lib/userApi';
+import { useAppContent } from '@/hooks/useAppContent';
 import AdminPanelTour from '@/components/AdminPanelTour';
 
 interface UserManagementProps {
@@ -74,6 +75,7 @@ const VISIBILITY_LABELS: Record<string, string> = {
 const ALL_PERMISSION_KEYS = [...Object.keys(TAB_LABELS), ...Object.keys(VISIBILITY_LABELS)];
 
 const UserManagement = ({ currentUser, currentPassword }: UserManagementProps) => {
+  const { plans } = useAppContent();
   const [users, setUsers] = useState<AppUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -146,18 +148,28 @@ const UserManagement = ({ currentUser, currentPassword }: UserManagementProps) =
 
   useEffect(() => { fetchUsers(); fetchAnalytics(); }, []);
 
+  const getPlanName = (planId?: string) => {
+    const match = plans.find(p => p.id === planId);
+    if (match) return match.name;
+    if (planId === 'plan-pro') return 'الباقة الاحترافية PRO';
+    if (planId === 'plan-business') return 'باقة الشركات والمطابع';
+    return 'المجانية التجريبية';
+  };
+
   const openCreateDialog = () => {
     setEditingUser(null);
-    setFormData({ username: '', password: '', is_admin: false, expires_in_hours: '', max_devices: '2', max_employees: '0' });
+    setFormData({ username: '', password: '', is_admin: false, expires_in_hours: '', max_devices: '2', max_employees: '0', subscription_plan: 'plan-free' });
     setDialogOpen(true);
   };
 
   const openEditDialog = (user: AppUser) => {
     setEditingUser(user);
+    const userPlan = user.subscription_plan || getUserPlan(user.id, user.username);
     setFormData({
       username: user.username, password: '', is_admin: user.is_admin,
       expires_in_hours: '', max_devices: String(user.max_devices || 2),
       max_employees: String(user.max_employees || 0),
+      subscription_plan: userPlan || 'plan-free',
     });
     setDialogOpen(true);
   };
@@ -178,7 +190,9 @@ const UserManagement = ({ currentUser, currentPassword }: UserManagementProps) =
           password: formData.password || undefined, is_admin: formData.is_admin,
           expires_at: expiresAt, max_devices: Number(formData.max_devices) || 2,
           max_employees: Number(formData.max_employees) || 0,
+          subscription_plan: formData.subscription_plan,
         });
+        saveUserPlan(editingUser.id, formData.username, formData.subscription_plan);
         toast.success('تم تحديث المستخدم بنجاح');
       } else {
         await createUser(currentUser.username, currentPassword, {
@@ -186,7 +200,9 @@ const UserManagement = ({ currentUser, currentPassword }: UserManagementProps) =
           is_admin: formData.is_admin, expires_at: expiresAt,
           max_devices: Number(formData.max_devices) || 2,
           max_employees: Number(formData.max_employees) || 0,
+          subscription_plan: formData.subscription_plan,
         });
+        saveUserPlan(undefined, formData.username, formData.subscription_plan);
         toast.success('تم إنشاء المستخدم بنجاح');
       }
       setDialogOpen(false);
@@ -576,9 +592,17 @@ const UserManagement = ({ currentUser, currentPassword }: UserManagementProps) =
                     <TableRow key={user.id}>
                       <TableCell className="font-medium">{user.username}</TableCell>
                       <TableCell>
-                        <Badge variant={user.is_admin ? 'default' : 'secondary'}>
-                          {user.is_admin ? 'مدير' : 'مستخدم'}
-                        </Badge>
+                        <div className="flex flex-col gap-1.5 items-start">
+                          <Badge variant={user.is_admin ? 'default' : 'secondary'}>
+                            {user.is_admin ? 'مدير' : 'مستخدم'}
+                          </Badge>
+                          {!user.is_admin && (
+                            <Badge variant="outline" className="bg-amber-50 text-amber-950 border-amber-300/80 text-[11px] font-semibold gap-1 py-0.5 whitespace-nowrap">
+                              <Sparkles className="w-3 h-3 text-amber-600 shrink-0" />
+                              {getPlanName(user.subscription_plan || getUserPlan(user.id, user.username))}
+                            </Badge>
+                          )}
+                        </div>
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
@@ -677,6 +701,30 @@ const UserManagement = ({ currentUser, currentPassword }: UserManagementProps) =
               <Label>مدير (صلاحيات كاملة)</Label>
               <Switch checked={formData.is_admin} onCheckedChange={(v) => setFormData(p => ({ ...p, is_admin: v }))} />
             </div>
+
+            {!formData.is_admin && (
+              <div className="space-y-2 background-[#fffbeb] p-3 rounded-lg border border-amber-200">
+                <Label className="flex items-center gap-1.5 text-amber-900 font-semibold text-xs">
+                  <Sparkles className="w-4 h-4 text-amber-600" />
+                  نوع باقة الاشتراك للمستخدم
+                </Label>
+                <Select
+                  value={formData.subscription_plan}
+                  onValueChange={(val) => setFormData(p => ({ ...p, subscription_plan: val }))}
+                >
+                  <SelectTrigger className="w-full bg-white" dir="rtl">
+                    <SelectValue placeholder="اختر باقة الاشتراك" />
+                  </SelectTrigger>
+                  <SelectContent dir="rtl">
+                    {plans.map((p) => (
+                      <SelectItem key={p.id} value={p.id}>
+                        {p.name} ({typeof p.priceMonthly === 'number' ? `${p.priceMonthly} ر.س/شهر` : p.priceMonthly})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
             <div className="space-y-2">
               <Label>الحد الأقصى للأجهزة المتصلة</Label>
               <Input type="number" value={formData.max_devices} onChange={(e) => setFormData(p => ({ ...p, max_devices: e.target.value }))} placeholder="2" min="1" max="10" />

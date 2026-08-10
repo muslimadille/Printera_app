@@ -140,6 +140,7 @@ const D001Calculator = () => {
   const [previewMode, setPreviewMode] = useState<PreviewMode>('template');
   const [showDimensions, setShowDimensions] = useState(true);
   const [dimUnit, setDimUnit] = useState<'mm' | 'cm' | 'in'>('mm');
+  const [dimScale, setDimScale] = useState(1);
   const [printOpen, setPrintOpen] = useState(false);
 
   const setN = <K extends keyof D001NestingParams>(k: K, v: D001NestingParams[K]) =>
@@ -280,8 +281,8 @@ const D001Calculator = () => {
   }), [appliedParams]);
 
   const dimsSvg = useMemo(
-    () => (showDimensions ? buildD001DimensionsSvg(appliedParams, dimUnit, 1) : ''),
-    [showDimensions, appliedParams, dimUnit],
+    () => (showDimensions ? buildD001DimensionsSvg(appliedParams, dimUnit, dimScale) : ''),
+    [showDimensions, appliedParams, dimUnit, dimScale],
   );
 
   return (
@@ -297,6 +298,8 @@ const D001Calculator = () => {
         onShowDimensionsChange={setShowDimensions}
         dimUnit={dimUnit}
         onDimUnitChange={setDimUnit}
+        dimScale={dimScale}
+        onDimScaleChange={setDimScale}
         onSave={handleSave}
         onReset={handleReset}
         actionButtons={
@@ -313,6 +316,8 @@ const D001Calculator = () => {
                 svgWidth={geo.bbox.w}
                 svgHeight={geo.bbox.h}
                 dimensionsMarkup={dimsSvg}
+                showDimensions={showDimensions}
+                onShowDimensionsChange={setShowDimensions}
               />
             </div>
           ) : previewMode === 'sheet' ? (

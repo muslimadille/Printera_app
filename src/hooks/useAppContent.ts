@@ -26,6 +26,19 @@ export interface SubscriptionPlan {
   features: string[];
 }
 
+export interface DiscountCode {
+  id: string;
+  code: string;
+  discountType: 'percentage' | 'fixed';
+  discountValue: number;
+  targetPlanId: string;
+  maxUses?: number | null;
+  usedCount: number;
+  expiresAt?: string | null;
+  isActive: boolean;
+  createdAt: string;
+}
+
 export interface PricingContentData {
   heroTag: string;
   heroTitle: string;
@@ -141,12 +154,121 @@ const DEFAULT_STEPS_SECTION: StepsSectionData = {
   step3: { numberOrIcon: '3', text: 'أرفع الملف', iconClass: 'ph ph-number-three' },
 };
 
+export interface LegalSection {
+  id: string;
+  title: string;
+  content: string;
+}
+
+export interface LegalDocumentData {
+  title: string;
+  subtitle: string;
+  lastUpdated: string;
+  sections: LegalSection[];
+}
+
+const DEFAULT_TERMS: LegalDocumentData = {
+  title: 'الشروط والأحكام',
+  subtitle: 'يرجى قراءة شروط واستخدام منصة برينتيرا بعناية قبل استخدام خدماتنا وتصدير القوالب',
+  lastUpdated: '10 أغسطس 2026',
+  sections: [
+    {
+      id: 'term-1',
+      title: '1. قبول الشروط وتغييرها',
+      content: 'باستخدامك لمنصة برينتيرا (Printera)، فإنك توافق التام على الالتزام بكافة الشروط والأحكام المدونة هنا. تحق للمنصة التعديل والتحديث في أي وقت وسيتم إشعار المستخدمين بذلك.',
+    },
+    {
+      id: 'term-2',
+      title: '2. تراخيص الاستخدام وتصدير القوالب',
+      content: 'جميع القوالب الهندسية وملفات القص (DXF, SVG, PDF) المتاحة في المنصة مخصصة للاستخدام في أعمالك التجارية والطباعية الخاصة وحساباتك مع العملاء. يُحظر إعادة بيع الخدمة البرمجية كمنصة منافسة.',
+    },
+    {
+      id: 'term-3',
+      title: '3. دقة الأبعاد والمسؤولية الهندسيّة',
+      content: 'توفر برينتيرا محرك قوالب بارامترية هندسي يحسب خطوط القص والتجهيز وسماكة الخامات بدقة عالية. يتوجب على المستخدم تجربة عينة قص (Prototype) قبل البدء في الإنتاج الكمي والمقاسات الضخمة.',
+    },
+    {
+      id: 'term-4',
+      title: '4. الاشتراكات والدفع والإنهاء',
+      content: 'تُحتسب رسوم الاشتراكات بناءً على الباقة المختارة (شهرياً أو سنوياً). يمكن إلغاء الاشتراك في أي وقت، وستظل المميزات مفعّلة حتى نهاية فترة الفوترة الحالية.',
+    },
+    {
+      id: 'term-5',
+      title: '5. حقوق الملكية الفكرية',
+      content: 'تظل الخوارزميات والبرمجيات والمحرك الهندسية ملكاً حصرياً لـ برينتيرا. بينما تعود الملكية الفكرية للتصاميم والشعارات التي يرفعها المستخدم له ولعملاؤه.',
+    },
+  ],
+};
+
+const DEFAULT_PRIVACY: LegalDocumentData = {
+  title: 'سياسة الخصوصية',
+  subtitle: 'نحن نلتزم بحماية بياناتك الشخصية وأبعاد تصاميمك بأعلى معايير الأمان والتشفير',
+  lastUpdated: '10 أغسطس 2026',
+  sections: [
+    {
+      id: 'priv-1',
+      title: '1. جمع المعلومات والبيانات',
+      content: 'نجمع المعلومات التي تزودنا بها عند إنشاء الحساب مثل الاسم والبريد الإلكتروني واسم الشركة، بالإضافة إلى أبعاد وقوالب التغليف التي تقوم بإعدادها أو حفظها على حسابك.',
+    },
+    {
+      id: 'priv-2',
+      title: '2. استخدام البيانات والتصاميم',
+      content: 'نستخدم بياناتك لتوفير خدمات المنصة وتخصيص تجربة المستخدم وتحديث ملفات التصدير، ولا نقوم بنشر أو مبيعات أي تصاميم أو مقاسات خاصة بعملائك لأطراف خارجية.',
+    },
+    {
+      id: 'priv-3',
+      title: '3. حماية البيانات والتشفير',
+      content: 'نطبق تدابير أمنية متقدمة وتشفير SSL لحماية بيانات حسابك وملفات الدايكات والقوالب ضد الوصول غير المصرح به أو الفقدان.',
+    },
+    {
+      id: 'priv-4',
+      title: '4. مشاركة البيانات مع أطراف ثالثة',
+      content: 'لا نشارك أي معلومات شخصية مع أي جهة خارجية إلا في الحالات المحددة قانوناً أو لتشغيل الخدمات الأساسية (مثل معالجة الدفع السحابي المعتمد).',
+    },
+    {
+      id: 'priv-5',
+      title: '5. حقوق المستخدم والتحكم بالبيانات',
+      content: 'يحق لك في أي وقت طلب استخراج ملفاتك وتصاميمك أو طلب حذف حسابك وبياناتك بالكامل من خوادم منصة برينتيرا بالتواصل مع الدعم الفني.',
+    },
+  ],
+};
+
+const DEFAULT_DISCOUNT_CODES: DiscountCode[] = [
+  {
+    id: 'disc-1',
+    code: 'WELCOME20',
+    discountType: 'percentage',
+    discountValue: 20,
+    targetPlanId: 'all',
+    maxUses: 100,
+    usedCount: 14,
+    expiresAt: null,
+    isActive: true,
+    createdAt: new Date().toISOString(),
+  },
+  {
+    id: 'disc-2',
+    code: 'PRO50',
+    discountType: 'fixed',
+    discountValue: 50,
+    targetPlanId: 'plan-pro',
+    maxUses: 50,
+    usedCount: 8,
+    expiresAt: null,
+    isActive: true,
+    createdAt: new Date().toISOString(),
+  },
+];
+
 const KEYS = {
   banner: 'printCalc_heroBanner',
   faqs: 'printCalc_faqs',
   plans: 'printCalc_subscriptionPlans',
   pricing: 'printCalc_pricingPageContent',
   steps: 'printCalc_stepsSection',
+  terms: 'printCalc_termsContent',
+  privacy: 'printCalc_privacyContent',
+  discountCodes: 'printCalc_discountCodes',
 };
 
 const EVENT_NAME = 'appContentUpdated';
@@ -197,6 +319,33 @@ export function useAppContent() {
     }
   });
 
+  const [termsContent, setTermsContent] = useState<LegalDocumentData>(() => {
+    try {
+      const raw = localStorage.getItem(KEYS.terms);
+      return raw ? JSON.parse(raw) : DEFAULT_TERMS;
+    } catch {
+      return DEFAULT_TERMS;
+    }
+  });
+
+  const [privacyContent, setPrivacyContent] = useState<LegalDocumentData>(() => {
+    try {
+      const raw = localStorage.getItem(KEYS.privacy);
+      return raw ? JSON.parse(raw) : DEFAULT_PRIVACY;
+    } catch {
+      return DEFAULT_PRIVACY;
+    }
+  });
+
+  const [discountCodes, setDiscountCodes] = useState<DiscountCode[]>(() => {
+    try {
+      const raw = localStorage.getItem(KEYS.discountCodes);
+      return raw ? JSON.parse(raw) : DEFAULT_DISCOUNT_CODES;
+    } catch {
+      return DEFAULT_DISCOUNT_CODES;
+    }
+  });
+
   const reloadData = () => {
     try {
       const rawB = localStorage.getItem(KEYS.banner);
@@ -209,6 +358,12 @@ export function useAppContent() {
       if (rawPr) setPricingContent(JSON.parse(rawPr));
       const rawS = localStorage.getItem(KEYS.steps);
       if (rawS) setStepsSection(JSON.parse(rawS));
+      const rawT = localStorage.getItem(KEYS.terms);
+      if (rawT) setTermsContent(JSON.parse(rawT));
+      const rawPv = localStorage.getItem(KEYS.privacy);
+      if (rawPv) setPrivacyContent(JSON.parse(rawPv));
+      const rawD = localStorage.getItem(KEYS.discountCodes);
+      if (rawD) setDiscountCodes(JSON.parse(rawD));
     } catch {}
   };
 
@@ -255,16 +410,40 @@ export function useAppContent() {
     notifyChange();
   };
 
+  const updateTermsContent = (newTerms: LegalDocumentData) => {
+    setTermsContent(newTerms);
+    localStorage.setItem(KEYS.terms, JSON.stringify(newTerms));
+    notifyChange();
+  };
+
+  const updatePrivacyContent = (newPrivacy: LegalDocumentData) => {
+    setPrivacyContent(newPrivacy);
+    localStorage.setItem(KEYS.privacy, JSON.stringify(newPrivacy));
+    notifyChange();
+  };
+
+  const updateDiscountCodes = (newCodes: DiscountCode[]) => {
+    setDiscountCodes(newCodes);
+    localStorage.setItem(KEYS.discountCodes, JSON.stringify(newCodes));
+    notifyChange();
+  };
+
   return {
     banner,
     faqs,
     plans,
     pricingContent,
     stepsSection,
+    termsContent,
+    privacyContent,
+    discountCodes,
     updateBanner,
     updateFaqs,
     updatePlans,
     updatePricingContent,
     updateStepsSection,
+    updateTermsContent,
+    updatePrivacyContent,
+    updateDiscountCodes,
   };
 }

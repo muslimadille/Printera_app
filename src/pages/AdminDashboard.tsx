@@ -1,22 +1,202 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import UserManagement from '@/components/UserManagement';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
-import { useAppContent, FAQItem, SubscriptionPlan, HeroBannerData, PricingContentData } from '@/hooks/useAppContent';
+import { useAppContent, FAQItem, SubscriptionPlan, HeroBannerData, PricingContentData, LegalDocumentData, LegalSection, DiscountCode } from '@/hooks/useAppContent';
 import { getMergedTemplatesList } from '@/hooks/useAppTemplates';
-import { listUsers } from '@/lib/userApi';
+import { listUsers, getUserPlan } from '@/lib/userApi';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Download, Eye } from 'lucide-react';
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
-  const [activeSection, setActiveSection] = useState<'overview' | 'templates' | 'orders' | 'users' | 'billing' | 'settings'>('overview');
+  const [activeSection, setActiveSection] = useState<'overview' | 'templates' | 'users' | 'billing' | 'content' | 'legal' | 'settings'>('overview');
   const [session, setSession] = useState<any>(null);
-  const { banner, faqs, plans, pricingContent, stepsSection, updateBanner, updateFaqs, updatePlans, updatePricingContent, updateStepsSection } = useAppContent();
+  const { banner, faqs, plans, pricingContent, stepsSection, termsContent, privacyContent, discountCodes, updateBanner, updateFaqs, updatePlans, updatePricingContent, updateStepsSection, updateTermsContent, updatePrivacyContent, updateDiscountCodes } = useAppContent();
   const [bannerForm, setBannerForm] = useState<HeroBannerData>(banner);
   const [faqsList, setFaqsList] = useState<FAQItem[]>(faqs);
   const [plansList, setPlansList] = useState<SubscriptionPlan[]>(plans);
   const [pricingForm, setPricingForm] = useState<PricingContentData>(pricingContent);
   const [stepsForm, setStepsForm] = useState<StepsSectionData>(stepsSection);
+  const [termsForm, setTermsForm] = useState<LegalDocumentData>(termsContent);
+  const [privacyForm, setPrivacyForm] = useState<LegalDocumentData>(privacyContent);
+
+  // Core Data States
+  const [dbTemplates, setDbTemplates] = useState<any[]>(() => getMergedTemplatesList());
+  const [adminUsersList, setAdminUsersList] = useState<any[]>([]);
+
+  // Discount codes state
+  const [discountCodesList, setDiscountCodesList] = useState<DiscountCode[]>(discountCodes || []);
+  const [newCodeName, setNewCodeName] = useState('');
+  const [newCodeType, setNewCodeType] = useState<'percentage' | 'fixed'>('percentage');
+  const [newCodeValue, setNewCodeValue] = useState('');
+  const [newCodeTargetPlan, setNewCodeTargetPlan] = useState('all');
+  const [newCodeMaxUses, setNewCodeMaxUses] = useState('');
+
+  // Invoice viewing state
+  const [selectedInvoice, setSelectedInvoice] = useState<any | null>(null);
+
+  const realInvoices = useMemo(() => {
+    const clients = adminUsersList.filter(u => !u.is_admin);
+    if (clients.length === 0) return [];
+
+    return clients.map((u, idx) => {
+      const planId = u.subscription_plan || getUserPlan(u.id, u.username) || 'plan-free';
+      const matchedPlan = plansList.find(p => p.id === planId);
+      const planName = matchedPlan ? matchedPlan.name : (planId === 'plan-pro' ? 'الباقة الاحترافية PRO' : planId === 'plan-business' ? 'باقة الشركات والمطابع' : 'المجانية التجريبية');
+
+      let amountVal = 0;
+      if (matchedPlan) {
+        amountVal = typeof matchedPlan.priceMonthly === 'number' 
+          ? matchedPlan.priceMonthly 
+          : (parseFloat(String(matchedPlan.priceMonthly)) || 0);
+      } else {
+        if (planId === 'plan-pro') amountVal = 149;
+        else if (planId === 'plan-business') amountVal = 399;
+      }
+
+      const invId = `INV-2026-${String(1001 + idx)}`;
+      const dateStr = u.created_at ? new Date(u.created_at).toLocaleDateString('ar-EG', { year: 'numeric', month: 'long', day: 'numeric' }) : '1 أغسطس 2026';
+      const isPaid = u.is_active !== false && amountVal > 0;
+      const statusText = amountVal === 0 ? 'مجاني (تجريبي)' : (isPaid ? 'مدفوع' : 'معلق / غير نشط');
+
+      return {
+        id: invId,
+        client: u.username,
+        planId,
+        planName,
+        amountValue: amountVal,
+        amount: amountVal === 0 ? 'مجانًا' : `${amountVal} ر.س`,
+        date: dateStr,
+        status: statusText,
+        userObj: u,
+      };
+    });
+  }, [adminUsersList, plansList]);
+
+  const handleDownloadInvoicePDF = (invToPrint?: any) => {
+    const inv = invToPrint || selectedInvoice;
+    if (!inv) return;
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) {
+      toast.error('يرجى السماح بتطبيقات النوافذ المنبثقة للطباعة والتنزيل');
+      return;
+    }
+    
+    const vatAmount = (inv.amountValue - (inv.amountValue / 1.15)).toFixed(2);
+    const baseAmount = (inv.amountValue / 1.15).toFixed(2);
+
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html dir="rtl" lang="ar">
+      <head>
+        <meta charset="utf-8" />
+        <title>فاتورة ضريبية - ${inv.id}</title>
+        <style>
+          body { font-family: 'Cairo', system-ui, sans-serif; padding: 30px; direction: rtl; color: #0f172a; background: #fff; }
+          .invoice-box { border: 1px solid #e2e8f0; padding: 24px; border-radius: 12px; max-width: 750px; margin: 0 auto; }
+          .header { display: flex; justify-content: space-between; border-bottom: 2px solid #3b82f6; padding-bottom: 16px; margin-bottom: 20px; }
+          .brand { font-size: 22px; font-weight: bold; color: #1e293b; }
+          .sub-brand { font-size: 12px; color: #64748b; margin-top: 2px; }
+          .meta { text-align: left; font-size: 12px; color: #475569; }
+          .badge { display: inline-block; padding: 4px 10px; background: #ecfdf5; color: #047857; font-weight: bold; border-radius: 6px; font-size: 12px; }
+          .grid-info { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; background: #f8fafc; padding: 14px; border-radius: 8px; font-size: 13px; margin-bottom: 20px; border: 1px solid #e2e8f0; }
+          table { width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 13px; }
+          th, td { border: 1px solid #cbd5e1; padding: 10px; text-align: right; }
+          th { background: #f1f5f9; font-weight: 700; color: #334155; }
+          .totals { display: flex; justify-content: flex-end; margin-top: 10px; }
+          .totals-box { width: 280px; background: #f8fafc; border: 1px solid #cbd5e1; padding: 12px; border-radius: 8px; font-size: 13px; }
+          .totals-row { display: flex; justify-content: space-between; margin-bottom: 6px; }
+          .totals-row.final { font-size: 15px; font-weight: bold; color: #1d4ed8; border-top: 1px solid #cbd5e1; padding-top: 6px; margin-bottom: 0; }
+          .footer-stamp { text-align: center; margin-top: 30px; font-size: 11px; color: #94a3b8; border-top: 1px solid #e2e8f0; padding-top: 16px; }
+          @media print { body { padding: 0; } .invoice-box { border: none; } }
+        </style>
+      </head>
+      <body>
+        <div class="invoice-box">
+          <div class="header">
+            <div>
+              <div class="brand">منصة برينتيرا — Print Logic</div>
+              <div class="sub-brand">فاتورة ضريبية مبسطة (Tax Invoice)</div>
+              <div class="sub-brand">الرقم الضريبي للمنصة: 310045981200003</div>
+            </div>
+            <div class="meta">
+              <div class="badge">${inv.status}</div>
+              <div style="margin-top: 8px;"><strong>رقم الفاتورة:</strong> ${inv.id}</div>
+              <div><strong>تاريخ الفاتورة:</strong> ${inv.date}</div>
+            </div>
+          </div>
+
+          <div class="grid-info">
+            <div>
+              <span style="color:#64748b;">اسم العميل / المؤسسة:</span><br/>
+              <strong>${inv.client}</strong>
+            </div>
+            <div>
+              <span style="color:#64748b;">باقة الاشتراك المعتمدة:</span><br/>
+              <strong>${inv.planName}</strong>
+            </div>
+          </div>
+
+          <table>
+            <thead>
+              <tr>
+                <th>الوصف والتفاصيل</th>
+                <th style="text-align: center;">المدة</th>
+                <th style="text-align: left;">المبلغ الخاضع للضريبة</th>
+                <th style="text-align: left;">الضريبة (15%)</th>
+                <th style="text-align: left;">الإجمالي</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>رسوم ترخيص وااشتراك ${inv.planName} - حاسبة وتصاميم التغليف</td>
+                <td style="text-align: center;">شهري</td>
+                <td style="text-align: left;">${baseAmount} ر.س</td>
+                <td style="text-align: left;">${vatAmount} ر.س</td>
+                <td style="text-align: left; font-weight: bold;">${inv.amountValue.toFixed(2)} ر.س</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div class="totals">
+            <div class="totals-box">
+              <div class="totals-row">
+                <span>المجموع قبل الضريبة:</span>
+                <span>${baseAmount} ر.س</span>
+              </div>
+              <div class="totals-row">
+                <span>ضريبة القيمة المضافة (15%):</span>
+                <span>${vatAmount} ر.س</span>
+              </div>
+              <div class="totals-row final">
+                <span>المبلغ الإجمالي المدفوع:</span>
+                <span>${inv.amountValue.toFixed(2)} ر.س</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="footer-stamp">
+            صدرت هذه الفاتورة إلكترونياً من نظام برينتيرا الإلكتروني وتعتبر وثيقة رسمية معتمدة لا تتطلب التوقيع.
+          </div>
+        </div>
+        <script>
+          setTimeout(() => { window.print(); }, 400);
+        </script>
+      </body>
+      </html>
+    `);
+    printWindow.document.close();
+    toast.success('تم فتح نافذة الطباعة والتنزيل للفاتورة');
+  };
+
+  useEffect(() => {
+    setTermsForm(termsContent);
+    setPrivacyForm(privacyContent);
+    if (discountCodes) setDiscountCodesList(discountCodes);
+  }, [termsContent, privacyContent, discountCodes]);
   const [newFaqQuestion, setNewFaqQuestion] = useState('');
   const [newFaqAnswer, setNewFaqAnswer] = useState('');
   const [newFaqCat, setNewFaqCat] = useState('عام');
@@ -32,6 +212,41 @@ export default function AdminDashboard() {
   const [newPlanCta, setNewPlanCta] = useState('اشترك الآن');
   const [newPlanFeatured, setNewPlanFeatured] = useState(false);
   const [newPlanFeaturesText, setNewPlanFeaturesText] = useState('');
+
+  const handleAddDiscountCode = () => {
+    const cleanCode = newCodeName.trim().toUpperCase();
+    if (!cleanCode) {
+      toast.error('يرجى كتابة كود الخصم');
+      return;
+    }
+    const valNum = parseFloat(newCodeValue);
+    if (isNaN(valNum) || valNum <= 0) {
+      toast.error('يرجى إدخال قيمة خصم صالحة أكبر من صفر');
+      return;
+    }
+
+    const newCodeItem: DiscountCode = {
+      id: `disc_${Date.now()}`,
+      code: cleanCode,
+      discountType: newCodeType,
+      discountValue: valNum,
+      targetPlanId: newCodeTargetPlan,
+      maxUses: newCodeMaxUses ? parseInt(newCodeMaxUses) : null,
+      usedCount: 0,
+      expiresAt: null,
+      isActive: true,
+      createdAt: new Date().toISOString(),
+    };
+
+    const updated = [newCodeItem, ...discountCodesList];
+    setDiscountCodesList(updated);
+    updateDiscountCodes(updated);
+    toast.success(`تم إنشاء كود الخصم (${cleanCode}) بنجاح`);
+
+    setNewCodeName('');
+    setNewCodeValue('');
+    setNewCodeMaxUses('');
+  };
 
   const [usersTab, setUsersTab] = useState<'list' | 'roles'>('list');
   const [search, setSearch] = useState('');
@@ -117,8 +332,7 @@ export default function AdminDashboard() {
     }
   }, [navigate]);
 
-  const [dbTemplates, setDbTemplates] = useState<any[]>(() => getMergedTemplatesList());
-  const [adminUsersList, setAdminUsersList] = useState<any[]>([]);
+
 
   useEffect(() => {
     async function loadAdminData() {
@@ -140,14 +354,61 @@ export default function AdminDashboard() {
         }
       }
     }
-    if (session) loadAdminData();
+    if (session) {
+      loadAdminData();
+      const handleUpdate = () => loadAdminData();
+      window.addEventListener('userPlansUpdated', handleUpdate);
+      return () => window.removeEventListener('userPlansUpdated', handleUpdate);
+    }
   }, [session]);
 
   const totalUsersCount = adminUsersList.length;
-  const activeUsersCount = adminUsersList.filter(u => u.is_active !== false).length;
-  const paidUsersCount = adminUsersList.filter(u => u.is_active !== false && !u.is_admin).length;
-  const realMonthlyRevenue = paidUsersCount * 149;
-  const renewalRateVal = totalUsersCount > 0 ? ((activeUsersCount / totalUsersCount) * 100).toFixed(1) : '100.0';
+  const clientUsersList = adminUsersList.filter(u => !u.is_admin);
+  const totalClientsCount = clientUsersList.length;
+
+  // Active client subscriptions: non-admin, active flag true, and unexpired
+  const activeSubscriptionsList = clientUsersList.filter(u => {
+    if (u.is_active === false) return false;
+    if (u.expires_at && new Date(u.expires_at).getTime() < Date.now()) return false;
+    return true;
+  });
+  const activeSubscriptionsCount = activeSubscriptionsList.length;
+
+  // Active paid subscriptions: active subscriptions with price > 0
+  const activePaidSubscriptionsCount = activeSubscriptionsList.filter(u => {
+    const planId = u.subscription_plan || getUserPlan(u.id, u.username) || 'plan-free';
+    const matchedPlan = plans.find(p => p.id === planId);
+    if (matchedPlan) {
+      const price = typeof matchedPlan.priceMonthly === 'number' 
+        ? matchedPlan.priceMonthly 
+        : (parseFloat(String(matchedPlan.priceMonthly)) || 0);
+      return price > 0;
+    }
+    return planId === 'plan-pro' || planId === 'plan-business';
+  }).length;
+
+  const realMonthlyRevenue = activeSubscriptionsList.reduce((sum, u) => {
+    const planId = u.subscription_plan || getUserPlan(u.id, u.username) || 'plan-free';
+    const matchedPlan = plans.find(p => p.id === planId);
+    let planPrice = 0;
+    if (matchedPlan) {
+      planPrice = typeof matchedPlan.priceMonthly === 'number' 
+        ? matchedPlan.priceMonthly 
+        : (parseFloat(String(matchedPlan.priceMonthly)) || 0);
+    } else {
+      if (planId === 'plan-pro') planPrice = 149;
+      else if (planId === 'plan-business') planPrice = 399;
+    }
+    return sum + planPrice;
+  }, 0);
+
+  const activationRateVal = totalClientsCount > 0 
+    ? ((activeSubscriptionsCount / totalClientsCount) * 100).toFixed(1) 
+    : '0.0';
+
+  const paidRenewalRateVal = totalClientsCount > 0 
+    ? ((activePaidSubscriptionsCount / totalClientsCount) * 100).toFixed(1) 
+    : '0.0';
 
   if (!session) {
     return <div style={{ padding: '40px', textAlign: 'center' }}>جاري التحقق من الهوية الإدارية...</div>;
@@ -160,19 +421,7 @@ export default function AdminDashboard() {
     navigate('/admin/login');
   };
 
-  // Mock Data
-  const recentOrders = [
-    { id: 'ORD-2026-908', customer: 'أحمد الغامدي', date: 'منذ ساعتين', template: 'T0005', amount: '119 ر.س', status: 'completed', statusLabel: 'مكتمل' },
-    { id: 'ORD-2026-907', customer: 'شركة حلول الرياض', date: 'منذ 5 ساعات', template: 'T0012', amount: '359 ر.س', status: 'completed', statusLabel: 'مكتمل' },
-    { id: 'ORD-2026-906', customer: 'مخبز الكرم', date: 'منذ يوم', template: 'D001-H', amount: '119 ر.س', status: 'pending', statusLabel: 'قيد المراجعة' },
-    { id: 'ORD-2026-905', customer: 'رائد المطيري', date: 'منذ يومين', template: 'T0002', amount: '0 ر.س', status: 'cancelled', statusLabel: 'ملغي' },
-  ];
 
-  const recentUsers = [
-    { name: 'فهد السبيعي', email: 'fahad@company.com', date: 'منذ ساعة' },
-    { name: 'عمر القحطاني', email: 'omar@site.sa', date: 'منذ 4 ساعات' },
-    { name: 'منى الحربي', email: 'mona.h@design.com', date: 'منذ يوم' },
-  ];
 
 
 
@@ -271,10 +520,10 @@ export default function AdminDashboard() {
   const navItems = [
     { id: 'overview', label: 'لوحة القيادة', icon: 'ph ph-squares-four' },
     { id: 'templates', label: 'القوالب والعرض', icon: 'ph ph-cube' },
-    { id: 'orders', label: 'الطلبات', icon: 'ph ph-shopping-cart' },
     { id: 'users', label: 'المستخدمون', icon: 'ph ph-users' },
     { id: 'billing', label: 'باقات الاشتراك', icon: 'ph ph-receipt' },
     { id: 'content', label: 'البانر والأسئلة الشائعة', icon: 'ph ph-article' },
+    { id: 'legal', label: 'الشروط والسياسات', icon: 'ph ph-file-text' },
     { id: 'settings', label: 'إعدادات النظام', icon: 'ph ph-gear' },
   ] as const;
 
@@ -399,7 +648,7 @@ export default function AdminDashboard() {
         </header>
 
         {/* Scrollable Container */}
-        <main style={{ flex: 1, padding: 'var(--space-8)', maxWidth: '1180px', width: '100%', boxSizing: 'border-box' }}>
+        <main style={{ flex: 1, padding: 'var(--space-8)', maxWidth: activeSection === 'users' ? '100%' : '1400px', width: '100%', boxSizing: 'border-box' }}>
           
           {/* SECTION: Overview */}
           {activeSection === 'overview' && (
@@ -408,9 +657,9 @@ export default function AdminDashboard() {
               {/* Stats Grid */}
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 'var(--space-5)' }}>
                 {[
-                  { title: 'إجمالي القوالب', value: `${dbTemplates.length || 12}`, trend: '+متاح', icon: 'ph ph-cube', iconBg: '#efe4d3' },
-                  { title: 'إجمالي المستخدمين', value: `${totalUsersCount}`, trend: `+${totalUsersCount}`, icon: 'ph ph-users', iconBg: '#e8f0fb' },
-                  { title: 'الاشتراكات النشطة', value: `${activeUsersCount} اشتراك`, trend: `${renewalRateVal}%`, icon: 'ph ph-check-circle', iconBg: '#e6f4ea' },
+                  { title: 'إجمالي القوالب المتاحة', value: `${dbTemplates.length}`, trend: `${dbTemplates.length} قالب`, icon: 'ph ph-cube', iconBg: '#efe4d3' },
+                  { title: 'إجمالي المستخدمين العملاء', value: `${totalClientsCount} عميل`, trend: `${totalUsersCount} كلي`, icon: 'ph ph-users', iconBg: '#e8f0fb' },
+                  { title: 'الاشتراكات النشطة', value: `${activeSubscriptionsCount} اشتراك`, trend: `${activationRateVal}% تفعيل`, icon: 'ph ph-check-circle', iconBg: '#e6f4ea' },
                   { title: 'الإيرادات الشهرية الحقيقية', value: `${realMonthlyRevenue.toLocaleString('ar-EG')} ر.س`, trend: 'مباشر', icon: 'ph ph-receipt', iconBg: '#fbe7e5' },
                 ].map((s, idx) => (
                   <div key={idx} className="hover-lift" style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 'var(--radius-lg)', padding: 'var(--space-5)', display: 'flex', flexDirection: 'column', gap: '10px' }}>
@@ -428,66 +677,7 @@ export default function AdminDashboard() {
                 ))}
               </div>
 
-              {/* Lists section */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1.6fr 1fr', gap: 'var(--space-6)', alignItems: 'start' }}>
-                
-                {/* Recent Orders */}
-                <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 'var(--radius-lg)', overflow: 'hidden' }}>
-                  <div style={{ padding: 'var(--space-4)', borderBottom: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 700 }}>أحدث الطلبات</h3>
-                    <button onClick={() => setActiveSection('orders')} style={{ border: 'none', background: 'transparent', color: '#3b82f6', fontWeight: 700, fontSize: '13px', cursor: 'pointer' }}>عرض الكل</button>
-                  </div>
-                  <table style={styleTable}>
-                    <thead>
-                      <tr>
-                        <th style={styleTh}>رقم الطلب</th>
-                        <th style={styleTh}>العميل</th>
-                        <th style={styleTh}>القالب</th>
-                        <th style={styleTh}>المبلغ</th>
-                        <th style={styleTh}>الحالة</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {recentOrders.map((o) => {
-                        const statusColors = badgeColor(o.status);
-                        return (
-                          <tr key={o.id} className="row-hover">
-                            <td style={{ ...styleTd, fontWeight: 700 }}>{o.id}</td>
-                            <td style={styleTd}>{o.customer}</td>
-                            <td style={styleTd}>{o.template}</td>
-                            <td style={styleTd}>{o.amount}</td>
-                            <td style={styleTd}>
-                              <span style={{ background: statusColors.bg, color: statusColors.color, fontSize: '11px', fontWeight: 700, padding: '3px 8px', borderRadius: '6px' }}>{o.statusLabel}</span>
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
 
-                {/* New Users */}
-                <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 'var(--radius-lg)', overflow: 'hidden' }}>
-                  <div style={{ padding: 'var(--space-4)', borderBottom: '1px solid #e2e8f0' }}>
-                    <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 700 }}>مستخدمون جدد</h3>
-                  </div>
-                  <div style={{ display: 'flex', flexDirection: 'column' }}>
-                    {recentUsers.map((u, idx) => (
-                      <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '12px 16px', borderBottom: idx < recentUsers.length - 1 ? '1px solid #f2e9d9' : 'none' }}>
-                        <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: '#f1f5f9', color: '#3b82f6', display: 'flex', alignItems: 'center', justifyContext: 'center', justifyContent: 'center', fontWeight: 700, fontSize: '13px' }}>
-                          {u.name.trim().charAt(0)}
-                        </div>
-                        <div style={{ flex: 1 }}>
-                          <div style={{ fontSize: '13.5px', fontWeight: 700 }}>{u.name}</div>
-                          <div style={{ fontSize: '11px', color: '#94a3b8', marginTop: '1px' }}>{u.email}</div>
-                        </div>
-                        <span style={{ fontSize: '11.5px', color: '#94a3b8' }}>{u.date}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-              </div>
 
             </div>
           )}
@@ -803,42 +993,6 @@ export default function AdminDashboard() {
             </div>
           )}
 
-          {/* SECTION: Orders */}
-          {activeSection === 'orders' && (
-            <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 'var(--radius-lg)', overflow: 'hidden' }}>
-              <div style={{ padding: 'var(--space-4)', borderBottom: '1px solid #e2e8f0' }}>
-                <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 700 }}>سجل طلبات الاشتراكات والتراخيص</h3>
-              </div>
-              <table style={styleTable}>
-                <thead>
-                  <tr>
-                    <th style={styleTh}>الطلب</th>
-                    <th style={styleTh}>العميل</th>
-                    <th style={styleTh}>التاريخ</th>
-                    <th style={styleTh}>المبلغ</th>
-                    <th style={styleTh}>الحالة</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {recentOrders.map((o) => {
-                    const statusColors = badgeColor(o.status);
-                    return (
-                      <tr key={o.id} className="row-hover">
-                        <td style={{ ...styleTd, fontWeight: 700 }}>{o.id}</td>
-                        <td style={styleTd}>{o.customer}</td>
-                        <td style={styleTd}>{o.date}</td>
-                        <td style={styleTd}>{o.amount}</td>
-                        <td style={styleTd}>
-                          <span style={{ background: statusColors.bg, color: statusColors.color, fontSize: '11px', fontWeight: 700, padding: '3px 8px', borderRadius: '6px' }}>{o.statusLabel}</span>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          )}
-
           {/* SECTION: Users */}
           {activeSection === 'users' && (
             <div>
@@ -895,8 +1049,8 @@ export default function AdminDashboard() {
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 'var(--space-4)' }}>
                 {[
                   { title: 'الإيرادات هذا الشهر (حقيقي)', value: `${realMonthlyRevenue.toLocaleString('ar-EG')} ر.س` },
-                  { title: 'الاشتراكات النشطة (حقيقي)', value: `${activeUsersCount} / ${totalUsersCount} اشتراك` },
-                  { title: 'معدل التجديد والتفعيل', value: `${renewalRateVal}%` },
+                  { title: 'الاشتراكات النشطة (حقيقي)', value: `${activeSubscriptionsCount} / ${totalClientsCount} اشتراك (${activePaidSubscriptionsCount} مدفوع)` },
+                  { title: 'معدل التفعيل والتجديد الحقيقي', value: `${activationRateVal}% تفعيل (${paidRenewalRateVal}% مدفوع)` },
                 ].map((b, idx) => (
                   <div key={idx} style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 'var(--radius-lg)', padding: 'var(--space-5)' }}>
                     <div style={{ fontSize: '22px', fontWeight: 700 }}>{b.value}</div>
@@ -1111,34 +1265,247 @@ export default function AdminDashboard() {
                 </div>
               </div>
 
-              <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 'var(--radius-lg)', overflow: 'hidden' }}>
-                <div style={{ padding: 'var(--space-4)', borderBottom: '1px solid #e2e8f0' }}>
-                  <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 700 }}>الفواتير</h3>
+              {/* Discount Promo Codes Management Card */}
+              <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 'var(--radius-lg)', padding: 'var(--space-6)' }}>
+                <h3 style={{ margin: '0 0 16px', fontSize: '17px', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <i className="ph ph-tag" style={{ color: '#ec4899' }}></i> إدارة أكواد الخصم والتخفيضات (Discount Codes & Coupons)
+                </h3>
+
+                {/* Add New Discount Code Form */}
+                <div style={{ background: '#fdf2f8', border: '1px solid #fbcfe8', borderRadius: '8px', padding: '16px', marginBottom: '24px' }}>
+                  <h4 style={{ margin: '0 0 12px', fontSize: '14.5px', fontWeight: 700, color: '#9d174d' }}>إنشاء كود خصم ترويجي جديد</h4>
+                  
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '12px', marginBottom: '12px' }}>
+                    <div>
+                      <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#831843', marginBottom: '4px' }}>رمز الخصم (Coupon Code)</label>
+                      <input
+                        type="text"
+                        placeholder="مثال: SAVE20"
+                        value={newCodeName}
+                        onChange={(e) => setNewCodeName(e.target.value.toUpperCase())}
+                        style={{ width: '100%', boxSizing: 'border-box', height: '38px', borderRadius: '6px', border: '1px solid #f472b6', padding: '0 10px', fontSize: '13px', fontFamily: 'monospace', fontWeight: 700, background: '#fff' }}
+                      />
+                    </div>
+
+                    <div>
+                      <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#831843', marginBottom: '4px' }}>نوع الخصم</label>
+                      <select
+                        value={newCodeType}
+                        onChange={(e) => setNewCodeType(e.target.value as any)}
+                        style={{ width: '100%', boxSizing: 'border-box', height: '38px', borderRadius: '6px', border: '1px solid #f472b6', padding: '0 10px', fontSize: '13px', fontFamily: 'Cairo,sans-serif', background: '#fff' }}
+                      >
+                        <option value="percentage">نسبة مئوية (%)</option>
+                        <option value="fixed">مبلغ ثابت (ر.س)</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#831843', marginBottom: '4px' }}>قيمة الخصم</label>
+                      <input
+                        type="number"
+                        placeholder={newCodeType === 'percentage' ? '20' : '50'}
+                        value={newCodeValue}
+                        onChange={(e) => setNewCodeValue(e.target.value)}
+                        style={{ width: '100%', boxSizing: 'border-box', height: '38px', borderRadius: '6px', border: '1px solid #f472b6', padding: '0 10px', fontSize: '13px', fontFamily: 'Cairo,sans-serif', background: '#fff' }}
+                      />
+                    </div>
+
+                    <div>
+                      <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#831843', marginBottom: '4px' }}>تطبيق على الباقة</label>
+                      <select
+                        value={newCodeTargetPlan}
+                        onChange={(e) => setNewCodeTargetPlan(e.target.value)}
+                        style={{ width: '100%', boxSizing: 'border-box', height: '38px', borderRadius: '6px', border: '1px solid #f472b6', padding: '0 10px', fontSize: '13px', fontFamily: 'Cairo,sans-serif', background: '#fff' }}
+                      >
+                        <option value="all">جميع الباقات (All Plans)</option>
+                        {plansList.map(p => (
+                          <option key={p.id} value={p.id}>{p.name}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#831843', marginBottom: '4px' }}>حد الاستخدام (اختياري)</label>
+                      <input
+                        type="number"
+                        placeholder="100"
+                        value={newCodeMaxUses}
+                        onChange={(e) => setNewCodeMaxUses(e.target.value)}
+                        style={{ width: '100%', boxSizing: 'border-box', height: '38px', borderRadius: '6px', border: '1px solid #f472b6', padding: '0 10px', fontSize: '13px', fontFamily: 'Cairo,sans-serif', background: '#fff' }}
+                      />
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={handleAddDiscountCode}
+                    style={{ background: '#db2777', color: '#fff', border: 'none', borderRadius: '6px', padding: '8px 20px', fontSize: '13.5px', fontWeight: 700, cursor: 'pointer' }}
+                  >
+                    + إنشاء كود الخصم
+                  </button>
                 </div>
-                <table style={styleTable}>
-                  <thead>
-                    <tr>
-                      <th style={styleTh}>العميل</th>
-                      <th style={styleTh}>الخطة</th>
-                      <th style={styleTh}>المبلغ</th>
-                      <th style={styleTh}>التاريخ</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {[
-                      { client: 'أحمد الغامدي', plan: 'الأعمال (شهري)', amount: '149 ر.س', date: '15 يوليو 2026' },
-                      { client: 'شركة حلول الرياض', plan: 'المصنع (شهري)', amount: '449 ر.س', date: '15 يوليو 2026' },
-                      { client: 'ورشة التغليف الحديثة', plan: 'الأعمال (سنوي)', amount: '1,428 ر.س', date: '12 يوليو 2026' },
-                    ].map((i, idx) => (
-                      <tr key={idx} className="row-hover">
-                        <td style={{ ...styleTd, fontWeight: 700 }}>{i.client}</td>
-                        <td style={styleTd}>{i.plan}</td>
-                        <td style={styleTd}>{i.amount}</td>
-                        <td style={styleTd}>{i.date}</td>
+
+                {/* Discount Codes Table */}
+                <div style={{ overflowX: 'auto' }}>
+                  <table style={styleTable}>
+                    <thead>
+                      <tr>
+                        <th style={styleTh}>كود الخصم</th>
+                        <th style={styleTh}>قيمة الخصم</th>
+                        <th style={styleTh}>الباقة المشمولة</th>
+                        <th style={styleTh}>الاستخدامات</th>
+                        <th style={styleTh}>الحالة</th>
+                        <th style={styleTh}>الإجراءات</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody>
+                      {discountCodesList.length === 0 ? (
+                        <tr>
+                          <td colSpan={6} style={{ textAlign: 'center', padding: '24px', color: '#94a3b8' }}>
+                            لا يوجد أكواد خصم حالية. أنشئ كود جديد أعلاه.
+                          </td>
+                        </tr>
+                      ) : (
+                        discountCodesList.map((dc) => {
+                          const targetPlanObj = plansList.find(p => p.id === dc.targetPlanId);
+                          const targetName = dc.targetPlanId === 'all' ? 'جميع الباقات' : (targetPlanObj?.name || dc.targetPlanId);
+                          const valLabel = dc.discountType === 'percentage' ? `${dc.discountValue}% خصم` : `${dc.discountValue} ر.س خصم`;
+
+                          return (
+                            <tr key={dc.id} className="row-hover">
+                              <td style={{ ...styleTd, fontWeight: 700 }}>
+                                <span style={{ background: '#fef3c7', color: '#92400e', border: '1px solid #fcd34d', padding: '4px 10px', borderRadius: '6px', fontFamily: 'monospace', fontSize: '13px' }}>
+                                  {dc.code}
+                                </span>
+                              </td>
+                              <td style={{ ...styleTd, fontWeight: 700, color: '#059669' }}>{valLabel}</td>
+                              <td style={styleTd}>{targetName}</td>
+                              <td style={styleTd}>{dc.usedCount} / {dc.maxUses || 'غير محدود'}</td>
+                              <td style={styleTd}>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const updated = discountCodesList.map(item => item.id === dc.id ? { ...item, isActive: !item.isActive } : item);
+                                    setDiscountCodesList(updated);
+                                    updateDiscountCodes(updated);
+                                    toast.success(dc.isActive ? 'تم تعطيل الكود' : 'تم تفعيل الكود');
+                                  }}
+                                  style={{ border: 'none', background: dc.isActive ? '#ecfdf5' : '#fef2f2', color: dc.isActive ? '#047857' : '#b91c1c', fontSize: '11px', fontWeight: 700, padding: '4px 10px', borderRadius: '6px', cursor: 'pointer' }}
+                                >
+                                  {dc.isActive ? 'مفعل ✓' : 'معطل ✕'}
+                                </button>
+                              </td>
+                              <td style={styleTd}>
+                                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      navigator.clipboard.writeText(dc.code);
+                                      toast.success(`تم نسخ الكود (${dc.code}) إلى الحافظة`);
+                                    }}
+                                    style={{ border: 'none', background: '#f1f5f9', color: '#334155', padding: '4px 8px', borderRadius: '4px', cursor: 'pointer', fontSize: '12px' }}
+                                    title="نسخ الكود"
+                                  >
+                                    <i className="ph ph-copy"></i>
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      const updated = discountCodesList.filter(item => item.id !== dc.id);
+                                      setDiscountCodesList(updated);
+                                      updateDiscountCodes(updated);
+                                      toast.success('تم حذف كود الخصم');
+                                    }}
+                                    style={{ border: 'none', background: 'transparent', color: '#ef4444', cursor: 'pointer', padding: '4px' }}
+                                    title="حذف"
+                                  >
+                                    <i className="ph ph-trash" style={{ fontSize: '16px' }}></i>
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          );
+                        })
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {/* Real Invoices List Table */}
+              <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 'var(--radius-lg)', overflow: 'hidden' }}>
+                <div style={{ padding: 'var(--space-4)', borderBottom: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <i className="ph ph-receipt" style={{ color: '#3b82f6' }}></i> سجل فواتير الاشتراكات الحقيقية ({realInvoices.length})
+                  </h3>
+                </div>
+                <div style={{ overflowX: 'auto' }}>
+                  <table style={styleTable}>
+                    <thead>
+                      <tr>
+                        <th style={styleTh}>رقم الفاتورة</th>
+                        <th style={styleTh}>العميل</th>
+                        <th style={styleTh}>باقة الاشتراك</th>
+                        <th style={styleTh}>المبلغ</th>
+                        <th style={styleTh}>التاريخ</th>
+                        <th style={styleTh}>الحالة</th>
+                        <th style={styleTh}>الإجراءات</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {realInvoices.length === 0 ? (
+                        <tr>
+                          <td colSpan={7} style={{ textAlign: 'center', padding: '24px', color: '#94a3b8' }}>
+                            لا يوجد فواتير اشتراكات حتى الآن.
+                          </td>
+                        </tr>
+                      ) : (
+                        realInvoices.map((inv) => (
+                          <tr key={inv.id} className="row-hover">
+                            <td style={{ ...styleTd, fontWeight: 700, fontFamily: 'monospace', color: '#1e293b' }}>
+                              {inv.id}
+                            </td>
+                            <td style={{ ...styleTd, fontWeight: 700 }}>{inv.client}</td>
+                            <td style={styleTd}>
+                              <span style={{ background: '#f1f5f9', color: '#334155', padding: '3px 8px', borderRadius: '6px', fontSize: '12px', fontWeight: 600 }}>
+                                {inv.planName}
+                              </span>
+                            </td>
+                            <td style={{ ...styleTd, fontWeight: 700, color: inv.amountValue > 0 ? '#059669' : '#64748b' }}>
+                              {inv.amount}
+                            </td>
+                            <td style={styleTd}>{inv.date}</td>
+                            <td style={styleTd}>
+                              <span style={{ background: inv.amountValue === 0 ? '#f1f5f9' : (inv.status === 'مدفوع' ? '#ecfdf5' : '#fef2f2'), color: inv.amountValue === 0 ? '#475569' : (inv.status === 'مدفوع' ? '#047857' : '#b91c1c'), fontSize: '11px', fontWeight: 700, padding: '3px 8px', borderRadius: '6px' }}>
+                                {inv.status}
+                              </span>
+                            </td>
+                            <td style={styleTd}>
+                              <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                                <button
+                                  type="button"
+                                  onClick={() => setSelectedInvoice(inv)}
+                                  style={{ border: '1px solid #cbd5e1', background: '#fff', color: '#1e293b', padding: '5px 10px', borderRadius: '6px', cursor: 'pointer', fontSize: '12px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px' }}
+                                  title="عرض الفاتورة"
+                                >
+                                  <Eye className="w-3.5 h-3.5 text-blue-600" /> عرض الفاتورة
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleDownloadInvoicePDF(inv)}
+                                  style={{ border: 'none', background: '#3b82f6', color: '#fff', padding: '5px 10px', borderRadius: '6px', cursor: 'pointer', fontSize: '12px', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '4px' }}
+                                  title="تنزيل / طباعة"
+                                >
+                                  <Download className="w-3.5 h-3.5" /> تنزيل
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
+                </div>
               </div>
 
               {/* Pricing Page Texts & FAQs Form */}
@@ -1441,6 +1808,237 @@ export default function AdminDashboard() {
             </div>
           )}
 
+          {/* SECTION: Legal (Terms & Privacy) */}
+          {activeSection === 'legal' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-6)' }}>
+              
+              {/* Terms & Conditions Form */}
+              <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 'var(--radius-lg)', padding: 'var(--space-6)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', borderBottom: '1px solid #e2e8f0', paddingBottom: '12px' }}>
+                  <h3 style={{ margin: 0, fontSize: '17px', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <i className="ph ph-file-text" style={{ color: '#3b82f6' }}></i> إدارة الشروط والأحكام
+                  </h3>
+                  <Link to="/terms" target="_blank" style={{ fontSize: '13px', color: '#3b82f6', textDecoration: 'none', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    معاينة الصفحة <i className="ph ph-arrow-square-out"></i>
+                  </Link>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '20px' }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '6px' }}>العنوان الرئيسي</label>
+                    <input
+                      type="text"
+                      value={termsForm.title}
+                      onChange={(e) => setTermsForm({ ...termsForm, title: e.target.value })}
+                      style={{ width: '100%', boxSizing: 'border-box', height: '40px', borderRadius: '6px', border: '1px solid #e2e8f0', padding: '0 12px', fontSize: '13.5px', fontFamily: 'Cairo,sans-serif' }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '6px' }}>تاريخ آخر تحديث</label>
+                    <input
+                      type="text"
+                      value={termsForm.lastUpdated}
+                      onChange={(e) => setTermsForm({ ...termsForm, lastUpdated: e.target.value })}
+                      style={{ width: '100%', boxSizing: 'border-box', height: '40px', borderRadius: '6px', border: '1px solid #e2e8f0', padding: '0 12px', fontSize: '13.5px', fontFamily: 'Cairo,sans-serif' }}
+                    />
+                  </div>
+                  <div style={{ gridColumn: 'span 2' }}>
+                    <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '6px' }}>الوصف الفرعي (Subtitle)</label>
+                    <textarea
+                      value={termsForm.subtitle}
+                      onChange={(e) => setTermsForm({ ...termsForm, subtitle: e.target.value })}
+                      rows={2}
+                      style={{ width: '100%', boxSizing: 'border-box', borderRadius: '6px', border: '1px solid #e2e8f0', padding: '10px 12px', fontSize: '13.5px', fontFamily: 'Cairo,sans-serif', resize: 'vertical' }}
+                    />
+                  </div>
+                </div>
+
+                {/* Terms Sections list */}
+                <h4 style={{ margin: '0 0 12px', fontSize: '15px', fontWeight: 700, color: '#1e293b' }}>بنود الشروط والأحكام</h4>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', marginBottom: '16px' }}>
+                  {termsForm.sections.map((sec, idx) => (
+                    <div key={sec.id || idx} style={{ border: '1px solid #e2e8f0', borderRadius: '8px', padding: '14px', background: '#f8fafc' }}>
+                      <div style={{ display: 'flex', gap: '10px', alignItems: 'center', marginBottom: '10px' }}>
+                        <span style={{ fontWeight: 700, fontSize: '13px', color: '#64748b', whiteSpace: 'nowrap' }}>بند {idx + 1}</span>
+                        <input
+                          type="text"
+                          value={sec.title}
+                          onChange={(e) => {
+                            const updated = [...termsForm.sections];
+                            updated[idx] = { ...updated[idx], title: e.target.value };
+                            setTermsForm({ ...termsForm, sections: updated });
+                          }}
+                          placeholder="عنوان البند..."
+                          style={{ flex: 1, height: '36px', borderRadius: '6px', border: '1px solid #cbd5e1', padding: '0 10px', fontSize: '13px', fontFamily: 'Cairo,sans-serif', fontWeight: 700 }}
+                        />
+                        <button
+                          onClick={() => {
+                            const updated = termsForm.sections.filter((_, i) => i !== idx);
+                            setTermsForm({ ...termsForm, sections: updated });
+                          }}
+                          title="حذف البند"
+                          style={{ background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer', padding: '4px 8px' }}
+                        >
+                          <i className="ph ph-trash" style={{ fontSize: '16px' }}></i>
+                        </button>
+                      </div>
+                      <textarea
+                        value={sec.content}
+                        onChange={(e) => {
+                          const updated = [...termsForm.sections];
+                          updated[idx] = { ...updated[idx], content: e.target.value };
+                          setTermsForm({ ...termsForm, sections: updated });
+                        }}
+                        rows={3}
+                        placeholder="محتوى البند..."
+                        style={{ width: '100%', boxSizing: 'border-box', borderRadius: '6px', border: '1px solid #cbd5e1', padding: '8px 12px', fontSize: '13px', fontFamily: 'Cairo,sans-serif', resize: 'vertical' }}
+                      />
+                    </div>
+                  ))}
+                </div>
+
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <button
+                    onClick={() => {
+                      const newSec: LegalSection = {
+                        id: `term-${Date.now()}`,
+                        title: `${termsForm.sections.length + 1}. بند جديد`,
+                        content: 'نص البند الجديد هنا...',
+                      };
+                      setTermsForm({ ...termsForm, sections: [...termsForm.sections, newSec] });
+                    }}
+                    style={{ background: '#f1f5f9', color: '#334155', border: '1px solid #cbd5e1', padding: '8px 16px', borderRadius: '6px', fontSize: '13px', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}
+                  >
+                    <i className="ph ph-plus"></i> إضافة بند جديد
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      updateTermsContent(termsForm);
+                      toast.success('تم حفظ الشروط والأحكام ونشرها بنجاح');
+                    }}
+                    style={{ background: '#1e293b', color: '#fff', border: 'none', padding: '10px 24px', borderRadius: '999px', fontSize: '13.5px', fontWeight: 700, cursor: 'pointer' }}
+                  >
+                    حفظ الشروط والأحكام
+                  </button>
+                </div>
+              </div>
+
+              {/* Privacy Policy Form */}
+              <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 'var(--radius-lg)', padding: 'var(--space-6)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', borderBottom: '1px solid #e2e8f0', paddingBottom: '12px' }}>
+                  <h3 style={{ margin: 0, fontSize: '17px', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <i className="ph ph-shield-check" style={{ color: '#3b82f6' }}></i> إدارة سياسة الخصوصية
+                  </h3>
+                  <Link to="/privacy" target="_blank" style={{ fontSize: '13px', color: '#3b82f6', textDecoration: 'none', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    معاينة الصفحة <i className="ph ph-arrow-square-out"></i>
+                  </Link>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '20px' }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '6px' }}>العنوان الرئيسي</label>
+                    <input
+                      type="text"
+                      value={privacyForm.title}
+                      onChange={(e) => setPrivacyForm({ ...privacyForm, title: e.target.value })}
+                      style={{ width: '100%', boxSizing: 'border-box', height: '40px', borderRadius: '6px', border: '1px solid #e2e8f0', padding: '0 12px', fontSize: '13.5px', fontFamily: 'Cairo,sans-serif' }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '6px' }}>تاريخ آخر تحديث</label>
+                    <input
+                      type="text"
+                      value={privacyForm.lastUpdated}
+                      onChange={(e) => setPrivacyForm({ ...privacyForm, lastUpdated: e.target.value })}
+                      style={{ width: '100%', boxSizing: 'border-box', height: '40px', borderRadius: '6px', border: '1px solid #e2e8f0', padding: '0 12px', fontSize: '13.5px', fontFamily: 'Cairo,sans-serif' }}
+                    />
+                  </div>
+                  <div style={{ gridColumn: 'span 2' }}>
+                    <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '6px' }}>الوصف الفرعي (Subtitle)</label>
+                    <textarea
+                      value={privacyForm.subtitle}
+                      onChange={(e) => setPrivacyForm({ ...privacyForm, subtitle: e.target.value })}
+                      rows={2}
+                      style={{ width: '100%', boxSizing: 'border-box', borderRadius: '6px', border: '1px solid #e2e8f0', padding: '10px 12px', fontSize: '13.5px', fontFamily: 'Cairo,sans-serif', resize: 'vertical' }}
+                    />
+                  </div>
+                </div>
+
+                {/* Privacy Sections list */}
+                <h4 style={{ margin: '0 0 12px', fontSize: '15px', fontWeight: 700, color: '#1e293b' }}>بنود سياسة الخصوصية</h4>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', marginBottom: '16px' }}>
+                  {privacyForm.sections.map((sec, idx) => (
+                    <div key={sec.id || idx} style={{ border: '1px solid #e2e8f0', borderRadius: '8px', padding: '14px', background: '#f8fafc' }}>
+                      <div style={{ display: 'flex', gap: '10px', alignItems: 'center', marginBottom: '10px' }}>
+                        <span style={{ fontWeight: 700, fontSize: '13px', color: '#64748b', whiteSpace: 'nowrap' }}>بند {idx + 1}</span>
+                        <input
+                          type="text"
+                          value={sec.title}
+                          onChange={(e) => {
+                            const updated = [...privacyForm.sections];
+                            updated[idx] = { ...updated[idx], title: e.target.value };
+                            setPrivacyForm({ ...privacyForm, sections: updated });
+                          }}
+                          placeholder="عنوان البند..."
+                          style={{ flex: 1, height: '36px', borderRadius: '6px', border: '1px solid #cbd5e1', padding: '0 10px', fontSize: '13px', fontFamily: 'Cairo,sans-serif', fontWeight: 700 }}
+                        />
+                        <button
+                          onClick={() => {
+                            const updated = privacyForm.sections.filter((_, i) => i !== idx);
+                            setPrivacyForm({ ...privacyForm, sections: updated });
+                          }}
+                          title="حذف البند"
+                          style={{ background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer', padding: '4px 8px' }}
+                        >
+                          <i className="ph ph-trash" style={{ fontSize: '16px' }}></i>
+                        </button>
+                      </div>
+                      <textarea
+                        value={sec.content}
+                        onChange={(e) => {
+                          const updated = [...privacyForm.sections];
+                          updated[idx] = { ...updated[idx], content: e.target.value };
+                          setPrivacyForm({ ...privacyForm, sections: updated });
+                        }}
+                        rows={3}
+                        placeholder="محتوى البند..."
+                        style={{ width: '100%', boxSizing: 'border-box', borderRadius: '6px', border: '1px solid #cbd5e1', padding: '8px 12px', fontSize: '13px', fontFamily: 'Cairo,sans-serif', resize: 'vertical' }}
+                      />
+                    </div>
+                  ))}
+                </div>
+
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <button
+                    onClick={() => {
+                      const newSec: LegalSection = {
+                        id: `priv-${Date.now()}`,
+                        title: `${privacyForm.sections.length + 1}. بند جديد`,
+                        content: 'نص البند الجديد هنا...',
+                      };
+                      setPrivacyForm({ ...privacyForm, sections: [...privacyForm.sections, newSec] });
+                    }}
+                    style={{ background: '#f1f5f9', color: '#334155', border: '1px solid #cbd5e1', padding: '8px 16px', borderRadius: '6px', fontSize: '13px', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}
+                  >
+                    <i className="ph ph-plus"></i> إضافة بند جديد
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      updatePrivacyContent(privacyForm);
+                      toast.success('تم حفظ سياسة الخصوصية ونشرها بنجاح');
+                    }}
+                    style={{ background: '#1e293b', color: '#fff', border: 'none', padding: '10px 24px', borderRadius: '999px', fontSize: '13.5px', fontWeight: 700, cursor: 'pointer' }}
+                  >
+                    حفظ سياسة الخصوصية
+                  </button>
+                </div>
+              </div>
+
+            </div>
+          )}
+
           {/* SECTION: Settings */}
           {activeSection === 'settings' && (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 'var(--space-6)' }}>
@@ -1533,10 +2131,100 @@ export default function AdminDashboard() {
             </div>
           )}
 
+          {/* View Invoice Dialog */}
+          <Dialog open={!!selectedInvoice} onOpenChange={() => setSelectedInvoice(null)}>
+            <DialogContent className="sm:max-w-xl max-h-[90vh] overflow-y-auto" dir="rtl">
+              <DialogHeader>
+                <DialogTitle className="flex items-center justify-between border-b pb-3 font-bold text-base">
+                  <span>تفاصيل الفاتورة الضريبية — {selectedInvoice?.id}</span>
+                </DialogTitle>
+              </DialogHeader>
+
+              {selectedInvoice && (
+                <div className="space-y-5 p-2 bg-white text-slate-900 text-right">
+                  {/* Header */}
+                  <div className="flex justify-between items-start border-b pb-4">
+                    <div>
+                      <h3 className="text-lg font-bold text-slate-900">منصة برينتيرا — Print Logic</h3>
+                      <p className="text-xs text-slate-500">حسابات وقوالب هندسة التغليف والعلب</p>
+                      <p className="text-xs text-slate-500 mt-1">الرقم الضريبي: 310045981200003</p>
+                    </div>
+                    <div className="text-left">
+                      <span className={`inline-block px-2.5 py-1 text-xs font-bold rounded ${selectedInvoice.amountValue === 0 ? 'bg-slate-100 text-slate-700' : 'bg-green-100 text-green-800'}`}>
+                        {selectedInvoice.status}
+                      </span>
+                      <p className="text-xs font-mono font-bold text-slate-700 mt-2">رقم: {selectedInvoice.id}</p>
+                      <p className="text-xs text-slate-500">{selectedInvoice.date}</p>
+                    </div>
+                  </div>
+
+                  {/* Client & Plan Info */}
+                  <div className="bg-slate-50 p-3 rounded-lg border border-slate-200 grid grid-cols-2 gap-4 text-xs">
+                    <div>
+                      <span className="text-slate-500 block mb-0.5">بيانات المشترك:</span>
+                      <strong className="text-slate-900 text-sm">{selectedInvoice.client}</strong>
+                    </div>
+                    <div>
+                      <span className="text-slate-500 block mb-0.5">خطة الاشتراك:</span>
+                      <strong className="text-blue-700 text-sm">{selectedInvoice.planName}</strong>
+                    </div>
+                  </div>
+
+                  {/* Line Items Table */}
+                  <div className="border rounded-lg overflow-hidden border-slate-200">
+                    <table className="w-full text-xs text-right">
+                      <thead className="bg-slate-100 text-slate-700 font-bold border-b border-slate-200">
+                        <tr>
+                          <th className="p-2.5">الوصف والخدمة</th>
+                          <th className="p-2.5 text-center">المدة</th>
+                          <th className="p-2.5 text-left">الأساسي</th>
+                          <th className="p-2.5 text-left">الضريبة (15%)</th>
+                          <th className="p-2.5 text-left">المجموع</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-200">
+                        <tr>
+                          <td className="p-2.5 font-semibold">ترخيص وقوالب {selectedInvoice.planName}</td>
+                          <td className="p-2.5 text-center">شهري</td>
+                          <td className="p-2.5 text-left">{(selectedInvoice.amountValue / 1.15).toFixed(2)} ر.س</td>
+                          <td className="p-2.5 text-left">{(selectedInvoice.amountValue - (selectedInvoice.amountValue / 1.15)).toFixed(2)} ر.س</td>
+                          <td className="p-2.5 text-left font-bold text-slate-900">{selectedInvoice.amountValue.toFixed(2)} ر.س</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {/* Totals Box */}
+                  <div className="flex justify-end pt-1">
+                    <div className="w-64 bg-slate-50 p-3 rounded-lg border border-slate-200 text-xs space-y-1.5">
+                      <div className="flex justify-between">
+                        <span className="text-slate-600">المبلغ قبل الضريبة:</span>
+                        <span className="font-semibold">{(selectedInvoice.amountValue / 1.15).toFixed(2)} ر.س</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-slate-600">ضريبة القيمة المضافة (15%):</span>
+                        <span className="font-semibold">{(selectedInvoice.amountValue - (selectedInvoice.amountValue / 1.15)).toFixed(2)} ر.س</span>
+                      </div>
+                      <div className="flex justify-between font-bold text-slate-900 border-t border-slate-200 pt-1.5 text-sm">
+                        <span>الإجمالي المدفوع:</span>
+                        <span className="text-blue-600">{selectedInvoice.amountValue.toFixed(2)} ر.س</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              <DialogFooter className="gap-2 sm:gap-0 mt-4">
+                <Button variant="outline" onClick={() => setSelectedInvoice(null)}>إغلاق</Button>
+                <Button onClick={() => handleDownloadInvoicePDF()} className="gap-1.5 bg-blue-600 hover:bg-blue-700 text-white">
+                  <Download className="w-4 h-4" /> تنزيل / طباعة الفاتورة PDF
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+
         </main>
-
       </div>
-
     </div>
   );
 }

@@ -81,6 +81,7 @@ const T0005Calculator = ({ isAdmin = false }: { isAdmin?: boolean }) => {
   const [previewMode, setPreviewMode] = useState<'template' | 'sheet' | 'three'>('template');
   const [showDimensions, setShowDimensions] = useState(true);
   const [dimUnit, setDimUnit] = useState<'mm' | 'cm' | 'in'>('mm');
+  const [dimScale, setDimScale] = useState(1);
   const [printOpen, setPrintOpen] = useState(false);
 
   // Segment overrides state for interactive line adjustments
@@ -299,8 +300,8 @@ const T0005Calculator = ({ isAdmin = false }: { isAdmin?: boolean }) => {
   }), [appliedParams]);
 
   const dimsSvg = useMemo(
-    () => (showDimensions ? buildT0005DimensionsSvg(appliedParams, dimUnit) : ''),
-    [showDimensions, appliedParams, dimUnit],
+    () => (showDimensions ? buildT0005DimensionsSvg(appliedParams, dimUnit, dimScale) : ''),
+    [showDimensions, appliedParams, dimUnit, dimScale],
   );
 
   return (
@@ -316,6 +317,8 @@ const T0005Calculator = ({ isAdmin = false }: { isAdmin?: boolean }) => {
         onShowDimensionsChange={setShowDimensions}
         dimUnit={dimUnit}
         onDimUnitChange={setDimUnit}
+        dimScale={dimScale}
+        onDimScaleChange={setDimScale}
         onSave={handleSave}
         onReset={handleReset}
         actionButtons={
@@ -333,6 +336,8 @@ const T0005Calculator = ({ isAdmin = false }: { isAdmin?: boolean }) => {
                     svgWidth={geo.bbox.w}
                     svgHeight={geo.bbox.h}
                     dimensionsMarkup={dimsSvg}
+                    showDimensions={showDimensions}
+                    onShowDimensionsChange={setShowDimensions}
                     onChange={(newSvg, newSegs) => {
                       setSegmentOverrides({ svg: newSvg, segments: newSegs });
                     }}

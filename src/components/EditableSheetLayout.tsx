@@ -148,6 +148,8 @@ const EditableSheetLayout = forwardRef<EditableSheetLayoutHandle, EditableSheetL
   gap,
   optimalPieces,
   onCountChange,
+  initialEnabled = true,
+  onExitEdit,
   importedDieline,
   onDielineImported,
   dielineLibrary,
@@ -156,7 +158,7 @@ const EditableSheetLayout = forwardRef<EditableSheetLayoutHandle, EditableSheetL
   engineVariant = 'basic',
   dielinePaths,
 }, ref) => {
-  const [enabled, setEnabled] = useState(false);
+  const [enabled, setEnabled] = useState(initialEnabled ?? true);
   const [autoNestOpen, setAutoNestOpen] = useState(false);
   
   // When a dieline is imported, its size overrides the product size used for new pieces.
@@ -958,14 +960,14 @@ const safeToFixed = (val: any, decimals: number = 2): string => {
             compact
           />
           {!enabled ? (
-            <Button size="sm" variant="outline" className="h-7 text-xs gap-1" onClick={() => setEnabled(true)}>
-              <Edit3 className="w-3 h-3" />
-              تفعيل التعديل
+            <Button size="sm" variant="default" className="h-7 text-xs gap-1.5 font-bold bg-blue-600 hover:bg-blue-700 text-white shadow-sm" onClick={() => setEnabled(true)}>
+              <Edit3 className="w-3.5 h-3.5" />
+              تفعيل نظام التعديل اليدوي
             </Button>
           ) : (
-            <Button size="sm" variant="ghost" className="h-7 text-xs gap-1" onClick={attemptExit}>
-              <Check className="w-3 h-3" />
-              إنهاء
+            <Button size="sm" variant="outline" className="h-7 text-xs gap-1.5 font-bold border-slate-300 text-slate-700 bg-white hover:bg-slate-50 shadow-sm" onClick={attemptExit}>
+              <Check className="w-3.5 h-3.5 text-emerald-600" />
+              إنهاء التعديل
             </Button>
           )}
           {enabled && validateLayout.hasIssues && (
