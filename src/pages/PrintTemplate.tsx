@@ -91,7 +91,7 @@ export default function PrintTemplate() {
   };
 
   return (
-    <div dir="rtl" style={{ background: '#ffffff', color: '#1e293b', fontFamily: 'Cairo, sans-serif', padding: '0.5in', maxWidth: '8.5in', margin: '0 auto' }}>
+    <div dir="rtl" style={{ background: '#ffffff', color: '#1e293b', fontFamily: "'IBM Plex Sans', 'IBM Plex Sans Arabic', sans-serif", padding: '0.5in', maxWidth: '8.5in', margin: '0 auto' }}>
       
       {/* ===== Breadcrumbs ===== */}
       <div className="print:hidden" style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: '#94a3b8', marginBottom: '14px' }}>

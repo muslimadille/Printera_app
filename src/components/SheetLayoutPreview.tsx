@@ -704,7 +704,7 @@ const ScenarioCard = ({
                       fill={strokeColor}
                       fontSize={labelSize}
                       fontWeight="bold"
-                      fontFamily="Cairo, sans-serif"
+                      fontFamily="'IBM Plex Sans', 'IBM Plex Sans Arabic', sans-serif"
                     >
                       {p.index}
                     </text>
@@ -714,10 +714,10 @@ const ScenarioCard = ({
             })}
           </g>
           {/* Dimension labels follow the displayed orientation (always landscape) */}
-          <text x={dispW / 2} y={-1} textAnchor="middle" fontSize={Math.max(1.8, dispW * 0.028)} fill="hsl(var(--muted-foreground))" fontFamily="Cairo, sans-serif" fontWeight="600">
+          <text x={dispW / 2} y={-1} textAnchor="middle" fontSize={Math.max(1.8, dispW * 0.028)} fill="hsl(var(--muted-foreground))" fontFamily="'IBM Plex Sans', 'IBM Plex Sans Arabic', sans-serif" fontWeight="600">
             {isPortrait ? sheetH : sheetW} سم
           </text>
-          <text x={-1} y={dispH / 2} textAnchor="middle" fontSize={Math.max(1.8, dispH * 0.028)} fill="hsl(var(--muted-foreground))" fontFamily="Cairo, sans-serif" fontWeight="600" transform={`rotate(-90, -1, ${dispH / 2})`}>
+          <text x={-1} y={dispH / 2} textAnchor="middle" fontSize={Math.max(1.8, dispH * 0.028)} fill="hsl(var(--muted-foreground))" fontFamily="'IBM Plex Sans', 'IBM Plex Sans Arabic', sans-serif" fontWeight="600" transform={`rotate(-90, -1, ${dispH / 2})`}>
             {isPortrait ? sheetW : sheetH} سم
           </text>
         </svg>
@@ -1064,7 +1064,7 @@ const BaseSheetCutDiagram = ({
                     fill={cutColor}
                     fontSize={Math.min(layout.pw, layout.ph) * 0.28}
                     fontWeight="bold"
-                    fontFamily="Cairo, sans-serif"
+                    fontFamily="'IBM Plex Sans', 'IBM Plex Sans Arabic', sans-serif"
                     transform={isPortrait ? `rotate(-90, ${x + layout.pw / 2}, ${y + layout.ph / 2})` : undefined}
                   >
                     {productsPerPress}

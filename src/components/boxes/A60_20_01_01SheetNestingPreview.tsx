@@ -63,7 +63,7 @@ const A60_20_01_01SheetNestingPreview = ({ params, nesting }: Props) => {
     }
   }
 
-  const [isManualEdit, setIsManualEdit] = useState(true);
+  const [isManualEdit, setIsManualEdit] = useState(false);
   const [editedPieces, setEditedPieces] = useState<any[] | null>(null);
 
   const cmSheetW = sheetW / 10;

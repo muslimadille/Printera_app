@@ -184,7 +184,7 @@ const exportSignaturesPdf = (
     <title>تفاصيل الملازم - ${sel.machineSizeName || ''}</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;600;700&family=IBM+Plex+Sans:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
       /* مساحات ثابتة محجوزة للترويسة (28mm) والتذييل (18mm) في كل صفحة */
       @page {
@@ -194,7 +194,7 @@ const exportSignaturesPdf = (
       * { box-sizing: border-box; }
       html, body { margin: 0; padding: 0; }
       body {
-        font-family: 'Cairo', Tahoma, Arial, sans-serif;
+        font-family: 'IBM Plex Sans', 'IBM Plex Sans Arabic', Tahoma, Arial, sans-serif;
         color: #0f172a;
         font-size: 10.5pt;
         line-height: 1.5;

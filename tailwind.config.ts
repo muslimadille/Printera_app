@@ -13,7 +13,8 @@ export default {
       },
     },
     fontFamily: {
-      cairo: ['Cairo', 'sans-serif'],
+      sans: ['"IBM Plex Sans"', '"IBM Plex Sans Arabic"', 'sans-serif'],
+      cairo: ['"IBM Plex Sans"', '"IBM Plex Sans Arabic"', 'sans-serif'],
     },
     extend: {
       colors: {

@@ -74,7 +74,7 @@ export default function Dashboard() {
       border: 'none',
       background: 'transparent',
       cursor: 'pointer',
-      fontFamily: 'Cairo, sans-serif',
+      fontFamily: "'IBM Plex Sans', 'IBM Plex Sans Arabic', sans-serif",
       fontSize: '14px',
       fontWeight: isActive ? 700 : 600,
       color: isActive ? 'var(--brand-navy)' : 'var(--brand-muted)',
@@ -151,7 +151,7 @@ export default function Dashboard() {
   };
 
   return (
-    <div dir="rtl" style={{ minHeight: '100vh', background: 'var(--brand-bg)', color: 'var(--brand-navy)', fontFamily: 'Cairo, sans-serif' }}>
+    <div dir="rtl" style={{ minHeight: '100vh', background: 'var(--brand-bg)', color: 'var(--brand-navy)', fontFamily: "'IBM Plex Sans', 'IBM Plex Sans Arabic', sans-serif" }}>
       <Header />
 
       <div style={{ padding: 'var(--space-8)', maxWidth: '960px', margin: '0 auto' }}>

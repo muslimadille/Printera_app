@@ -3,7 +3,7 @@ import Footer from '@/components/Footer';
 
 export default function About() {
   return (
-    <div dir="rtl" style={{ minHeight: '100vh', background: 'var(--brand-bg)', color: 'var(--brand-navy)', fontFamily: 'Cairo, sans-serif' }}>
+    <div dir="rtl" style={{ minHeight: '100vh', background: 'var(--brand-bg)', color: 'var(--brand-navy)', fontFamily: "'IBM Plex Sans', 'IBM Plex Sans Arabic', sans-serif" }}>
       <Header active="about" />
 
       {/* Hero */}

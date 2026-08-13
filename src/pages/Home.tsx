@@ -155,7 +155,7 @@ export default function Home() {
     .slice(0, 9);
 
   return (
-    <div dir="rtl" style={{ minHeight: '100vh', background: '#FFFFFF', color: '#0F172A', fontFamily: "'Cairo', sans-serif" }}>
+    <div dir="rtl" style={{ minHeight: '100vh', background: '#FFFFFF', color: '#0F172A', fontFamily: "'IBM Plex Sans', 'IBM Plex Sans Arabic', sans-serif" }}>
       {/* Top Navbar with Pure White Background (#ffffff) as requested */}
       <Header variant="simple" active="home" bg="#ffffff" />
 

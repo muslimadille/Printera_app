@@ -109,7 +109,7 @@ export default function Signup() {
   const mismatch = confirmPassword.length > 0 && password !== confirmPassword;
 
   return (
-    <div dir="rtl" style={{ minHeight: '100vh', background: 'var(--brand-bg)', color: 'var(--brand-navy)', display: 'grid', gridTemplateColumns: '1fr 1fr', fontFamily: 'Cairo, sans-serif' }}>
+    <div dir="rtl" style={{ minHeight: '100vh', background: 'var(--brand-bg)', color: 'var(--brand-navy)', display: 'grid', gridTemplateColumns: '1fr 1fr', fontFamily: "'IBM Plex Sans', 'IBM Plex Sans Arabic', sans-serif" }}>
       
       {/* ===== Visual side ===== */}
       <div style={{ position: 'relative', background: 'var(--brand-navy)', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 'var(--space-8)' }}>
@@ -148,7 +148,7 @@ export default function Signup() {
                   placeholder="مثال: أحمد محمد" 
                   value={name} 
                   onChange={(e) => setName(e.target.value)}
-                  style={{ width: '100%', boxSizing: 'border-box', height: '46px', borderRadius: '10px', border: '1px solid var(--brand-border)', background: '#fff', padding: '0 14px', fontSize: '14px', fontFamily: 'Cairo,sans-serif', color: 'var(--brand-navy)', outlineColor: 'var(--brand-gold)' }} 
+                  style={{ width: '100%', boxSizing: 'border-box', height: '46px', borderRadius: '10px', border: '1px solid var(--brand-border)', background: '#fff', padding: '0 14px', fontSize: '14px', fontFamily: "'IBM Plex Sans', 'IBM Plex Sans Arabic', sans-serif", color: 'var(--brand-navy)', outlineColor: 'var(--brand-gold)' }} 
                 />
               </div>
               <div>
@@ -159,7 +159,7 @@ export default function Signup() {
                   placeholder="name@company.com" 
                   value={email} 
                   onChange={(e) => setEmail(e.target.value)}
-                  style={{ width: '100%', boxSizing: 'border-box', height: '46px', borderRadius: '10px', border: '1px solid var(--brand-border)', background: '#fff', padding: '0 14px', fontSize: '14px', fontFamily: 'Cairo,sans-serif', color: 'var(--brand-navy)', outlineColor: 'var(--brand-gold)' }} 
+                  style={{ width: '100%', boxSizing: 'border-box', height: '46px', borderRadius: '10px', border: '1px solid var(--brand-border)', background: '#fff', padding: '0 14px', fontSize: '14px', fontFamily: "'IBM Plex Sans', 'IBM Plex Sans Arabic', sans-serif", color: 'var(--brand-navy)', outlineColor: 'var(--brand-gold)' }} 
                 />
               </div>
               <div>
@@ -170,7 +170,7 @@ export default function Signup() {
                   placeholder="8 أحرف على الأقل" 
                   value={password} 
                   onChange={(e) => setPassword(e.target.value)}
-                  style={{ width: '100%', boxSizing: 'border-box', height: '46px', borderRadius: '10px', border: '1px solid var(--brand-border)', background: '#fff', padding: '0 14px', fontSize: '14px', fontFamily: 'Cairo,sans-serif', color: 'var(--brand-navy)', outlineColor: 'var(--brand-gold)' }} 
+                  style={{ width: '100%', boxSizing: 'border-box', height: '46px', borderRadius: '10px', border: '1px solid var(--brand-border)', background: '#fff', padding: '0 14px', fontSize: '14px', fontFamily: "'IBM Plex Sans', 'IBM Plex Sans Arabic', sans-serif", color: 'var(--brand-navy)', outlineColor: 'var(--brand-gold)' }} 
                 />
               </div>
               <div>
@@ -181,7 +181,7 @@ export default function Signup() {
                   placeholder="أعد كتابة كلمة المرور" 
                   value={confirmPassword} 
                   onChange={(e) => setConfirmPassword(e.target.value)}
-                  style={{ width: '100%', boxSizing: 'border-box', height: '46px', borderRadius: '10px', border: `1px solid ${mismatch ? '#ef4444' : 'var(--brand-border)'}`, background: '#fff', padding: '0 14px', fontSize: '14px', fontFamily: 'Cairo,sans-serif', color: 'var(--brand-navy)', outlineColor: 'var(--brand-gold)' }} 
+                  style={{ width: '100%', boxSizing: 'border-box', height: '46px', borderRadius: '10px', border: `1px solid ${mismatch ? '#ef4444' : 'var(--brand-border)'}`, background: '#fff', padding: '0 14px', fontSize: '14px', fontFamily: "'IBM Plex Sans', 'IBM Plex Sans Arabic', sans-serif", color: 'var(--brand-navy)', outlineColor: 'var(--brand-gold)' }} 
                 />
                 {mismatch && (
                   <div style={{ fontSize: '12px', color: '#ef4444', marginTop: '5px' }}>كلمتا المرور غير متطابقتين</div>

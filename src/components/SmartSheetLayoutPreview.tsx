@@ -609,7 +609,7 @@ const SheetGrid = ({
                     fill={strokeColor}
                     fontSize={labelSize}
                     fontWeight="bold"
-                    fontFamily="Cairo, sans-serif"
+                    fontFamily="'IBM Plex Sans', 'IBM Plex Sans Arabic', sans-serif"
                   >
                     {i + 1}
                   </text>
@@ -642,7 +642,7 @@ const SheetGrid = ({
                     fill={strokeColor}
                     fontSize={labelSize}
                     fontWeight="bold"
-                    fontFamily="Cairo, sans-serif"
+                    fontFamily="'IBM Plex Sans', 'IBM Plex Sans Arabic', sans-serif"
                   >
                     {i + 1}
                   </text>
@@ -657,7 +657,7 @@ const SheetGrid = ({
           textAnchor="middle"
           fontSize={Math.max(1.8, dispW * 0.028)}
           fill="hsl(var(--muted-foreground))"
-          fontFamily="Cairo, sans-serif"
+          fontFamily="'IBM Plex Sans', 'IBM Plex Sans Arabic', sans-serif"
           fontWeight="600"
         >
           {isPortrait ? sheetH : sheetW} سم
@@ -667,7 +667,7 @@ const SheetGrid = ({
           textAnchor="middle"
           fontSize={Math.max(1.8, dispH * 0.028)}
           fill="hsl(var(--muted-foreground))"
-          fontFamily="Cairo, sans-serif"
+          fontFamily="'IBM Plex Sans', 'IBM Plex Sans Arabic', sans-serif"
           fontWeight="600"
           transform={`rotate(-90, -1, ${dispH / 2})`}
         >

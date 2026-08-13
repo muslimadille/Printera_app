@@ -1101,7 +1101,7 @@ const TemplateCostCalculator = ({ onNavigateToQuote, sessionToken, engineVariant
       <style>
         @page { size: A4; margin: 16mm 14mm 18mm 14mm; }
         * { box-sizing: border-box; }
-        body { font-family: 'Cairo', 'Segoe UI', Tahoma, Arial, sans-serif; color: #0f172a; margin: 0; }
+        body { font-family: 'IBM Plex Sans', 'IBM Plex Sans Arabic', 'Segoe UI', Tahoma, Arial, sans-serif; color: #0f172a; margin: 0; }
         .doc-head { display: flex; justify-content: space-between; align-items: flex-end;
           border-bottom: 2px solid #1e3a8a; padding-bottom: 8px; margin-bottom: 14px; }
         .doc-head h1 { font-size: 18px; margin: 0; color: #1e3a8a; }

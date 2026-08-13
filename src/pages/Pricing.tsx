@@ -17,14 +17,14 @@ export default function Pricing() {
     fontWeight: active ? 700 : 600,
     border: 'none',
     cursor: 'pointer',
-    fontFamily: 'Cairo, sans-serif',
+    fontFamily: "'IBM Plex Sans', 'IBM Plex Sans Arabic', sans-serif",
     background: active ? 'var(--brand-navy)' : 'transparent',
     color: active ? '#ffffff' : 'var(--brand-muted)',
     transition: 'background .2s ease, color .2s ease',
   });
 
   return (
-    <div dir="rtl" style={{ minHeight: '100vh', background: 'var(--brand-bg)', color: 'var(--brand-navy)', fontFamily: 'Cairo, sans-serif' }}>
+    <div dir="rtl" style={{ minHeight: '100vh', background: 'var(--brand-bg)', color: 'var(--brand-navy)', fontFamily: "'IBM Plex Sans', 'IBM Plex Sans Arabic', sans-serif" }}>
       <Header active="pricing" />
 
       {/* ===== Hero ===== */}

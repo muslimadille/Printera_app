@@ -56,7 +56,7 @@ export default function AdminLogin() {
   };
 
   return (
-    <div dir="rtl" style={{ minHeight: '100vh', background: '#1e293b', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Cairo, sans-serif', padding: '20px', position: 'relative', overflow: 'hidden' }}>
+    <div dir="rtl" style={{ minHeight: '100vh', background: '#1e293b', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'IBM Plex Sans', 'IBM Plex Sans Arabic', sans-serif", padding: '20px', position: 'relative', overflow: 'hidden' }}>
       
       {/* Background decorations */}
       <div style={{ position: 'absolute', inset: 0, backgroundImage: 'radial-gradient(circle at 1px 1px, rgba(255,255,255,0.05) 1px, transparent 0)', backgroundSize: '26px 26px', pointerEvents: 'none' }}></div>
@@ -86,7 +86,7 @@ export default function AdminLogin() {
               placeholder="admin@qawalibline.sa"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              style={{ width: '100%', boxSizing: 'border-box', height: '46px', borderRadius: '10px', border: '1px solid #334155', background: '#1e293b', padding: '0 14px', fontSize: '14px', fontFamily: 'Cairo,sans-serif', color: '#f1f5f9' }}
+              style={{ width: '100%', boxSizing: 'border-box', height: '46px', borderRadius: '10px', border: '1px solid #334155', background: '#1e293b', padding: '0 14px', fontSize: '14px', fontFamily: "'IBM Plex Sans', 'IBM Plex Sans Arabic', sans-serif", color: '#f1f5f9' }}
             />
           </div>
 
@@ -98,7 +98,7 @@ export default function AdminLogin() {
               placeholder="••••••••"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              style={{ width: '100%', boxSizing: 'border-box', height: '46px', borderRadius: '10px', border: '1px solid #334155', background: '#1e293b', padding: '0 14px', fontSize: '14px', fontFamily: 'Cairo,sans-serif', color: '#f1f5f9' }}
+              style={{ width: '100%', boxSizing: 'border-box', height: '46px', borderRadius: '10px', border: '1px solid #334155', background: '#1e293b', padding: '0 14px', fontSize: '14px', fontFamily: "'IBM Plex Sans', 'IBM Plex Sans Arabic', sans-serif", color: '#f1f5f9' }}
             />
           </div>
 
@@ -111,7 +111,7 @@ export default function AdminLogin() {
               placeholder="000000"
               value={otp}
               onChange={(e) => setOtp(e.target.value)}
-              style={{ width: '100%', boxSizing: 'border-box', height: '46px', borderRadius: '10px', border: '1px solid #334155', background: '#1e293b', padding: '0 14px', fontSize: '16px', fontWeight: 700, letterSpacing: '6px', textAlign: 'center', fontFamily: 'Cairo,sans-serif', color: '#f1f5f9' }}
+              style={{ width: '100%', boxSizing: 'border-box', height: '46px', borderRadius: '10px', border: '1px solid #334155', background: '#1e293b', padding: '0 14px', fontSize: '16px', fontWeight: 700, letterSpacing: '6px', textAlign: 'center', fontFamily: "'IBM Plex Sans', 'IBM Plex Sans Arabic', sans-serif", color: '#f1f5f9' }}
             />
           </div>
 

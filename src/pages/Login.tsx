@@ -123,7 +123,7 @@ export default function Login() {
   };
 
   return (
-    <div dir="rtl" style={{ minHeight: '100vh', background: 'var(--brand-bg)', color: 'var(--brand-navy)', display: 'grid', gridTemplateColumns: '1fr 1fr', fontFamily: 'Cairo, sans-serif' }}>
+    <div dir="rtl" style={{ minHeight: '100vh', background: 'var(--brand-bg)', color: 'var(--brand-navy)', display: 'grid', gridTemplateColumns: '1fr 1fr', fontFamily: "'IBM Plex Sans', 'IBM Plex Sans Arabic', sans-serif" }}>
       
       {/* ===== Form side ===== */}
       <div style={{ display: 'flex', flexDirection: 'column', padding: 'var(--space-8)' }}>
@@ -151,7 +151,7 @@ export default function Login() {
                       placeholder="name@company.com" 
                       value={email} 
                       onChange={(e) => setEmail(e.target.value)}
-                      style={{ width: '100%', boxSizing: 'border-box', height: '46px', borderRadius: '10px', border: '1px solid var(--brand-border)', background: '#fff', padding: '0 14px', fontSize: '14px', fontFamily: 'Cairo,sans-serif', color: 'var(--brand-navy)', outlineColor: 'var(--brand-gold)' }} 
+                      style={{ width: '100%', boxSizing: 'border-box', height: '46px', borderRadius: '10px', border: '1px solid var(--brand-border)', background: '#fff', padding: '0 14px', fontSize: '14px', fontFamily: "'IBM Plex Sans', 'IBM Plex Sans Arabic', sans-serif", color: 'var(--brand-navy)', outlineColor: 'var(--brand-gold)' }} 
                     />
                   </div>
                   <div>
@@ -165,7 +165,7 @@ export default function Login() {
                       placeholder="••••••••" 
                       value={password} 
                       onChange={(e) => setPassword(e.target.value)}
-                      style={{ width: '100%', boxSizing: 'border-box', height: '46px', borderRadius: '10px', border: '1px solid var(--brand-border)', background: '#fff', padding: '0 14px', fontSize: '14px', fontFamily: 'Cairo,sans-serif', color: 'var(--brand-navy)', outlineColor: 'var(--brand-gold)' }} 
+                      style={{ width: '100%', boxSizing: 'border-box', height: '46px', borderRadius: '10px', border: '1px solid var(--brand-border)', background: '#fff', padding: '0 14px', fontSize: '14px', fontFamily: "'IBM Plex Sans', 'IBM Plex Sans Arabic', sans-serif", color: 'var(--brand-navy)', outlineColor: 'var(--brand-gold)' }} 
                     />
                   </div>
 

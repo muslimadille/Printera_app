@@ -1259,7 +1259,7 @@ const safeToFixed = (val: any, decimals: number = 2): string => {
             >
               <g transform={rotateAttr}>
               {/* Top: sheet width */}
-              <g fontFamily="Cairo, sans-serif" fill="hsl(var(--muted-foreground))">
+              <g fontFamily="'IBM Plex Sans', 'IBM Plex Sans Arabic', sans-serif" fill="hsl(var(--muted-foreground))">
                 <line x1={0} y1={-padY * 0.45} x2={sheetW} y2={-padY * 0.45} stroke="hsl(var(--muted-foreground))" strokeWidth={0.08} />
                 <line x1={0} y1={-padY * 0.55} x2={0} y2={-padY * 0.35} stroke="hsl(var(--muted-foreground))" strokeWidth={0.08} />
                 <line x1={sheetW} y1={-padY * 0.55} x2={sheetW} y2={-padY * 0.35} stroke="hsl(var(--muted-foreground))" strokeWidth={0.08} />
@@ -1269,7 +1269,7 @@ const safeToFixed = (val: any, decimals: number = 2): string => {
               </g>
 
               {/* Right: sheet height */}
-              <g fontFamily="Cairo, sans-serif" fill="hsl(var(--muted-foreground))">
+              <g fontFamily="'IBM Plex Sans', 'IBM Plex Sans Arabic', sans-serif" fill="hsl(var(--muted-foreground))">
                 <line x1={sheetW + padX * 0.45} y1={0} x2={sheetW + padX * 0.45} y2={sheetH} stroke="hsl(var(--muted-foreground))" strokeWidth={0.08} />
                 <line x1={sheetW + padX * 0.35} y1={0} x2={sheetW + padX * 0.55} y2={0} stroke="hsl(var(--muted-foreground))" strokeWidth={0.08} />
                 <line x1={sheetW + padX * 0.35} y1={sheetH} x2={sheetW + padX * 0.55} y2={sheetH} stroke="hsl(var(--muted-foreground))" strokeWidth={0.08} />
@@ -1288,7 +1288,7 @@ const safeToFixed = (val: any, decimals: number = 2): string => {
 
               {/* Bottom: total used width (pieces bbox) */}
               {hasPieces && bbW > 0 && (
-                <g fontFamily="Cairo, sans-serif" fill="hsl(var(--primary))">
+                <g fontFamily="'IBM Plex Sans', 'IBM Plex Sans Arabic', sans-serif" fill="hsl(var(--primary))">
                   <line x1={bbMinX} y1={sheetH + padY * 0.45} x2={bbMaxX} y2={sheetH + padY * 0.45} stroke="hsl(var(--primary))" strokeWidth={0.08} />
                   <line x1={bbMinX} y1={sheetH + padY * 0.35} x2={bbMinX} y2={sheetH + padY * 0.55} stroke="hsl(var(--primary))" strokeWidth={0.08} />
                   <line x1={bbMaxX} y1={sheetH + padY * 0.35} x2={bbMaxX} y2={sheetH + padY * 0.55} stroke="hsl(var(--primary))" strokeWidth={0.08} />
@@ -1300,7 +1300,7 @@ const safeToFixed = (val: any, decimals: number = 2): string => {
 
               {/* Left: total used height (pieces bbox) */}
               {hasPieces && bbH > 0 && (
-                <g fontFamily="Cairo, sans-serif" fill="hsl(var(--primary))">
+                <g fontFamily="'IBM Plex Sans', 'IBM Plex Sans Arabic', sans-serif" fill="hsl(var(--primary))">
                   <line x1={-padX * 0.45} y1={bbMinY} x2={-padX * 0.45} y2={bbMaxY} stroke="hsl(var(--primary))" strokeWidth={0.08} />
                   <line x1={-padX * 0.55} y1={bbMinY} x2={-padX * 0.35} y2={bbMinY} stroke="hsl(var(--primary))" strokeWidth={0.08} />
                   <line x1={-padX * 0.55} y1={bbMaxY} x2={-padX * 0.35} y2={bbMaxY} stroke="hsl(var(--primary))" strokeWidth={0.08} />
@@ -1527,7 +1527,7 @@ const safeToFixed = (val: any, decimals: number = 2): string => {
                         fill={strokeColor}
                         fontSize={Math.min(p.w, p.h) * 0.35}
                         fontWeight="bold"
-                        fontFamily="Cairo, sans-serif"
+                        fontFamily="'IBM Plex Sans', 'IBM Plex Sans Arabic', sans-serif"
                         opacity={showDieline ? 0.5 : 1}
                         style={{ pointerEvents: 'none' }}
                       >

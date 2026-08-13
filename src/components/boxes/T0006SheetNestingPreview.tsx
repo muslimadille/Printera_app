@@ -55,7 +55,7 @@ const T0006SheetNestingPreview = ({ params, result }: Props) => {
   const padX = Math.max(sheetW * 0.03, 1.5);
   const padY = Math.max(sheetH * 0.03, 1.5);
 
-  const [isManualEdit, setIsManualEdit] = useState(true);
+  const [isManualEdit, setIsManualEdit] = useState(false);
   const [, setEditedPieces] = useState<any[] | null>(null);
 
   const cmSheetW = sheetW / 10;

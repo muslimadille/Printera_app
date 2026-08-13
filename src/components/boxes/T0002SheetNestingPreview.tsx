@@ -109,7 +109,7 @@ const T0002SheetNestingPreview = ({ params, nesting, result }: Props) => {
           ? { label: 'كفاءة مقبولة 👍', cls: 'bg-amber-500/15 text-amber-700 border-amber-500/30' }
           : { label: 'كفاءة منخفضة ⚠️', cls: 'bg-rose-500/15 text-rose-700 border-rose-500/30' };
 
-  const [isManualEdit, setIsManualEdit] = useState(true);
+  const [isManualEdit, setIsManualEdit] = useState(false);
   const [editedPieces, setEditedPieces] = useState<any[] | null>(null);
 
   const cmSheetW = sheetW / 10;

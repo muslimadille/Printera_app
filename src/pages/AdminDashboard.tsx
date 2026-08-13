@@ -95,7 +95,7 @@ export default function AdminDashboard() {
         <meta charset="utf-8" />
         <title>فاتورة ضريبية - ${inv.id}</title>
         <style>
-          body { font-family: 'Cairo', system-ui, sans-serif; padding: 30px; direction: rtl; color: #0f172a; background: #fff; }
+          body { font-family: 'IBM Plex Sans', 'IBM Plex Sans Arabic', system-ui, sans-serif; padding: 30px; direction: rtl; color: #0f172a; background: #fff; }
           .invoice-box { border: 1px solid #e2e8f0; padding: 24px; border-radius: 12px; max-width: 750px; margin: 0 auto; }
           .header { display: flex; justify-content: space-between; border-bottom: 2px solid #3b82f6; padding-bottom: 16px; margin-bottom: 20px; }
           .brand { font-size: 22px; font-weight: bold; color: #1e293b; }
@@ -559,7 +559,7 @@ export default function AdminDashboard() {
   };
 
   return (
-    <div dir="rtl" style={{ minHeight: '100vh', background: '#f8fafc', display: 'flex', fontFamily: 'Cairo, sans-serif' }}>
+    <div dir="rtl" style={{ minHeight: '100vh', background: '#f8fafc', display: 'flex', fontFamily: "'IBM Plex Sans', 'IBM Plex Sans Arabic', sans-serif" }}>
       
       {/* ===== Sidebar ===== */}
       <aside style={{ width: '240px', background: '#1e293b', color: '#f1f5f9', display: 'flex', flexDirection: 'column', flexShrink: 0, position: 'sticky', top: 0, height: '100vh' }}>
@@ -587,7 +587,7 @@ export default function AdminDashboard() {
                   borderRadius: '8px',
                   border: 'none',
                   cursor: 'pointer',
-                  fontFamily: 'Cairo, sans-serif',
+                  fontFamily: "'IBM Plex Sans', 'IBM Plex Sans Arabic', sans-serif",
                   fontSize: '14px',
                   fontWeight: active ? 700 : 500,
                   background: active ? '#334155' : 'transparent',
@@ -638,7 +638,7 @@ export default function AdminDashboard() {
                 placeholder="بحث عام..."
                 value={search}
                 onChange={e => setSearch(e.target.value)}
-                style={{ width: '100%', boxSizing: 'border-box', height: '36px', borderRadius: '999px', border: '1px solid #e2e8f0', background: '#fff', padding: '0 34px 0 12px', fontSize: '13px', fontFamily: 'Cairo,sans-serif' }}
+                style={{ width: '100%', boxSizing: 'border-box', height: '36px', borderRadius: '999px', border: '1px solid #e2e8f0', background: '#fff', padding: '0 34px 0 12px', fontSize: '13px', fontFamily: "'IBM Plex Sans', 'IBM Plex Sans Arabic', sans-serif" }}
               />
             </div>
             <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: '6px', border: '1px solid #e2e8f0', background: '#fff', color: '#1e293b', fontWeight: 700, fontSize: '13px', padding: '8px 16px', borderRadius: '999px', textDecoration: 'none' }}>
@@ -900,18 +900,18 @@ export default function AdminDashboard() {
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
                       <div>
                         <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '6px' }}>اسم القالب</label>
-                        <input type="text" value={templateName} onChange={e => setTemplateName(e.target.value)} style={{ width: '100%', boxSizing: 'border-box', height: '40px', borderRadius: '6px', border: '1px solid #e2e8f0', padding: '0 12px', fontSize: '13.5px', fontFamily: 'Cairo,sans-serif' }} />
+                        <input type="text" value={templateName} onChange={e => setTemplateName(e.target.value)} style={{ width: '100%', boxSizing: 'border-box', height: '40px', borderRadius: '6px', border: '1px solid #e2e8f0', padding: '0 12px', fontSize: '13.5px', fontFamily: "'IBM Plex Sans', 'IBM Plex Sans Arabic', sans-serif" }} />
                       </div>
                       <div>
                         <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '6px' }}>التصنيف</label>
-                        <input type="text" value={templateCat} onChange={e => setTemplateCat(e.target.value)} style={{ width: '100%', boxSizing: 'border-box', height: '40px', borderRadius: '6px', border: '1px solid #e2e8f0', padding: '0 12px', fontSize: '13.5px', fontFamily: 'Cairo,sans-serif' }} />
+                        <input type="text" value={templateCat} onChange={e => setTemplateCat(e.target.value)} style={{ width: '100%', boxSizing: 'border-box', height: '40px', borderRadius: '6px', border: '1px solid #e2e8f0', padding: '0 12px', fontSize: '13.5px', fontFamily: "'IBM Plex Sans', 'IBM Plex Sans Arabic', sans-serif" }} />
                       </div>
                       <div>
                         <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '6px' }}>حالة القالب (نشط / غير نشط)</label>
                         <select
                           value={templateStatus}
                           onChange={e => setTemplateStatus(e.target.value as 'active' | 'inactive')}
-                          style={{ width: '100%', boxSizing: 'border-box', height: '40px', borderRadius: '6px', border: '1px solid #e2e8f0', padding: '0 12px', fontSize: '13.5px', fontFamily: 'Cairo,sans-serif' }}
+                          style={{ width: '100%', boxSizing: 'border-box', height: '40px', borderRadius: '6px', border: '1px solid #e2e8f0', padding: '0 12px', fontSize: '13.5px', fontFamily: "'IBM Plex Sans', 'IBM Plex Sans Arabic', sans-serif" }}
                         >
                           <option value="active">نشط ✓ (يظهر للمستخدمين ويقبل التخصيص)</option>
                           <option value="inactive">غير نشط ✗ (مخفي من الصفحة الرئيسية والمكتبة)</option>
@@ -922,11 +922,11 @@ export default function AdminDashboard() {
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
                       <div>
                         <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '6px' }}>اسم القالب</label>
-                        <input type="text" value={templateName} onChange={e => setTemplateName(e.target.value)} style={{ width: '100%', boxSizing: 'border-box', height: '40px', borderRadius: '6px', border: '1px solid #e2e8f0', padding: '0 12px', fontSize: '13.5px', fontFamily: 'Cairo,sans-serif' }} />
+                        <input type="text" value={templateName} onChange={e => setTemplateName(e.target.value)} style={{ width: '100%', boxSizing: 'border-box', height: '40px', borderRadius: '6px', border: '1px solid #e2e8f0', padding: '0 12px', fontSize: '13.5px', fontFamily: "'IBM Plex Sans', 'IBM Plex Sans Arabic', sans-serif" }} />
                       </div>
                       <div>
                         <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '6px' }}>التصنيف</label>
-                        <input type="text" value={templateCat} onChange={e => setTemplateCat(e.target.value)} style={{ width: '100%', boxSizing: 'border-box', height: '40px', borderRadius: '6px', border: '1px solid #e2e8f0', padding: '0 12px', fontSize: '13.5px', fontFamily: 'Cairo,sans-serif' }} />
+                        <input type="text" value={templateCat} onChange={e => setTemplateCat(e.target.value)} style={{ width: '100%', boxSizing: 'border-box', height: '40px', borderRadius: '6px', border: '1px solid #e2e8f0', padding: '0 12px', fontSize: '13.5px', fontFamily: "'IBM Plex Sans', 'IBM Plex Sans Arabic', sans-serif" }} />
                       </div>
                       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px' }}>
                         <div>
@@ -998,8 +998,8 @@ export default function AdminDashboard() {
             <div>
               {/* Local tabs switcher */}
               <div style={{ display: 'flex', gap: '6px', borderBottom: '1px solid #e2e8f0', marginBottom: 'var(--space-6)' }}>
-                <button type="button" onClick={() => setUsersTab('list')} style={{ padding: '10px 16px', border: 'none', background: 'transparent', cursor: 'pointer', fontFamily: 'Cairo', fontSize: '13.5px', fontWeight: usersTab === 'list' ? 700 : 500, color: usersTab === 'list' ? '#1e293b' : '#94a3b8', borderBottom: `2px solid ${usersTab === 'list' ? '#3b82f6' : 'transparent'}`, marginBottom: '-1px' }}>المستخدمون</button>
-                <button type="button" onClick={() => setUsersTab('roles')} style={{ padding: '10px 16px', border: 'none', background: 'transparent', cursor: 'pointer', fontFamily: 'Cairo', fontSize: '13.5px', fontWeight: usersTab === 'roles' ? 700 : 500, color: usersTab === 'roles' ? '#1e293b' : '#94a3b8', borderBottom: `2px solid ${usersTab === 'roles' ? '#3b82f6' : 'transparent'}`, marginBottom: '-1px' }}>الأدوار والصلاحيات</button>
+                <button type="button" onClick={() => setUsersTab('list')} style={{ padding: '10px 16px', border: 'none', background: 'transparent', cursor: 'pointer', fontFamily: "'IBM Plex Sans', 'IBM Plex Sans Arabic', sans-serif", fontSize: '13.5px', fontWeight: usersTab === 'list' ? 700 : 500, color: usersTab === 'list' ? '#1e293b' : '#94a3b8', borderBottom: `2px solid ${usersTab === 'list' ? '#3b82f6' : 'transparent'}`, marginBottom: '-1px' }}>المستخدمون</button>
+                <button type="button" onClick={() => setUsersTab('roles')} style={{ padding: '10px 16px', border: 'none', background: 'transparent', cursor: 'pointer', fontFamily: "'IBM Plex Sans', 'IBM Plex Sans Arabic', sans-serif", fontSize: '13.5px', fontWeight: usersTab === 'roles' ? 700 : 500, color: usersTab === 'roles' ? '#1e293b' : '#94a3b8', borderBottom: `2px solid ${usersTab === 'roles' ? '#3b82f6' : 'transparent'}`, marginBottom: '-1px' }}>الأدوار والصلاحيات</button>
               </div>
 
               {usersTab === 'list' ? (
@@ -1076,7 +1076,7 @@ export default function AdminDashboard() {
                         placeholder="مثال: الباقة الذهبية"
                         value={newPlanName}
                         onChange={(e) => setNewPlanName(e.target.value)}
-                        style={{ width: '100%', boxSizing: 'border-box', height: '38px', borderRadius: '6px', border: '1px solid #cbd5e1', padding: '0 10px', fontSize: '13px', fontFamily: 'Cairo,sans-serif' }}
+                        style={{ width: '100%', boxSizing: 'border-box', height: '38px', borderRadius: '6px', border: '1px solid #cbd5e1', padding: '0 10px', fontSize: '13px', fontFamily: "'IBM Plex Sans', 'IBM Plex Sans Arabic', sans-serif" }}
                       />
                     </div>
                     <div>
@@ -1086,7 +1086,7 @@ export default function AdminDashboard() {
                         placeholder="مثال: 199 أو مجاناً"
                         value={newPlanPriceMonthly}
                         onChange={(e) => setNewPlanPriceMonthly(e.target.value)}
-                        style={{ width: '100%', boxSizing: 'border-box', height: '38px', borderRadius: '6px', border: '1px solid #cbd5e1', padding: '0 10px', fontSize: '13px', fontFamily: 'Cairo,sans-serif' }}
+                        style={{ width: '100%', boxSizing: 'border-box', height: '38px', borderRadius: '6px', border: '1px solid #cbd5e1', padding: '0 10px', fontSize: '13px', fontFamily: "'IBM Plex Sans', 'IBM Plex Sans Arabic', sans-serif" }}
                       />
                     </div>
                     <div>
@@ -1096,7 +1096,7 @@ export default function AdminDashboard() {
                         placeholder="مثال: 159 أو مجاناً"
                         value={newPlanPriceYearly}
                         onChange={(e) => setNewPlanPriceYearly(e.target.value)}
-                        style={{ width: '100%', boxSizing: 'border-box', height: '38px', borderRadius: '6px', border: '1px solid #cbd5e1', padding: '0 10px', fontSize: '13px', fontFamily: 'Cairo,sans-serif' }}
+                        style={{ width: '100%', boxSizing: 'border-box', height: '38px', borderRadius: '6px', border: '1px solid #cbd5e1', padding: '0 10px', fontSize: '13px', fontFamily: "'IBM Plex Sans', 'IBM Plex Sans Arabic', sans-serif" }}
                       />
                     </div>
                   </div>
@@ -1109,7 +1109,7 @@ export default function AdminDashboard() {
                         placeholder="وصف الباقة والفئة المستهدفة..."
                         value={newPlanDesc}
                         onChange={(e) => setNewPlanDesc(e.target.value)}
-                        style={{ width: '100%', boxSizing: 'border-box', height: '38px', borderRadius: '6px', border: '1px solid #cbd5e1', padding: '0 10px', fontSize: '13px', fontFamily: 'Cairo,sans-serif' }}
+                        style={{ width: '100%', boxSizing: 'border-box', height: '38px', borderRadius: '6px', border: '1px solid #cbd5e1', padding: '0 10px', fontSize: '13px', fontFamily: "'IBM Plex Sans', 'IBM Plex Sans Arabic', sans-serif" }}
                       />
                     </div>
                     <div>
@@ -1119,7 +1119,7 @@ export default function AdminDashboard() {
                         placeholder="مثال: الأكثر شعبية / خصم 20%"
                         value={newPlanBadge}
                         onChange={(e) => setNewPlanBadge(e.target.value)}
-                        style={{ width: '100%', boxSizing: 'border-box', height: '38px', borderRadius: '6px', border: '1px solid #cbd5e1', padding: '0 10px', fontSize: '13px', fontFamily: 'Cairo,sans-serif' }}
+                        style={{ width: '100%', boxSizing: 'border-box', height: '38px', borderRadius: '6px', border: '1px solid #cbd5e1', padding: '0 10px', fontSize: '13px', fontFamily: "'IBM Plex Sans', 'IBM Plex Sans Arabic', sans-serif" }}
                       />
                     </div>
                   </div>
@@ -1131,7 +1131,7 @@ export default function AdminDashboard() {
                       value={newPlanFeaturesText}
                       onChange={(e) => setNewPlanFeaturesText(e.target.value)}
                       rows={3}
-                      style={{ width: '100%', boxSizing: 'border-box', borderRadius: '6px', border: '1px solid #cbd5e1', padding: '8px 10px', fontSize: '13px', fontFamily: 'Cairo,sans-serif' }}
+                      style={{ width: '100%', boxSizing: 'border-box', borderRadius: '6px', border: '1px solid #cbd5e1', padding: '8px 10px', fontSize: '13px', fontFamily: "'IBM Plex Sans', 'IBM Plex Sans Arabic', sans-serif" }}
                     />
                   </div>
 
@@ -1257,7 +1257,7 @@ export default function AdminDashboard() {
                             updatePlans(updated);
                           }}
                           rows={3}
-                          style={{ width: '100%', boxSizing: 'border-box', borderRadius: '4px', border: '1px solid #cbd5e1', padding: '6px 8px', fontSize: '12px', fontFamily: 'Cairo,sans-serif' }}
+                          style={{ width: '100%', boxSizing: 'border-box', borderRadius: '4px', border: '1px solid #cbd5e1', padding: '6px 8px', fontSize: '12px', fontFamily: "'IBM Plex Sans', 'IBM Plex Sans Arabic', sans-serif" }}
                         />
                       </div>
                     </div>
@@ -1292,7 +1292,7 @@ export default function AdminDashboard() {
                       <select
                         value={newCodeType}
                         onChange={(e) => setNewCodeType(e.target.value as any)}
-                        style={{ width: '100%', boxSizing: 'border-box', height: '38px', borderRadius: '6px', border: '1px solid #f472b6', padding: '0 10px', fontSize: '13px', fontFamily: 'Cairo,sans-serif', background: '#fff' }}
+                        style={{ width: '100%', boxSizing: 'border-box', height: '38px', borderRadius: '6px', border: '1px solid #f472b6', padding: '0 10px', fontSize: '13px', fontFamily: "'IBM Plex Sans', 'IBM Plex Sans Arabic', sans-serif", background: '#fff' }}
                       >
                         <option value="percentage">نسبة مئوية (%)</option>
                         <option value="fixed">مبلغ ثابت (ر.س)</option>
@@ -1306,7 +1306,7 @@ export default function AdminDashboard() {
                         placeholder={newCodeType === 'percentage' ? '20' : '50'}
                         value={newCodeValue}
                         onChange={(e) => setNewCodeValue(e.target.value)}
-                        style={{ width: '100%', boxSizing: 'border-box', height: '38px', borderRadius: '6px', border: '1px solid #f472b6', padding: '0 10px', fontSize: '13px', fontFamily: 'Cairo,sans-serif', background: '#fff' }}
+                        style={{ width: '100%', boxSizing: 'border-box', height: '38px', borderRadius: '6px', border: '1px solid #f472b6', padding: '0 10px', fontSize: '13px', fontFamily: "'IBM Plex Sans', 'IBM Plex Sans Arabic', sans-serif", background: '#fff' }}
                       />
                     </div>
 
@@ -1315,7 +1315,7 @@ export default function AdminDashboard() {
                       <select
                         value={newCodeTargetPlan}
                         onChange={(e) => setNewCodeTargetPlan(e.target.value)}
-                        style={{ width: '100%', boxSizing: 'border-box', height: '38px', borderRadius: '6px', border: '1px solid #f472b6', padding: '0 10px', fontSize: '13px', fontFamily: 'Cairo,sans-serif', background: '#fff' }}
+                        style={{ width: '100%', boxSizing: 'border-box', height: '38px', borderRadius: '6px', border: '1px solid #f472b6', padding: '0 10px', fontSize: '13px', fontFamily: "'IBM Plex Sans', 'IBM Plex Sans Arabic', sans-serif", background: '#fff' }}
                       >
                         <option value="all">جميع الباقات (All Plans)</option>
                         {plansList.map(p => (
@@ -1331,7 +1331,7 @@ export default function AdminDashboard() {
                         placeholder="100"
                         value={newCodeMaxUses}
                         onChange={(e) => setNewCodeMaxUses(e.target.value)}
-                        style={{ width: '100%', boxSizing: 'border-box', height: '38px', borderRadius: '6px', border: '1px solid #f472b6', padding: '0 10px', fontSize: '13px', fontFamily: 'Cairo,sans-serif', background: '#fff' }}
+                        style={{ width: '100%', boxSizing: 'border-box', height: '38px', borderRadius: '6px', border: '1px solid #f472b6', padding: '0 10px', fontSize: '13px', fontFamily: "'IBM Plex Sans', 'IBM Plex Sans Arabic', sans-serif", background: '#fff' }}
                       />
                     </div>
                   </div>
@@ -1521,7 +1521,7 @@ export default function AdminDashboard() {
                       type="text"
                       value={pricingForm.heroTag}
                       onChange={(e) => setPricingForm({ ...pricingForm, heroTag: e.target.value })}
-                      style={{ width: '100%', boxSizing: 'border-box', height: '40px', borderRadius: '6px', border: '1px solid #e2e8f0', padding: '0 12px', fontSize: '13.5px', fontFamily: 'Cairo,sans-serif' }}
+                      style={{ width: '100%', boxSizing: 'border-box', height: '40px', borderRadius: '6px', border: '1px solid #e2e8f0', padding: '0 12px', fontSize: '13.5px', fontFamily: "'IBM Plex Sans', 'IBM Plex Sans Arabic', sans-serif" }}
                     />
                   </div>
 
@@ -1531,7 +1531,7 @@ export default function AdminDashboard() {
                       type="text"
                       value={pricingForm.heroTitle}
                       onChange={(e) => setPricingForm({ ...pricingForm, heroTitle: e.target.value })}
-                      style={{ width: '100%', boxSizing: 'border-box', height: '40px', borderRadius: '6px', border: '1px solid #e2e8f0', padding: '0 12px', fontSize: '13.5px', fontFamily: 'Cairo,sans-serif' }}
+                      style={{ width: '100%', boxSizing: 'border-box', height: '40px', borderRadius: '6px', border: '1px solid #e2e8f0', padding: '0 12px', fontSize: '13.5px', fontFamily: "'IBM Plex Sans', 'IBM Plex Sans Arabic', sans-serif" }}
                     />
                   </div>
 
@@ -1541,7 +1541,7 @@ export default function AdminDashboard() {
                       value={pricingForm.heroSubtitle}
                       onChange={(e) => setPricingForm({ ...pricingForm, heroSubtitle: e.target.value })}
                       rows={2}
-                      style={{ width: '100%', boxSizing: 'border-box', borderRadius: '6px', border: '1px solid #e2e8f0', padding: '10px 12px', fontSize: '13.5px', fontFamily: 'Cairo,sans-serif', resize: 'vertical' }}
+                      style={{ width: '100%', boxSizing: 'border-box', borderRadius: '6px', border: '1px solid #e2e8f0', padding: '10px 12px', fontSize: '13.5px', fontFamily: "'IBM Plex Sans', 'IBM Plex Sans Arabic', sans-serif", resize: 'vertical' }}
                     />
                   </div>
 
@@ -1551,7 +1551,7 @@ export default function AdminDashboard() {
                       type="text"
                       value={pricingForm.guaranteeTitle}
                       onChange={(e) => setPricingForm({ ...pricingForm, guaranteeTitle: e.target.value })}
-                      style={{ width: '100%', boxSizing: 'border-box', height: '40px', borderRadius: '6px', border: '1px solid #e2e8f0', padding: '0 12px', fontSize: '13.5px', fontFamily: 'Cairo,sans-serif' }}
+                      style={{ width: '100%', boxSizing: 'border-box', height: '40px', borderRadius: '6px', border: '1px solid #e2e8f0', padding: '0 12px', fontSize: '13.5px', fontFamily: "'IBM Plex Sans', 'IBM Plex Sans Arabic', sans-serif" }}
                     />
                   </div>
 
@@ -1561,7 +1561,7 @@ export default function AdminDashboard() {
                       type="text"
                       value={pricingForm.faqTitle}
                       onChange={(e) => setPricingForm({ ...pricingForm, faqTitle: e.target.value })}
-                      style={{ width: '100%', boxSizing: 'border-box', height: '40px', borderRadius: '6px', border: '1px solid #e2e8f0', padding: '0 12px', fontSize: '13.5px', fontFamily: 'Cairo,sans-serif' }}
+                      style={{ width: '100%', boxSizing: 'border-box', height: '40px', borderRadius: '6px', border: '1px solid #e2e8f0', padding: '0 12px', fontSize: '13.5px', fontFamily: "'IBM Plex Sans', 'IBM Plex Sans Arabic', sans-serif" }}
                     />
                   </div>
 
@@ -1571,7 +1571,7 @@ export default function AdminDashboard() {
                       value={pricingForm.guaranteeSubtitle}
                       onChange={(e) => setPricingForm({ ...pricingForm, guaranteeSubtitle: e.target.value })}
                       rows={2}
-                      style={{ width: '100%', boxSizing: 'border-box', borderRadius: '6px', border: '1px solid #e2e8f0', padding: '10px 12px', fontSize: '13.5px', fontFamily: 'Cairo,sans-serif', resize: 'vertical' }}
+                      style={{ width: '100%', boxSizing: 'border-box', borderRadius: '6px', border: '1px solid #e2e8f0', padding: '10px 12px', fontSize: '13.5px', fontFamily: "'IBM Plex Sans', 'IBM Plex Sans Arabic', sans-serif", resize: 'vertical' }}
                     />
                   </div>
 
@@ -1581,7 +1581,7 @@ export default function AdminDashboard() {
                       type="text"
                       value={pricingForm.badge1}
                       onChange={(e) => setPricingForm({ ...pricingForm, badge1: e.target.value })}
-                      style={{ width: '100%', boxSizing: 'border-box', height: '40px', borderRadius: '6px', border: '1px solid #e2e8f0', padding: '0 12px', fontSize: '13.5px', fontFamily: 'Cairo,sans-serif' }}
+                      style={{ width: '100%', boxSizing: 'border-box', height: '40px', borderRadius: '6px', border: '1px solid #e2e8f0', padding: '0 12px', fontSize: '13.5px', fontFamily: "'IBM Plex Sans', 'IBM Plex Sans Arabic', sans-serif" }}
                     />
                   </div>
 
@@ -1591,7 +1591,7 @@ export default function AdminDashboard() {
                       type="text"
                       value={pricingForm.badge2}
                       onChange={(e) => setPricingForm({ ...pricingForm, badge2: e.target.value })}
-                      style={{ width: '100%', boxSizing: 'border-box', height: '40px', borderRadius: '6px', border: '1px solid #e2e8f0', padding: '0 12px', fontSize: '13.5px', fontFamily: 'Cairo,sans-serif' }}
+                      style={{ width: '100%', boxSizing: 'border-box', height: '40px', borderRadius: '6px', border: '1px solid #e2e8f0', padding: '0 12px', fontSize: '13.5px', fontFamily: "'IBM Plex Sans', 'IBM Plex Sans Arabic', sans-serif" }}
                     />
                   </div>
                 </div>
@@ -1618,14 +1618,14 @@ export default function AdminDashboard() {
                       placeholder="السؤال حول الأسعار..."
                       value={newPricingFaqQ}
                       onChange={(e) => setNewPricingFaqQ(e.target.value)}
-                      style={{ height: '38px', borderRadius: '6px', border: '1px solid #cbd5e1', padding: '0 12px', fontSize: '13px', fontFamily: 'Cairo,sans-serif' }}
+                      style={{ height: '38px', borderRadius: '6px', border: '1px solid #cbd5e1', padding: '0 12px', fontSize: '13px', fontFamily: "'IBM Plex Sans', 'IBM Plex Sans Arabic', sans-serif" }}
                     />
                     <textarea
                       placeholder="الإجابة..."
                       value={newPricingFaqA}
                       onChange={(e) => setNewPricingFaqA(e.target.value)}
                       rows={2}
-                      style={{ width: '100%', boxSizing: 'border-box', borderRadius: '6px', border: '1px solid #cbd5e1', padding: '8px 12px', fontSize: '13px', fontFamily: 'Cairo,sans-serif' }}
+                      style={{ width: '100%', boxSizing: 'border-box', borderRadius: '6px', border: '1px solid #cbd5e1', padding: '8px 12px', fontSize: '13px', fontFamily: "'IBM Plex Sans', 'IBM Plex Sans Arabic', sans-serif" }}
                     />
                   </div>
                   <button
@@ -1691,7 +1691,7 @@ export default function AdminDashboard() {
                       type="text"
                       value={bannerForm.title}
                       onChange={(e) => setBannerForm({ ...bannerForm, title: e.target.value })}
-                      style={{ width: '100%', boxSizing: 'border-box', height: '40px', borderRadius: '6px', border: '1px solid #e2e8f0', padding: '0 12px', fontSize: '13.5px', fontFamily: 'Cairo,sans-serif' }}
+                      style={{ width: '100%', boxSizing: 'border-box', height: '40px', borderRadius: '6px', border: '1px solid #e2e8f0', padding: '0 12px', fontSize: '13.5px', fontFamily: "'IBM Plex Sans', 'IBM Plex Sans Arabic', sans-serif" }}
                     />
                   </div>
                   <div>
@@ -1700,7 +1700,7 @@ export default function AdminDashboard() {
                       type="text"
                       value={bannerForm.ctaText}
                       onChange={(e) => setBannerForm({ ...bannerForm, ctaText: e.target.value })}
-                      style={{ width: '100%', boxSizing: 'border-box', height: '40px', borderRadius: '6px', border: '1px solid #e2e8f0', padding: '0 12px', fontSize: '13.5px', fontFamily: 'Cairo,sans-serif' }}
+                      style={{ width: '100%', boxSizing: 'border-box', height: '40px', borderRadius: '6px', border: '1px solid #e2e8f0', padding: '0 12px', fontSize: '13.5px', fontFamily: "'IBM Plex Sans', 'IBM Plex Sans Arabic', sans-serif" }}
                     />
                   </div>
                   <div style={{ gridColumn: 'span 2' }}>
@@ -1709,7 +1709,7 @@ export default function AdminDashboard() {
                       value={bannerForm.subtitle}
                       onChange={(e) => setBannerForm({ ...bannerForm, subtitle: e.target.value })}
                       rows={3}
-                      style={{ width: '100%', boxSizing: 'border-box', borderRadius: '6px', border: '1px solid #e2e8f0', padding: '10px 12px', fontSize: '13.5px', fontFamily: 'Cairo,sans-serif', resize: 'vertical' }}
+                      style={{ width: '100%', boxSizing: 'border-box', borderRadius: '6px', border: '1px solid #e2e8f0', padding: '10px 12px', fontSize: '13.5px', fontFamily: "'IBM Plex Sans', 'IBM Plex Sans Arabic', sans-serif", resize: 'vertical' }}
                     />
                   </div>
                 </div>
@@ -1739,14 +1739,14 @@ export default function AdminDashboard() {
                       placeholder="السؤال..."
                       value={newFaqQuestion}
                       onChange={(e) => setNewFaqQuestion(e.target.value)}
-                      style={{ height: '38px', borderRadius: '6px', border: '1px solid #cbd5e1', padding: '0 12px', fontSize: '13px', fontFamily: 'Cairo,sans-serif' }}
+                      style={{ height: '38px', borderRadius: '6px', border: '1px solid #cbd5e1', padding: '0 12px', fontSize: '13px', fontFamily: "'IBM Plex Sans', 'IBM Plex Sans Arabic', sans-serif" }}
                     />
                     <input
                       type="text"
                       placeholder="التصنيف (مثال: الأسعار، الإنتاج)..."
                       value={newFaqCat}
                       onChange={(e) => setNewFaqCat(e.target.value)}
-                      style={{ height: '38px', borderRadius: '6px', border: '1px solid #cbd5e1', padding: '0 12px', fontSize: '13px', fontFamily: 'Cairo,sans-serif' }}
+                      style={{ height: '38px', borderRadius: '6px', border: '1px solid #cbd5e1', padding: '0 12px', fontSize: '13px', fontFamily: "'IBM Plex Sans', 'IBM Plex Sans Arabic', sans-serif" }}
                     />
                   </div>
                   <textarea
@@ -1754,7 +1754,7 @@ export default function AdminDashboard() {
                     value={newFaqAnswer}
                     onChange={(e) => setNewFaqAnswer(e.target.value)}
                     rows={2}
-                    style={{ width: '100%', boxSizing: 'border-box', borderRadius: '6px', border: '1px solid #cbd5e1', padding: '8px 12px', fontSize: '13px', fontFamily: 'Cairo,sans-serif', marginBottom: '12px' }}
+                    style={{ width: '100%', boxSizing: 'border-box', borderRadius: '6px', border: '1px solid #cbd5e1', padding: '8px 12px', fontSize: '13px', fontFamily: "'IBM Plex Sans', 'IBM Plex Sans Arabic', sans-serif", marginBottom: '12px' }}
                   />
                   <button
                     onClick={() => {
@@ -1830,7 +1830,7 @@ export default function AdminDashboard() {
                       type="text"
                       value={termsForm.title}
                       onChange={(e) => setTermsForm({ ...termsForm, title: e.target.value })}
-                      style={{ width: '100%', boxSizing: 'border-box', height: '40px', borderRadius: '6px', border: '1px solid #e2e8f0', padding: '0 12px', fontSize: '13.5px', fontFamily: 'Cairo,sans-serif' }}
+                      style={{ width: '100%', boxSizing: 'border-box', height: '40px', borderRadius: '6px', border: '1px solid #e2e8f0', padding: '0 12px', fontSize: '13.5px', fontFamily: "'IBM Plex Sans', 'IBM Plex Sans Arabic', sans-serif" }}
                     />
                   </div>
                   <div>
@@ -1839,7 +1839,7 @@ export default function AdminDashboard() {
                       type="text"
                       value={termsForm.lastUpdated}
                       onChange={(e) => setTermsForm({ ...termsForm, lastUpdated: e.target.value })}
-                      style={{ width: '100%', boxSizing: 'border-box', height: '40px', borderRadius: '6px', border: '1px solid #e2e8f0', padding: '0 12px', fontSize: '13.5px', fontFamily: 'Cairo,sans-serif' }}
+                      style={{ width: '100%', boxSizing: 'border-box', height: '40px', borderRadius: '6px', border: '1px solid #e2e8f0', padding: '0 12px', fontSize: '13.5px', fontFamily: "'IBM Plex Sans', 'IBM Plex Sans Arabic', sans-serif" }}
                     />
                   </div>
                   <div style={{ gridColumn: 'span 2' }}>
@@ -1848,7 +1848,7 @@ export default function AdminDashboard() {
                       value={termsForm.subtitle}
                       onChange={(e) => setTermsForm({ ...termsForm, subtitle: e.target.value })}
                       rows={2}
-                      style={{ width: '100%', boxSizing: 'border-box', borderRadius: '6px', border: '1px solid #e2e8f0', padding: '10px 12px', fontSize: '13.5px', fontFamily: 'Cairo,sans-serif', resize: 'vertical' }}
+                      style={{ width: '100%', boxSizing: 'border-box', borderRadius: '6px', border: '1px solid #e2e8f0', padding: '10px 12px', fontSize: '13.5px', fontFamily: "'IBM Plex Sans', 'IBM Plex Sans Arabic', sans-serif", resize: 'vertical' }}
                     />
                   </div>
                 </div>
@@ -1869,7 +1869,7 @@ export default function AdminDashboard() {
                             setTermsForm({ ...termsForm, sections: updated });
                           }}
                           placeholder="عنوان البند..."
-                          style={{ flex: 1, height: '36px', borderRadius: '6px', border: '1px solid #cbd5e1', padding: '0 10px', fontSize: '13px', fontFamily: 'Cairo,sans-serif', fontWeight: 700 }}
+                          style={{ flex: 1, height: '36px', borderRadius: '6px', border: '1px solid #cbd5e1', padding: '0 10px', fontSize: '13px', fontFamily: "'IBM Plex Sans', 'IBM Plex Sans Arabic', sans-serif", fontWeight: 700 }}
                         />
                         <button
                           onClick={() => {
@@ -1891,7 +1891,7 @@ export default function AdminDashboard() {
                         }}
                         rows={3}
                         placeholder="محتوى البند..."
-                        style={{ width: '100%', boxSizing: 'border-box', borderRadius: '6px', border: '1px solid #cbd5e1', padding: '8px 12px', fontSize: '13px', fontFamily: 'Cairo,sans-serif', resize: 'vertical' }}
+                        style={{ width: '100%', boxSizing: 'border-box', borderRadius: '6px', border: '1px solid #cbd5e1', padding: '8px 12px', fontSize: '13px', fontFamily: "'IBM Plex Sans', 'IBM Plex Sans Arabic', sans-serif", resize: 'vertical' }}
                       />
                     </div>
                   ))}
@@ -1942,7 +1942,7 @@ export default function AdminDashboard() {
                       type="text"
                       value={privacyForm.title}
                       onChange={(e) => setPrivacyForm({ ...privacyForm, title: e.target.value })}
-                      style={{ width: '100%', boxSizing: 'border-box', height: '40px', borderRadius: '6px', border: '1px solid #e2e8f0', padding: '0 12px', fontSize: '13.5px', fontFamily: 'Cairo,sans-serif' }}
+                      style={{ width: '100%', boxSizing: 'border-box', height: '40px', borderRadius: '6px', border: '1px solid #e2e8f0', padding: '0 12px', fontSize: '13.5px', fontFamily: "'IBM Plex Sans', 'IBM Plex Sans Arabic', sans-serif" }}
                     />
                   </div>
                   <div>
@@ -1951,7 +1951,7 @@ export default function AdminDashboard() {
                       type="text"
                       value={privacyForm.lastUpdated}
                       onChange={(e) => setPrivacyForm({ ...privacyForm, lastUpdated: e.target.value })}
-                      style={{ width: '100%', boxSizing: 'border-box', height: '40px', borderRadius: '6px', border: '1px solid #e2e8f0', padding: '0 12px', fontSize: '13.5px', fontFamily: 'Cairo,sans-serif' }}
+                      style={{ width: '100%', boxSizing: 'border-box', height: '40px', borderRadius: '6px', border: '1px solid #e2e8f0', padding: '0 12px', fontSize: '13.5px', fontFamily: "'IBM Plex Sans', 'IBM Plex Sans Arabic', sans-serif" }}
                     />
                   </div>
                   <div style={{ gridColumn: 'span 2' }}>
@@ -1960,7 +1960,7 @@ export default function AdminDashboard() {
                       value={privacyForm.subtitle}
                       onChange={(e) => setPrivacyForm({ ...privacyForm, subtitle: e.target.value })}
                       rows={2}
-                      style={{ width: '100%', boxSizing: 'border-box', borderRadius: '6px', border: '1px solid #e2e8f0', padding: '10px 12px', fontSize: '13.5px', fontFamily: 'Cairo,sans-serif', resize: 'vertical' }}
+                      style={{ width: '100%', boxSizing: 'border-box', borderRadius: '6px', border: '1px solid #e2e8f0', padding: '10px 12px', fontSize: '13.5px', fontFamily: "'IBM Plex Sans', 'IBM Plex Sans Arabic', sans-serif", resize: 'vertical' }}
                     />
                   </div>
                 </div>
@@ -1981,7 +1981,7 @@ export default function AdminDashboard() {
                             setPrivacyForm({ ...privacyForm, sections: updated });
                           }}
                           placeholder="عنوان البند..."
-                          style={{ flex: 1, height: '36px', borderRadius: '6px', border: '1px solid #cbd5e1', padding: '0 10px', fontSize: '13px', fontFamily: 'Cairo,sans-serif', fontWeight: 700 }}
+                          style={{ flex: 1, height: '36px', borderRadius: '6px', border: '1px solid #cbd5e1', padding: '0 10px', fontSize: '13px', fontFamily: "'IBM Plex Sans', 'IBM Plex Sans Arabic', sans-serif", fontWeight: 700 }}
                         />
                         <button
                           onClick={() => {
@@ -2003,7 +2003,7 @@ export default function AdminDashboard() {
                         }}
                         rows={3}
                         placeholder="محتوى البند..."
-                        style={{ width: '100%', boxSizing: 'border-box', borderRadius: '6px', border: '1px solid #cbd5e1', padding: '8px 12px', fontSize: '13px', fontFamily: 'Cairo,sans-serif', resize: 'vertical' }}
+                        style={{ width: '100%', boxSizing: 'border-box', borderRadius: '6px', border: '1px solid #cbd5e1', padding: '8px 12px', fontSize: '13px', fontFamily: "'IBM Plex Sans', 'IBM Plex Sans Arabic', sans-serif", resize: 'vertical' }}
                       />
                     </div>
                   ))}
