@@ -20,6 +20,7 @@ import Contact from "./pages/Contact.tsx";
 import About from "./pages/About.tsx";
 import Terms from "./pages/Terms.tsx";
 import Privacy from "./pages/Privacy.tsx";
+import SheetNesting from "./pages/SheetNesting.tsx";
 
 const queryClient = new QueryClient();
 
@@ -33,6 +34,7 @@ const App = () => (
           {/* Printera Core Routes */}
           <Route path="/" element={<Home />} />
           <Route path="/templates" element={<TemplatesLibrary />} />
+          <Route path="/sheet-nesting" element={<SheetNesting />} />
           <Route path="/pricing" element={<Pricing />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="/about" element={<About />} />

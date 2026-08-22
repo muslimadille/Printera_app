@@ -4,6 +4,7 @@ import { useParams, useSearchParams, Link } from 'react-router-dom';
 const TEMPLATE_META: Record<string, { title: string; categoryLabel: string; desc: string; svg: string }> = {
   'A60_20_01_01': { title: 'علبة ذاتية القفل (ECMA)', categoryLabel: 'علب قابلة للطي', desc: 'علبة كرتون بقاع أوتوماتيكي سريع الغلق (Crash Lock / 2-Point Gluing)', svg: '/templates/preview/A60_20_01_01.svg' },
   'T0002': { title: 'علبة مستقيمة الإغلاق', categoryLabel: 'طي وصواني', desc: 'التصميم الأساسي لعلب الطي الكرتونية، إغلاق علوي وسفلي بسيط بدون لصق.', svg: '/templates/preview/A10_10_03_03.svg' },
+  'F70_01_00_00_A': { title: 'علبة وسادة (ECMA Pillow Box)', categoryLabel: 'علب قابلة للطي', desc: 'علبة كرتون بتصميم وسادة مقوسة مع ألسنة إغلاق هلالية سريعة', svg: '/templates/preview/F70_01_00_00_A.svg' },
 };
 
 const UNIT_FACTORS = { mm: 1, cm: 10, in: 25.4 };

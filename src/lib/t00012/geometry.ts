@@ -21,10 +21,10 @@ export function buildT00012Geometry(params: T00012Params): T00012Geometry {
   const shiftX = Math.max(100, D * 2 + 20);
   const shiftY = Math.max(100, 30);
 
-  const xL = D + sideFlapL + 10;
+  const xL = D + sideFlapL;
   const xR = xL + W;
   
-  const yCovT = topTuckL + 10; // topTuckL for tuck flap + 10px shift
+  const yCovT = topTuckL;
   const yCovB = yCovT + H;
   const yTDB = yCovB + D;
   const yBaseB = yTDB + H;
@@ -229,13 +229,13 @@ export function buildT00012Geometry(params: T00012Params): T00012Geometry {
   }).join('\n  ');
 
   const bbox = {
-    x: Math.min(...segments.flatMap(s => s.d ? [] : [s.start.x, s.end.x])),
-    y: Math.min(...segments.flatMap(s => s.d ? [] : [s.start.y, s.end.y])) - 20, // Pad for bezier
-    w: W + D * 2 + sideFlapL * 2 + 20, // Pad 20 to prevent cutting edges
-    h: H * 2 + D * 2 + topTuckL + 20 // Pad 20 to prevent cutting edges
+    x: 0,
+    y: 0,
+    w: W + D * 2 + sideFlapL * 2,
+    h: H * 2 + D * 2 + topTuckL
   };
 
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${bbox.x - 5} ${bbox.y - 5} ${bbox.w + 10} ${bbox.h + 10}">
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${bbox.w} ${bbox.h}">
   ${svgLines}
 </svg>`.trim();
 

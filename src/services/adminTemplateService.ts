@@ -49,9 +49,99 @@ export const INITIAL_TEMPLATES: DbTemplate[] = [
     height_default: 100,
     depth_default: 50,
   },
+  {
+    id: 'F70_01_00_00_A',
+    title: 'علبة وسادة ECMA',
+    category: 'folding',
+    category_label: 'طي وصواني',
+    description: 'علبة كرتون بتصميم وسادة مقوسة مع ألسنة إغلاق هلالية سريعة.',
+    pro: false,
+    is_visible: true,
+    enable_nesting: true,
+    enable_3d: true,
+    downloads: 1420,
+    width_default: 135,
+    height_default: 200,
+    depth_default: 50,
+  },
+  {
+    id: 'B15_06_00_55',
+    title: 'علبة بقفل ذاتي وغطاء متداخل',
+    category: 'folding',
+    category_label: 'طي وصواني',
+    description: 'علبة كرتون ECMA B15 بقاع ذاتي القفل وألسنة تعشيق مع غطاء متداخل.',
+    pro: false,
+    is_visible: true,
+    enable_nesting: true,
+    enable_3d: true,
+    downloads: 1860,
+    width_default: 140,
+    height_default: 200,
+    depth_default: 55,
+  },
+  {
+    id: 'Bag_B_1',
+    title: 'كيس ورقي بقاعدة مستطيلة',
+    category: 'bags',
+    category_label: 'أكياس ورقية',
+    description: 'كيس ورقي بقاعدة مستطيلة وطيات جانبية (Gusseted Paper Bag).',
+    pro: false,
+    is_visible: true,
+    enable_nesting: true,
+    enable_3d: true,
+    downloads: 980,
+    width_default: 80,
+    height_default: 120,
+    depth_default: 40,
+  },
+  {
+    id: 'F10_41_00_00',
+    title: 'علبة قفل أوتوماتيكي مع نافذة',
+    category: 'folding',
+    category_label: 'طي وصواني',
+    description: 'علبة كرتون بقفل أوتوماتيكي علوي وسفلي مع نافذة عرض مقصوصة (ECMA F10.41.00.00).',
+    pro: false,
+    is_visible: true,
+    enable_nesting: true,
+    enable_3d: true,
+    downloads: 1120,
+    width_default: 100,
+    height_default: 150,
+    depth_default: 50,
+  },
+  {
+    id: 'Gable_Box_1',
+    title: 'علبة قمة هرمية بمقبض وثقوب حبل',
+    category: 'boxes',
+    category_label: 'علب وأكياس',
+    description: 'علبة كرتون بقمة هرمية مطوية مع مقبض علوي وثقوب دائرية لحبال الحمل وقاع قفل أوتوماتيكي.',
+    pro: false,
+    is_visible: true,
+    enable_nesting: true,
+    enable_3d: true,
+    downloads: 850,
+    width_default: 150,
+    height_default: 120,
+    depth_default: 80,
+  },
+  {
+    id: 'Basket_Box_1',
+    title: 'علبة سلة بمقبض وأقفال مقوسة',
+    category: 'boxes',
+    category_label: 'علب وأكياس',
+    description: 'علبة سلة هدايا بمقبض حمل علوي مريح وأقفال جانبية مقوسة ذاتية التجميع.',
+    pro: false,
+    is_visible: true,
+    enable_nesting: true,
+    enable_3d: true,
+    downloads: 720,
+    width_default: 140,
+    height_default: 60,
+    depth_default: 100,
+  },
 ];
 
-const ALLOWED_IDS = new Set(['A60_20_01_01', 'T0002']);
+const ALLOWED_IDS = new Set(['A60_20_01_01', 'T0002', 'F70_01_00_00_A', 'B15_06_00_55', 'Bag_B_1', 'F10_41_00_00', 'Gable_Box_1', 'Basket_Box_1']);
 
 const LOCAL_STORAGE_TEMPLATES_KEY = 'printera_admin_templates_v1';
 
@@ -116,38 +206,7 @@ export async function fetchAllAdminTemplates(): Promise<DbTemplate[]> {
       cachedMap[initial.id] = initial;
     }
   });
-  return Object.values(cachedMap).filter(t => ALLOWED_IDS.has(t.id));id => {
-        if (!mergedMap[id]) {
-          mergedMap[id] = cachedMap[id];
-        }
-      });
-      // Merge missing defaults from INITIAL_TEMPLATES
-      INITIAL_TEMPLATES.forEach(initial => {
-        if (!mergedMap[initial.id]) {
-          mergedMap[initial.id] = initial;
-        }
-      });
-
-      const result = Object.values(mergedMap);
-      localStorage.setItem(LOCAL_STORAGE_TEMPLATES_KEY, JSON.stringify(result));
-      return result;
-    }
-  } catch (e) {
-    console.warn('Failed fetching templates from Supabase, resorting to local fallback:', e);
-  }
-
-  // Local storage fallback
-  if (Object.keys(cachedMap).length > 0) {
-    // Ensure all INITIAL_TEMPLATES exist
-    INITIAL_TEMPLATES.forEach(initial => {
-      if (!cachedMap[initial.id]) {
-        cachedMap[initial.id] = initial;
-      }
-    });
-    return Object.values(cachedMap);
-  }
-
-  return INITIAL_TEMPLATES;
+  return Object.values(cachedMap).filter(t => ALLOWED_IDS.has(t.id));
 }
 
 export async function saveOrUpdateTemplate(template: DbTemplate): Promise<boolean> {

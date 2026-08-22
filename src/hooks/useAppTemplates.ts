@@ -44,9 +44,91 @@ export const SYSTEM_DEFAULT_TEMPLATES: AppTemplateItem[] = [
     default_h: 120,
     default_d: 80,
   },
+  {
+    id: 'F70_01_00_00_A',
+    title: 'علبة وسادة (ECMA Pillow Box)',
+    category: 'folding',
+    categoryLabel: 'علب قابلة للطي',
+    desc: 'علبة كرتون بتصميم وسادة مقوسة مع ألسنة إغلاق هلالية سريعة',
+    tags: ['وسادة', 'Pillow Box', 'ECMA', 'كرتون', 'طي'],
+    pro: false,
+    svg: '/templates/preview/F70_01_00_00_A.svg',
+    default_w: 135,
+    default_h: 200,
+    default_d: 50,
+  },
+  {
+    id: 'Bag_B_1',
+    title: 'كيس ورقي بقاعدة مستطيلة (Gusseted Paper Bag)',
+    category: 'bags',
+    categoryLabel: 'أكياس',
+    desc: 'كيس ورقي بقاعدة مستطيلة وطيات جانبية',
+    tags: ['أكياس', 'كيس ورقي', 'تغليف', 'Bag'],
+    pro: false,
+    svg: '/templates/preview/Bag_B_1.svg',
+    default_w: 80,
+    default_h: 120,
+    default_d: 40,
+    status: 'active'
+  },
+  {
+    id: 'B15_06_00_55',
+    title: 'علبة بقفل ذاتي وغطاء متداخل (ECMA Lock-Bottom Box)',
+    category: 'folding',
+    categoryLabel: 'علب قابلة للطي',
+    desc: 'علبة كرتون ECMA B15 بقاع ذاتي القفل وألسنة تعشيق مع غطاء متداخل',
+    tags: ['قفل ذاتي', 'ECMA', 'كرتون', 'طي', 'B15'],
+    pro: false,
+    svg: '/templates/preview/B15_06_00_55.svg',
+    default_w: 140,
+    default_h: 200,
+    default_d: 55,
+  },
+  {
+    id: 'F10_41_00_00',
+    title: 'علبة قفل أوتوماتيكي مع نافذة (ECMA F10.41.00.00)',
+    category: 'folding',
+    categoryLabel: 'علب قابلة للطي',
+    desc: 'علبة كرتون بقفل أوتوماتيكي علوي وسفلي مع نافذة عرض مقصوصة',
+    tags: ['نافذة', 'قفل أوتوماتيكي', 'ECMA', 'كرتون', 'طي', 'F10'],
+    pro: false,
+    svg: '/templates/preview/F10_41_00_00.svg',
+    default_w: 100,
+    default_h: 150,
+    default_d: 50,
+    status: 'active'
+  },
+  {
+    id: 'Gable_Box_1',
+    title: 'علبة قمة هرمية بمقبض وثقوب حبل (Gable Box with Handle & Rope Holes)',
+    category: 'boxes',
+    categoryLabel: 'علب وأكياس بمقبض',
+    desc: 'علبة كرتون بقمة هرمية مطوية مع مقبض علوي وثقوب دائرية لحبال الحمل وقاع قفل أوتوماتيكي',
+    tags: ['قمة هرمية', 'مقبض', 'حبل', 'قفل أوتوماتيكي', 'Gable', 'Gable_Box'],
+    pro: false,
+    svg: '/templates/preview/Gable_Box_1.svg',
+    default_w: 150,
+    default_h: 120,
+    default_d: 80,
+    status: 'active'
+  },
+  {
+    id: 'Basket_Box_1',
+    title: 'علبة سلة بمقبض وأقفال مقوسة (Basket Box with Handle & Arch Locks)',
+    category: 'boxes',
+    categoryLabel: 'علب وأكياس بمقبض',
+    desc: 'علبة سلة هدايا بمقبض حمل علوي مريح وأقفال جانبية مقوسة ذاتية التجميع',
+    tags: ['سلة', 'مقبض', 'هدايا', 'قفل مقوس', 'Basket', 'Basket_Box'],
+    pro: false,
+    svg: '/templates/preview/Basket_Box_1.svg',
+    default_w: 140,
+    default_h: 60,
+    default_d: 100,
+    status: 'active'
+  },
 ];
 
-const ALLOWED_TEMPLATE_IDS = new Set(['A60_20_01_01', 'T0002']);
+const ALLOWED_TEMPLATE_IDS = new Set(['A60_20_01_01', 'T0002', 'F70_01_00_00_A', 'B15_06_00_55', 'Bag_B_1', 'F10_41_00_00', 'Gable_Box_1', 'Basket_Box_1']);
 
 const EVENT_NAME = 'appTemplatesUpdated';
 

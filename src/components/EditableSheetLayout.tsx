@@ -1663,4 +1663,5 @@ const safeToFixed = (val: any, decimals: number = 2): string => {
 });
 EditableSheetLayout.displayName = 'EditableSheetLayout';
 
+export { EditableSheetLayout };
 export default EditableSheetLayout;

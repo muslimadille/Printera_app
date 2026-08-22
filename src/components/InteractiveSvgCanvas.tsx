@@ -274,8 +274,10 @@ export function InteractiveSvgCanvas({
     };
   }, [segments, svgWidth, svgHeight]);
 
-  const refW = referenceWidth || (bounds.w > 0 ? bounds.w + 80 : 500);
-  const refH = referenceHeight || (bounds.h > 0 ? bounds.h + 80 : 500);
+  const padX = bounds.w > 0 ? Math.max(bounds.w * 0.25, 60) : 40;
+  const padY = bounds.h > 0 ? Math.max(bounds.h * 0.25, 60) : 40;
+  const refW = referenceWidth || (bounds.w > 0 ? bounds.w + padX * 2 : 500);
+  const refH = referenceHeight || (bounds.h > 0 ? bounds.h + padY * 2 : 500);
 
   const cx = bounds.minX + bounds.w / 2;
   const cy = bounds.minY + bounds.h / 2;
@@ -387,17 +389,18 @@ export function InteractiveSvgCanvas({
               return null;
             };
 
+            const relScale = Math.max(bounds.w, bounds.h) / 238;
             return (
               <g key={s.id} onClick={(e) => { e.stopPropagation(); toggleSelection(s.id, e.shiftKey); }}>
                 {/* Invisible thicker line for easier clicking */}
                 {editMode && renderShape({
                   stroke: "transparent",
-                  strokeWidth: "15",
+                  strokeWidth: `${15 * relScale}`,
                   className: "cursor-pointer hover:stroke-blue-200/50 transition-colors"
                 })}
                 {renderShape({
                   stroke: isSelected ? "#3b82f6" : color,
-                  strokeWidth: isSelected ? "1.5" : "0.45",
+                  strokeWidth: isSelected ? `${1.5 * relScale}` : `${0.45 * relScale}`,
                   fill: "none",
                   className: editMode ? 'transition-all duration-200 cursor-pointer' : ''
                 })}
@@ -450,3 +453,5 @@ export function InteractiveSvgCanvas({
     </div>
   );
 }
+
+export default InteractiveSvgCanvas;

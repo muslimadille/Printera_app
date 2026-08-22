@@ -64,7 +64,7 @@ export const getTabLabel = (tabKey: string): string => {
 const DEFAULT_ON_KEYS = new Set<string>([
   'hybridengine', 'itemcost', 'flat', 'montage', 'templatecost', 'templates', 'diecut', 'diecut2', 'diecut3', 'diecut4', 'diecut5', 'carryhandle', 'lidtuck', 'medicinebox1', 'box10001', 'svgnest', 'templatemontage', 'magazinesheet', 'bagcalc', 'costcalc', 'smartengine', 'mergeitems',
   'montag', 'montag_itemcost', 'montag_box10001',
-  'box_diecut', 'box_diecut2', 'box_diecut3', 'box_diecut4', 'box_diecut5', 'box_carryhandle', 'box_lidtuck', 'box_medicinebox1', 'box_box10001', 'box_svgnest', 'box_d001', 'box_t0002', 'box_t0005', 'box_t0006', 'box_a60_20_01_01', 
+  'box_diecut', 'box_diecut2', 'box_diecut3', 'box_diecut4', 'box_diecut5', 'box_carryhandle', 'box_lidtuck', 'box_medicinebox1', 'box_box10001', 'box_svgnest', 'box_d001', 'box_t0002', 'box_t0005', 'box_t0006', 'box_a60_20_01_01', 'box_f70_01_00_00_a', 'box_b15_06_00_55', 'box_bag_b_1', 'box_f10_41_00_00', 'box_gable_box_1', 'box_basket_box_1',
   'savedquotes', 'settings', 'papertypes', 'guide',
 ]);
 

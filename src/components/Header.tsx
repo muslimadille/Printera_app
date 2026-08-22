@@ -1,11 +1,11 @@
 import { Link, useLocation } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 
-type SimpleActive = 'home' | 'contact' | 'about' | null;
-type AppActive = 'library' | 'categories' | 'pricing' | 'template' | null;
+type SimpleActive = 'home' | 'contact' | 'about' | 'nesting' | null;
+type AppActive = 'library' | 'categories' | 'pricing' | 'template' | 'nesting' | null;
 
 interface HeaderProps {
-  /** "simple" = text-nav header (الرئيسية/القوالب/الأسعار/تواصل معنا/عننا).
+  /** "simple" = text-nav header (الرئيسية/القوالب/توزيع علي الشيت/الأسعار/تواصل معنا/عننا).
    *  "app" = icon-nav header (العلب/التصنيفات/الأسعار) used on library/pricing/template pages. */
   variant?: 'simple' | 'app';
   active?: SimpleActive | AppActive;
@@ -56,6 +56,7 @@ export default function Header({ variant = 'app', active = null, bg, guestCta = 
       <nav style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-6)', marginInlineEnd: 'auto' }}>
         {navLink('home', '/', 'الرئيسية')}
         {navLink('library', '/templates', 'القوالب')}
+        {navLink('nesting', '/sheet-nesting', 'توزيع علي الشيت')}
         {navLink('pricing', '/pricing', 'الأسعار')}
         {navLink('contact', '/contact', 'تواصل معنا')}
         {navLink('about', '/about', 'من نحن')}
